@@ -1,12 +1,16 @@
 const electron = require('electron')
 // Module to control application life.
+var path = require('path')
 const app = electron.app
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
+const { app, Tray, Menu, nativeImage } = require('electron')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
+
+app.disableHardwareAcceleration()
 
 function createWindow () {
   // Create the browser window.
@@ -17,12 +21,17 @@ function createWindow () {
     minWidth: 1281,
     minHeight: 800,
     backgroundColor: '#312450',
-    show: false
+    show: false,
+    icon: path.join(__dirname, 'assets/icons/64.ico'),
+    // webPreferences: {
+    //   offscreen: true
+    // }
 })
 
   // and load the index.html of the app.
   //mainWindow.loadURL(`https://uchet.kz/`)
   mainWindow.loadURL(`index.html`)
+  //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz/`)} else {mainWindow.loadURL(`index.html`)} 
 
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
@@ -35,14 +44,34 @@ function createWindow () {
     mainWindow = null
   })
 
+  require('./menu/mainmenu')
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
 })
 }
-git commit -m "first commit"
-  git branch -M main
-  
-  git push -u origin main
+
+let tray
+
+app.whenReady().then(() => {
+  const icon = nativeImage.createFromPath('assets/icons/64.ico')
+  tray = new Tray(icon)
+
+  // note: your contextMenu, Tooltip and Title code will go here!
+})
+
+const contextMenu = Menu.buildFromTemplate([
+  {
+    label: 'Exit',
+    click: () => { mainWindow.quit() }
+  },
+  { label: 'Item3', type: 'radio', checked: true }
+])
+
+tray.setContextMenu(contextMenu)
+tray.setToolTip('This is my application')
+tray.setTitle('This is my title')
+
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

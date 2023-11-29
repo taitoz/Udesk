@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="UTF-8">
-    <title>Electron Hello World!</title>
-  </head>
-  <body>
-    <h1>Electron Hello World!</h1>
-    We are using node <script>document.write(process.versions.node)</script>,
-    Chromium <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
-  </body>
+    <title>Hello World!</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+</head>
+<body>
+    <h1>Connection status: <strong id='status'></strong></h1>
+    <script src="loadRenderer.js"></script>
+    <script>window.i18n = new(require('./translations/i18n'));</script>
+    <script>
+      require('./assets/js/menu')
+      require('./assets/js/translations')
+    </script>
+</body>
 </html>
