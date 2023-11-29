@@ -3,36 +3,8 @@ const electron = require('electron')
 const app = electron.app
 var i18n = new(require('../translations/i18n'))
 
+
 const template = [
-  {
-    label: i18n.__('Edit'),
-    submenu: [
-      {
-        role: 'undo', label: i18n.__('Undo')
-      },
-      {
-        role: 'redo', label: i18n.__('Redo')
-      },
-      {
-        type: 'separator'
-      },
-      {
-        role: 'cut', label: i18n.__('Cut')
-      },
-      {
-        role: 'copy', label: i18n.__('Copy')
-      },
-      {
-        role: 'paste', label: i18n.__('Paste')
-      },
-      {
-        role: 'delete', label: i18n.__('Delete')
-      },
-      {
-        role: 'selectall', label: i18n.__('Select all')
-      }
-    ]
-  },
   {
     label: i18n.__('View'),
     submenu: [
@@ -64,15 +36,15 @@ const template = [
       }
     ]
   },
-  {
-    role: 'help', label: i18n.__('Help'),
-    submenu: [
-      {
-        label: i18n.__('Learn more'),
-        click () { require('electron').shell.openExternal('https://github.com/crilleengvall/electron-tutorial-app') }
-      }
-    ]
-  }
+  // {
+  //   role: 'help', label: i18n.__('Help'),
+  //   submenu: [
+  //     {
+  //       label: i18n.__('Learn more'),
+  //       click () { require('electron').shell.openExternal('https://github.com/crilleengvall/electron-tutorial-app') }
+  //     }
+  //   ]
+  // }
 ]
 
 if (process.platform === 'darwin') {

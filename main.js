@@ -4,11 +4,13 @@ var path = require('path')
 const app = electron.app
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
-const { app, Tray, Menu, nativeImage } = require('electron')
+const {Tray, Menu, nativeImage } = require('electron')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
+
+var i18n = new(require('./translations/i18n'))
 
 app.disableHardwareAcceleration()
 
@@ -20,8 +22,8 @@ function createWindow () {
     height: 800,
     minWidth: 1281,
     minHeight: 800,
-    backgroundColor: '#312450',
-    show: false,
+    //backgroundColor: '#312450',
+    //show: false,
     icon: path.join(__dirname, 'assets/icons/64.ico'),
     // webPreferences: {
     //   offscreen: true
@@ -30,7 +32,8 @@ function createWindow () {
 
   // and load the index.html of the app.
   //mainWindow.loadURL(`https://uchet.kz/`)
-  mainWindow.loadURL(`index.html`)
+  mainWindow.loadFile('index.html')
+  setTimeout(() => mainWindow.loadURL(`https://uchet.kz/`), 1000)
   //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz/`)} else {mainWindow.loadURL(`index.html`)} 
 
   // Open the DevTools.
@@ -57,21 +60,17 @@ app.whenReady().then(() => {
   const icon = nativeImage.createFromPath('assets/icons/64.ico')
   tray = new Tray(icon)
 
-  // note: your contextMenu, Tooltip and Title code will go here!
+  const trayMenu = Menu.buildFromTemplate([
+    {
+      label: i18n.__('Close'),
+      click: () => { app.quit() }
+    }
+  ])
+
+  tray.setContextMenu(trayMenu)
+  tray.setToolTip('Uchet Desktop')
+  tray.setTitle('Uchet Desktop')
 })
-
-const contextMenu = Menu.buildFromTemplate([
-  {
-    label: 'Exit',
-    click: () => { mainWindow.quit() }
-  },
-  { label: 'Item3', type: 'radio', checked: true }
-])
-
-tray.setContextMenu(contextMenu)
-tray.setToolTip('This is my application')
-tray.setTitle('This is my title')
-
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

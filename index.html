@@ -2,16 +2,25 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Hello World!</title>
+    <title>Uchet Desktop</title>
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Connection status: <strong id='status'></strong></h1>
-    <script src="loadRenderer.js"></script>
-    <script>window.i18n = new(require('./translations/i18n'));</script>
+  <div class="container">
+    <div class="item item-1"></div>
+    <div class="item item-2"></div>
+    <div class="item item-3"></div>
+    <div class="item item-4"></div>
+  </div>
+  
+    <!-- <h1>Connection status: <strong id='status'></strong></h1> -->
+    <script src="./assets/js/loadRenderer.js"></script>
+    <!-- <script>window.i18n = new(require('./translations/i18n'));</script>
     <script>
-      require('./assets/js/menu')
+      //require('./assets/js/menu')
       require('./assets/js/translations')
-    </script>
+    </script> -->
+  
 </body>
 </html>
