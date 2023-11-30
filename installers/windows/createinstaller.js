@@ -20,6 +20,6 @@ function getInstallerConfig () {
     outputDirectory: path.join(outPath, 'windows-installer'),
     exe: 'uchet-desktop.exe',
     setupExe: 'UchetDesktopInstaller.exe',
-    setupIcon: path.join(rootPath, 'assets', 'icons', '64.ico')
+    setupIcon: path.join(rootPath, 'assets', 'icons', '48.ico')
   })
 }

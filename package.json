@@ -13,13 +13,13 @@
     },
     "scripts": {
         "start": "electron .",
-        "package-win": "electron-packager . uchet-desktop --overwrite --asar --platform=win32 --arch=ia32 --icon=assets/icons/64.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Uchet.kz Desktop\"",
+        "package-win": "electron-packager . uchet-desktop --overwrite --asar --platform=win32 --arch=ia32 --icon=assets/icons/48.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Uchet.kz Desktop\"",
         
         "package-win2": "electron-packager \"PATH/TO/APPLICATION/FOLDER\" --platform=win32 --arch=x64 myApplicationBuilt --electron-version 2.0.5",
         
-        "package-linux": "electron-packager . uchet-desktop --overwrite --asar --platform=linux --arch=x64 --icon=assets/icons/png/1024x1024.png --prune=true --out=release-builds",
-        "package-mac": "electron-packager . uchet-desktop --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
-        "create-installer-mac": "electron-installer-dmg ./release-builds/Electron\\ uchet-desktop\\ app-darwin-x64/Electron\\ uchet-desktop\\ app.app uchet-desktop --out=release-builds --overwrite --icon=assets/icons/mac/icon.icns",
+        "package-linux": "electron-packager . uchet-desktop --overwrite --asar --platform=linux --arch=x64 --icon=assets/icons/png/48.png --prune=true --out=release-builds",
+        "package-mac": "electron-packager . uchet-desktop --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/32.icns --prune=true --out=release-builds",
+        "create-installer-mac": "uchet-desktop-dmg ./release-builds/Electron\\ uchet-desktop\\ app-darwin-x64/Electron\\ uchet-desktop\\ app.app uchet-desktop --out=release-builds --overwrite --icon=assets/icons/mac/32.icns",
         "create-installer-win": "node installers/windows/createinstaller.js"
         
     }

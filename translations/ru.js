@@ -11,7 +11,7 @@
     "Speech": "Speech",
     "Start speaking": "Start speaking",
     "Stop speaking": "Stop speaking",
-    "Actual size": "Actual size",
+    "Actual size": "Исходный размер",
     "Zoom in": "Увеличить",
     "Zoom out": "Уменьшить",
     "Toggle fullscreen": "На весь экран",
@@ -27,5 +27,7 @@
     "Unhide": "Unhide",
     "Quit": "Quit",
     "Zoom": "Zoom",
-    "Bring all to front": "Bring all to front"
+    "Bring all to front": "Bring all to front",
+    "Go Back": "Назад",
+    "Go Forward": "Вперед"
    }

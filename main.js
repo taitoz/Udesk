@@ -26,13 +26,13 @@ function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     titleBarStyle: 'hidden-inset',
-    width: 1281,
+    width: 1280,
     height: 800,
-    minWidth: 1281,
+    minWidth: 1280,
     minHeight: 800,
     //backgroundColor: '#312450',
     //show: false,
-    icon: path.join(__dirname, 'assets/icons/64.ico'),
+    icon: path.join(__dirname, 'assets/icons/48.ico'),
     // webPreferences: {
     //   offscreen: true
     // }
@@ -55,18 +55,23 @@ function createWindow () {
     mainWindow = null
   })
 
-  require('./menu/mainmenu')
+  require('./mainmenu')
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
 })
 }
 
-let tray
+function get() {
+  return mainWindow;
+}
+
+// Export the publicly available functions.
+module.exports = {get};
 
 app.whenReady().then(() => {
-  const icon = nativeImage.createFromPath('assets/icons/64.ico')
-  tray = new Tray(icon)
+  //const icon = nativeImage.createFromPath()
+  const tray = new Tray('./assets/icons/24.ico')
 
   const trayMenu = Menu.buildFromTemplate([
     {

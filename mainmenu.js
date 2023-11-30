@@ -1,8 +1,10 @@
-const {Menu} = require('electron')
+const {Menu, nativeImage} = require('electron')
 const electron = require('electron')
 const app = electron.app
-var i18n = new(require('../translations/i18n'))
+var i18n = new(require('./translations/i18n.js'))
+var path = require('path')
 
+const mainWindow = require(path.join(__dirname, 'main'));
 
 const template = [
   {
@@ -35,6 +37,16 @@ const template = [
         role: 'close', label: i18n.__('Close')
       }
     ]
+  },
+  {type:'separator'}, 
+  {
+    label: i18n.__('Go Back'),
+    click: () => { mainWindow.get().webContents.goBack(); }
+  },
+  {
+    label: i18n.__('Go Forward'),
+    //icon: nativeImage.createFromPath('./assets/icons/24.ico'),
+    click: () => { mainWindow.get().webContents.goForward(); }
   },
   // {
   //   role: 'help', label: i18n.__('Help'),
