@@ -8,7 +8,7 @@ if (setupEvents.handleSquirrelEvent()) {
 // Module to control application life.
 let path = require('path')
 // Module to create native browser window.
-const {BrowserView, BrowserWindow, appTray, Menu, nativeImage, app, Tray} = require('electron')
+const {BrowserView, BrowserWindow, ipcMain, Menu, nativeImage, app, Tray, dialog} = require('electron')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -19,6 +19,7 @@ let mainView
 let i18n = new (require('./translations/i18n'))
 
 app.disableHardwareAcceleration()
+app.commandLine.appendSwitch('ignore-certificate-errors')
 
 function createWindow() {
     // Create the browser window.
@@ -29,7 +30,7 @@ function createWindow() {
         minWidth: 1520,
         minHeight: 850,
         useContentSize: true,
-        //backgroundColor: '#312450',
+        //backgroundColor: '#3f4254',
         //show: false,
         icon: path.join(__dirname, 'assets/icons/48.ico'),
         // webPreferences: {
@@ -37,29 +38,34 @@ function createWindow() {
         // }
     })
 
-    // and load the index.html of the app.
-    //mainWindow.loadURL(`https://uchet.kz/`)
-    //mainWindow.loadFile('index.html')
-    //setTimeout(() => mainWindow.loadURL(`https://uchet.kz`), 1000)
-    //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
-
-    const sidebarWidth = 240
-    sidebar = new BrowserView()
+    const sidebarWidth = 260
+    sidebar = new BrowserView({
+        webPreferences: {
+            preload: path.join(__dirname, 'sidebar', 'sidebarPreload.js')
+        }
+    })
     mainWindow.addBrowserView(sidebar)
     sidebar.setBounds({x: 0, y: 0, width: sidebarWidth, height: mainWindow.getBounds().height})
     sidebar.setAutoResize({width: true, height: false});
-    sidebar.webContents.loadFile('sidebar.html')
 
     mainView = new BrowserView()
     mainWindow.addBrowserView(mainView)
     sidebar.setAutoResize({width: true, height: false});
     mainView.setBounds({
-        x: 300,
+        x: sidebarWidth,
         y: 0,
         width: mainWindow.getBounds().width - sidebarWidth,
         height: mainWindow.getBounds().height
     })
-    mainView.webContents.loadURL('https://uchet.kz/month/')
+
+    // and load the index.html of the app.
+    mainWindow.loadFile('index.html')
+    setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar','sidebar.html')), 1000)
+    setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
+    //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
+
+    // Open the DevTools.
+    //sidebar.webContents.openDevTools()
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -71,9 +77,6 @@ function createWindow() {
         sidebar.setBounds({x: 0, y: 0, width: sidebarWidth, height: newBounds.height})
         mainView.setBounds({x: sidebarWidth, y: 0, width: newBounds.width - sidebarWidth, height: newBounds.height})
     })
-
-    // Open the DevTools.
-    //mainWindow.webContents.openDevTools()
 
     // Emitted when the window is closed.
     mainWindow.on('closed', function () {
@@ -89,11 +92,19 @@ function createWindow() {
         mainWindow.show()
     })
 
+    mainView.webContents.on('did-start-navigation', function () {
+        //mainView.hide()
+        //mainView.setBounds({x: sidebarWidth, y: 0, width: 0, height: 0})
+    })
+    mainView.webContents.on('did-navigate', function () {
+        //mainView.show()
+        //mainView.setBounds({x: sidebarWidth, y: 0, width: mainWindow.getBounds().width - sidebarWidth, height: mainWindow.getBounds().height})
+    })
 
 }
 
 function get() {
-    return mainWindow;
+    return mainView;
 }
 
 // Export the publicly available functions.
@@ -143,3 +154,11 @@ app.on('activate', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+ipcMain.on('loadService', (event, arg) => {
+    // sends arg to the renderer
+    // win.webContents.send('target', arg)
+    mainView.webContents.loadURL(arg)
+    //dialog.showErrorBox('loadService', arg)
+})
+

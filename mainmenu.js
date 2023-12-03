@@ -4,7 +4,7 @@ const app = electron.app
 let i18n = new (require('./translations/i18n.js'))
 let path = require('path')
 
-const mainWindow = require(path.join(__dirname, 'main'));
+const mainView = require(path.join(__dirname, 'main'));
 
 const template = [
     {
@@ -42,14 +42,14 @@ const template = [
     {
         label: i18n.__('Go Back'),
         click: () => {
-            mainWindow.get().webContents.goBack();
+            mainView.get().webContents.goBack();
         }
     },
     {
         label: i18n.__('Go Forward'),
         //icon: nativeImage.createFromPath('./assets/icons/24.ico'),
         click: () => {
-            mainWindow.get().webContents.goForward();
+            mainView.get().webContents.goForward();
         }
     },
     // {

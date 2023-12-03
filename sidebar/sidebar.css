@@ -1,0 +1,176 @@
+body {
+    font-size: 1em;
+    background-color: #efefef;
+    font-family: Poppins, Helvetica, sans-serif;
+}
+
+.side-menu {
+    width: 15em;
+    height: auto;
+    margin: 0 auto 0;
+    font-size: 1em;
+    line-height: 2em;
+    color: #fff;
+    font-weight: 800;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.side-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.side-menu ul li {
+    display: block;
+    background-color: #333;
+    height: 2em;
+    padding: 1em 1.5em;
+    position: relative;
+    -webkit-transition: -webkit-transform 0.5s, background-color .5s, color .5s;
+    transition: transform .5s, background-color .5s, color .5s;
+}
+
+.side-menu ul li:nth-child(1n):before {
+    display: inline-block;
+    width: 202px;
+    height: 32px;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    margin-right: 0;
+}
+
+.side-menu ul li:nth-child(1):before {
+    background-image: url('../assets/services/s1.png');
+}
+
+.side-menu ul li:nth-child(2):before {
+    background-image: url('../assets/services/s2.png');
+}
+
+.side-menu ul li:nth-child(3):before {
+    background-image: url('../assets/services/s3.png');
+}
+
+.side-menu ul li:nth-child(4):before {
+    background-image: url('../assets/services/s4.png');
+}
+
+.side-menu ul li:nth-child(5):before {
+    background-image: url('../assets/services/s5.png');
+}
+
+.side-menu ul li:nth-child(6):before {
+    background-image: url('../assets/services/s6.png');
+}
+
+.side-menu ul li:nth-child(7):before {
+    background-image: url('../assets/services/s7.png');
+}
+
+.side-menu ul li:nth-child(8):before {
+    background-image: url('../assets/services/s8.png');
+}
+
+.side-menu ul li:nth-child(9):before {
+    background-image: url('../assets/services/s9.png');
+}
+
+.side-menu ul li:nth-child(10):before {
+    background-image: url('../assets/services/s10.png');
+}
+
+.side-menu ul li:nth-child(11):before {
+    background-image: url('../assets/services/s11.png');
+}
+
+.side-menu ul li:nth-child(12):before {
+    background-image: url('../assets/services/s12.png');
+}
+
+.side-menu ul li:nth-child(13):before {
+    background-image: url('../assets/services/s13.png');
+}
+
+.side-menu ul li:nth-child(1) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(2) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(3) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(4) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(5) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(6) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(7) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(8) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(9) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(10) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(11) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(12) {
+    background-color: #fff;
+}
+
+.side-menu ul li:nth-child(13) {
+    background-color: #fff;
+}
+
+.side-menu ul li:hover {
+    background-color: lightgray; /*you can make different colors depending on the nth-child like above*/
+    -webkit-transform: translateX(1em);
+    transform: translateX(1em); /*equal to left in the .side-menu*/
+}
+
+.side-menu ul li a {
+    display: inline-block;
+    color: #000;
+    text-decoration: none;
+}
+
+.side-menu ul li span {
+    display: block;
+    position: absolute;
+    font-size: 1em;
+    color: black;
+    line-height: 2em;
+    height: 2em;
+    top: 0;
+    bottom: 0;
+    margin: 0 auto;
+    padding: 1em 1.5em;
+    right: 0.16666666666667em;
+}
+
