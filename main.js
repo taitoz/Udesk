@@ -10,6 +10,61 @@ let path = require('path')
 // Module to create native browser window.
 const {BrowserView, BrowserWindow, ipcMain, Menu, nativeImage, app, Tray, dialog} = require('electron')
 
+const ElectronPreferences = require('electron-preferences');
+
+const preferences = new ElectronPreferences({
+    config: {
+        debounce: 150, // debounce preference save settings event; 0 to disable
+    },
+
+
+    // Override default preference BrowserWindow values
+    //browserWindowOverrides: { /* ... */ },
+
+    // Create an optional menu bar
+    //menu: Menu.buildFromTemplate(/* ... */),
+
+    // Provide a custom CSS file, relative to your appPath.
+    css: 'preference-styles.css',
+
+    // Preference file path. Where your preferences are saved (required)
+    dataStore: path.join(app.getPath("userData"), 'preferences.json'),
+
+    // Preference default values
+    defaults: {
+        about: {
+            name: 'Albert'
+        }
+    },
+
+    // Preference sections visible to the UI
+    sections: [
+        {
+            id: 'about',
+            label: 'About You',
+            icon: 'single-01', // See the list of available icons below
+            form: {
+                groups: [
+                    {
+                        label: 'About You', // optional
+                        fields: [
+                            {
+                                label: 'Name',
+                                key: 'name',
+                                type: 'text',
+                                help: 'What is your name?'
+                            },
+                            // ...
+                        ]
+                    },
+                    // ...
+                ]
+            }
+        },
+        // ...
+    ]
+})
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -59,7 +114,8 @@ function createWindow() {
     })
 
     // and load the index.html of the app.
-    mainWindow.loadFile('index.html')
+    //mainWindow.loadFile('index.html')
+    preferences.show();
     setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar','sidebar.html')), 1000)
     setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
