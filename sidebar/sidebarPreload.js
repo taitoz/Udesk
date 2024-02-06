@@ -1,6 +1,11 @@
 const {ipcRenderer} = require('electron')
 
 window.addEventListener('DOMContentLoaded', () => {
+
+   document.getElementById('sidebar-toggle').addEventListener("click", function () {
+        ipcRenderer.send('sidebar-toggle', '')
+    })
+
     document.getElementById('s1').addEventListener("click", function () {
         ipcRenderer.send('loadService','https://uchet.kz/lp/5prichin/')
     })

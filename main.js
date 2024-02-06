@@ -72,6 +72,7 @@ let sidebar
 let mainView
 
 let i18n = new (require('./translations/i18n'))
+let sidebarWidth = 88
 
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
@@ -80,10 +81,10 @@ function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         titleBarStyle: 'hidden-inset',
-        width: 1520,
-        height: 850,
-        minWidth: 1520,
-        minHeight: 850,
+        width: 1024,
+        height: 768,
+        minWidth: 1024,
+        minHeight: 768,
         useContentSize: true,
         //backgroundColor: '#3f4254',
         //show: false,
@@ -93,7 +94,6 @@ function createWindow() {
         // }
     })
 
-    const sidebarWidth = 260
     sidebar = new BrowserView({
         webPreferences: {
             preload: path.join(__dirname, 'sidebar', 'sidebarPreload.js')
@@ -117,21 +117,15 @@ function createWindow() {
     //mainWindow.loadFile('index.html')
     preferences.show();
     setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar','sidebar.html')), 1000)
-    setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
+    //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
-    //sidebar.webContents.openDevTools()
+    //mainWindow.webContents.openDevTools()
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
-
-        // store window's new size in variable
-        let newBounds = mainWindow.getBounds()
-
-        // set BrowserView's bounds explicitly
-        sidebar.setBounds({x: 0, y: 0, width: sidebarWidth, height: newBounds.height})
-        mainView.setBounds({x: sidebarWidth, y: 0, width: newBounds.width - sidebarWidth, height: newBounds.height})
+        resizeMain()
     })
 
     // Emitted when the window is closed.
@@ -156,7 +150,30 @@ function createWindow() {
         //mainView.show()
         //mainView.setBounds({x: sidebarWidth, y: 0, width: mainWindow.getBounds().width - sidebarWidth, height: mainWindow.getBounds().height})
     })
+}
 
+ipcMain.on('sidebar-toggle', (event, arg) => {
+    // sends arg to the renderer
+    // win.webContents.send('target', arg)
+    //dialog.showErrorBox('loadService', arg)
+    sidebarWidth = sidebar.getBounds().width
+    switch (sidebarWidth) {
+        case 88:
+            sidebarWidth = 260;
+            break;
+        case 260:
+            sidebarWidth = 88
+            break;
+    }
+    resizeMain()
+})
+
+function resizeMain () {
+    // store window's new size in variable
+    let newBounds = mainWindow.getBounds();
+    // set BrowserView's bounds explicitly
+    sidebar.setBounds({x: 0, y: 0, width: sidebarWidth, height: newBounds.height})
+    mainView.setBounds({x: sidebarWidth, y: 0, width: newBounds.width - sidebarWidth, height: newBounds.height})
 }
 
 function get() {
@@ -167,6 +184,7 @@ function get() {
 module.exports = {get};
 
 app.whenReady().then(() => {
+
     //const icon = nativeImage.createFromPath()
     const tray = new Tray(path.join(__dirname, "assets", "icons", "24.ico"))
 

@@ -1,23 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
-    <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet' type='text/css'>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!----======== CSS ======== -->
     <link rel="stylesheet" href="sidebar.css">
+
+    <!----===== Boxicons CSS ===== -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
 </head>
+
 <body>
-<nav class="side-menu">
-    <ul class="smi">
-        <li id="s1"><span><i></i></span></li>
-        <li id="s2"><span><i></i></span></li>
-        <li id="s3"><span><i></i></span></li>
-        <li id="s4"><span><i></i></span></li>
-        <li id="s5"><span><i></i></span></li>
-        <li id="s6"><span><i></i></span></li>
-        <li id="s7"><span><i></i></span></li>
-        <li id="s8"><span><i></i></span></li>
-        <li id="s9"><span><i></i></span></li>
-        <li id="s10"><span><i></i></span></li>
-        <li id="s11"><span><i></i></span></li>
-        <li id="s12"><span><i></i></span></li>
-        <li id="s13"><span><i></i></span></li>
-    </ul>
+<nav id="sidebar" class="sidebar close">
+    <header>
+        <div class="image-text">
+        <span class="image">
+          <img src="logo.png" alt="">
+        </span>
+            <i id="sidebar-toggle" class='bx bx-menu icon toggle'></i>
+
+            <div class="text logo-text">
+                <span class="name">AppName</span>
+                <span class="version">v 1.0</span>
+            </div>
+        </div>
+    </header>
+
+    <div id="menu-bar" class="menu-bar">
+        <div class="menu">
+
+            <li class="search-box">
+                <i class='bx bx-search icon'></i>
+                <input type="text" placeholder=" Search...">
+            </li>
+
+            <ul class="menu-links">
+                <li class="nav-link">
+                    <a href="#">
+                        <i class='bx bx-home-alt icon'></i>
+                        <span class="text nav-text">Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="nav-link">
+                    <a href="#">
+                        <i class='bx bx-bar-chart-alt-2 icon'></i>
+                        <span class="text nav-text">Revenue</span>
+                    </a>
+                </li>
+
+                <li class="nav-link">
+                    <a href="#">
+                        <i class='bx bx-bell icon'></i>
+                        <span class="text nav-text">Notifications</span>
+                    </a>
+                </li>
+
+                <li class="nav-link">
+                    <a href="#">
+                        <i class='bx bx-pie-chart-alt icon'></i>
+                        <span class="text nav-text">Analytics</span>
+                    </a>
+                </li>
+
+                <li class="nav-link">
+                    <a href="#">
+                        <i class='bx bx-heart icon'></i>
+                        <span class="text nav-text">Likes</span>
+                    </a>
+                </li>
+
+            </ul>
+        </div>
+
+        <div class="bottom-content">
+
+            <li class="nav-link">
+                <a href="#">
+                    <i class='bx bx-cog icon'></i>
+                    <span class="text nav-text">Settings</span>
+                </a>
+            </li>
+
+            <li class="">
+                <a href="#">
+                    <i class='bx bx-log-out icon'></i>
+                    <span class="text nav-text">Logout</span>
+                </a>
+            </li>
+
+            <li class="mode">
+                <div class="sun-moon">
+                    <i class='bx bx-moon icon moon'></i>
+                    <i class='bx bx-sun icon sun'></i>
+                </div>
+                <span class="mode-text text">Dark mode</span>
+
+                <div class="toggle-switch">
+                    <span class="switch"></span>
+                </div>
+            </li>
+
+        </div>
+    </div>
+
 </nav>
+
+<!--<script src="./assets/js/sidebarRenderer.js"></script>-->
+<script src="sidebar.js"></script>
+
 </body>
+
+</html>

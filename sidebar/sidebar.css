@@ -1,176 +1,278 @@
-body {
-    font-size: 1em;
-    background-color: #efefef;
-    font-family: Poppins, Helvetica, sans-serif;
-}
+/* Google Font Import - Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
-.side-menu {
-    width: 15em;
-    height: auto;
-    margin: 0 auto 0;
-    font-size: 1em;
-    line-height: 2em;
-    color: #fff;
-    font-weight: 800;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-}
-
-.side-menu ul {
-    list-style: none;
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
 }
 
-.side-menu ul li {
-    display: block;
-    background-color: #333;
-    height: 2em;
-    padding: 1em 1.5em;
+:root {
+    /* ===== Colors ===== */
+    --body-color: #18191a;
+    --sidebar-color: #242526;
+    --primary-color: #3a3b3c;
+    --primary-color-light: #3a3b3c;
+    --toggle-color: #fff;
+    --text-color: #ccc;
+}
+
+body {
+    min-height: 100vh;
+    background-color: var(--body-color);
+}
+
+::selection {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+body.dark {
+    --body-color: #e4e9f7;
+    --sidebar-color: #fff;
+    --primary-color: #bbb;
+    --primary-color-light: #f6f5ff;
+    --toggle-color: #ddd;
+    --text-color: #707070;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 93%;
+    width: 260px;
+    padding: 10px 14px;
+    background: var(--sidebar-color);
+    z-index: 100;
+}
+
+.sidebar.close {
+    width: 88px;
+}
+
+/* ===== Reusable code - Here ===== */
+.sidebar li {
+    height: 50px;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.sidebar header .image,
+.sidebar .icon {
+    min-width: 60px;
+    border-radius: 6px;
+}
+
+.sidebar .icon {
+    min-width: 60px;
+    border-radius: 6px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.sidebar .text,
+.sidebar .icon {
+    color: var(--text-color);
+}
+
+.sidebar .text {
+    font-size: 17px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 1;
+}
+
+.sidebar.close .text {
+    opacity: 0;
+}
+
+/* =========================== */
+
+.sidebar header {
     position: relative;
-    -webkit-transition: -webkit-transform 0.5s, background-color .5s, color .5s;
-    transition: transform .5s, background-color .5s, color .5s;
 }
 
-.side-menu ul li:nth-child(1n):before {
-    display: inline-block;
-    width: 202px;
-    height: 32px;
-    content: "";
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    margin-right: 0;
+.sidebar header .image-text {
+    display: flex;
+    align-items: center;
 }
 
-.side-menu ul li:nth-child(1):before {
-    background-image: url('../assets/services/s1.png');
+.sidebar header .logo-text {
+    display: flex;
+    flex-direction: column;
 }
 
-.side-menu ul li:nth-child(2):before {
-    background-image: url('../assets/services/s2.png');
+header .image-text .name {
+    margin-top: 10px;
+    margin-left: 10px;
+    font-size: 18px;
+    font-weight: 600;
 }
 
-.side-menu ul li:nth-child(3):before {
-    background-image: url('../assets/services/s3.png');
+header .image-text .version {
+    font-size: 16px;
+    margin-left: 10px;
+    display: block;
 }
 
-.side-menu ul li:nth-child(4):before {
-    background-image: url('../assets/services/s4.png');
+.sidebar header .image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.side-menu ul li:nth-child(5):before {
-    background-image: url('../assets/services/s5.png');
+.sidebar header .image img {
+    width: 40px;
+    border-radius: 6px;
 }
 
-.side-menu ul li:nth-child(6):before {
-    background-image: url('../assets/services/s6.png');
+.sidebar header .toggle {
+    position: absolute;
+    top: 50%;
+    /*   right: 25px; */
+    /*   transform: translateY(-50%) rotate(180deg); */
+    height: 40px;
+    width: 40px;
+    /*   background-color: var(--primary-color); */
+    /*   color: var(--sidebar-color); */
+    /*   border-radius: 50%; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
 }
 
-.side-menu ul li:nth-child(7):before {
-    background-image: url('../assets/services/s7.png');
+.sidebar header .toggle:hover {
+    background-color: var(--primary-color);
 }
 
-.side-menu ul li:nth-child(8):before {
-    background-image: url('../assets/services/s8.png');
+body.dark .sidebar header .toggle {
+    color: var(--text-color);
 }
 
-.side-menu ul li:nth-child(9):before {
-    background-image: url('../assets/services/s9.png');
+.sidebar .menu {
+    margin-top: 10px;
 }
 
-.side-menu ul li:nth-child(10):before {
-    background-image: url('../assets/services/s10.png');
+.sidebar li.search-box {
+    border-radius: 6px;
+    /*   background-color: var(--primary-color-light); */
+    cursor: pointer;
 }
 
-.side-menu ul li:nth-child(11):before {
-    background-image: url('../assets/services/s11.png');
+.sidebar li.search-box input {
+    height: 100%;
+    width: 100%;
+    outline: none;
+    border: none;
+    background-color: var(--primary-color-light);
+    color: var(--text-color);
+    border-radius: 6px;
+    font-size: 17px;
+    font-weight: 500;
 }
 
-.side-menu ul li:nth-child(12):before {
-    background-image: url('../assets/services/s12.png');
-}
-
-.side-menu ul li:nth-child(13):before {
-    background-image: url('../assets/services/s13.png');
-}
-
-.side-menu ul li:nth-child(1) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(2) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(3) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(4) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(5) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(6) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(7) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(8) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(9) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(10) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(11) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(12) {
-    background-color: #fff;
-}
-
-.side-menu ul li:nth-child(13) {
-    background-color: #fff;
-}
-
-.side-menu ul li:hover {
-    background-color: lightgray; /*you can make different colors depending on the nth-child like above*/
-    -webkit-transform: translateX(1em);
-    transform: translateX(1em); /*equal to left in the .side-menu*/
-}
-
-.side-menu ul li a {
-    display: inline-block;
-    color: #000;
+.sidebar li a {
+    list-style: none;
+    height: 100%;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-radius: 6px;
     text-decoration: none;
 }
 
-.side-menu ul li span {
-    display: block;
+.sidebar li a:hover {
+    background-color: var(--primary-color);
+}
+
+.sidebar li a:hover .icon,
+.sidebar li a:hover .text {
+    color: var(--sidebar-color);
+}
+
+body.dark .sidebar li a:hover .icon,
+body.dark .sidebar li a:hover .text {
+    color: var(--text-color);
+}
+
+.sidebar .menu-bar {
+    height: calc(100% - 55px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.menu-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.sidebar .menu-bar .mode {
+    border-radius: 6px;
+    background-color: var(--primary-color-light);
+    position: relative;
+}
+
+.menu-bar .mode .sun-moon {
+    height: 50px;
+    width: 60px;
+}
+
+.mode .sun-moon i {
     position: absolute;
-    font-size: 1em;
-    color: black;
-    line-height: 2em;
-    height: 2em;
-    top: 0;
-    bottom: 0;
-    margin: 0 auto;
-    padding: 1em 1.5em;
-    right: 0.16666666666667em;
+}
+
+.mode .sun-moon i.sun {
+    opacity: 0;
+}
+
+body.dark .mode .sun-moon i.sun {
+    opacity: 1;
+}
+
+body.dark .mode .sun-moon i.moon {
+    opacity: 0;
+}
+
+.menu-bar .bottom-content .toggle-switch {
+    position: absolute;
+    right: 0;
+    height: 100%;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.toggle-switch .switch {
+    position: relative;
+    height: 22px;
+    width: 40px;
+    border-radius: 25px;
+    background-color: var(--toggle-color);
+}
+
+.switch::before {
+    content: "";
+    position: absolute;
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    background-color: var(--sidebar-color);
 }
 
