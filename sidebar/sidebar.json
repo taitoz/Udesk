@@ -1,10 +1,12 @@
 [
   {
-    "Name": "Test1",
-    "Icon": "bx bx-bell icon"
+    "name": "Test1",
+    "icon": "bx bx-bell icon",
+    "link": "#"
   },
   {
-    "Name": "Test2",
-    "Icon": "bx bx-bar-chart-alt-2 icon"
+    "name": "Test2",
+    "icon": "bx bx-bar-chart-alt-2 icon",
+    "link": "#"
   }
 ]

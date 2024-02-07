@@ -20,10 +20,6 @@ modeSwitch.addEventListener("click", () => {
     }
 });
 
-//var dataJSON = '[{"Name":"Test1", "Icon":"bx bx-bell icon"},{"Name":"Test2", "Icon":"bx bx-bar-chart-alt-2 icon"}]';
-//var dataObject = JSON.parse(dataJSON);
-//dataObject.forEach(buildNewItem);
-
 document.addEventListener("DOMContentLoaded", function () {
     fetch('sidebar.json')
         .then(response => response.json())
@@ -35,15 +31,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function buildNewItem(item, index) {
 
-    var li = document.createElement("li");
+    let li = document.createElement("li");
     li.setAttribute("class", "nav-link");
-    var a = document.createElement("a");
-    a.setAttribute("href", "#");
-    var ico = document.createElement("i");
-    ico.setAttribute("class", item.Icon);
-    var span = document.createElement("span");
+    let a = document.createElement("a");
+    a.setAttribute("href", item.link);
+    let ico = document.createElement("i");
+    ico.setAttribute("class", item.icon);
+    let span = document.createElement("span");
     span.setAttribute("class", "text nav-text");
-    span.textContent = item.Name;
+    span.textContent = item.name;
     a.appendChild(ico);
     a.appendChild(span);
     li.appendChild(a);

@@ -115,7 +115,7 @@ function createWindow() {
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
-    preferences.show();
+    //preferences.show();
     setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar','sidebar.html')), 1000)
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
