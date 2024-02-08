@@ -7,42 +7,23 @@ window.addEventListener('DOMContentLoaded', () => {
     })
 
     document.getElementById('s1').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://uchet.kz/lp/5prichin/')
+        ipcRenderer.send('loadService','')
     })
-    document.getElementById('s2').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://buh.uchet.kz/')
-    })
-    document.getElementById('s3').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://ukassa.kz/')
-    })
-    document.getElementById('s4').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://edo.uchet.kz/')
-    })
-    document.getElementById('s5').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://profitraining.kz/')
-    })
-    document.getElementById('s6').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://pk.uchet.kz/')
-    })
-    document.getElementById('s7').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://pob.uchet.kz/')
-    })
-    document.getElementById('s8').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://dashboard.uchet.kz/')
-    })
-    document.getElementById('s9').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://audit.uchet.kz/')
-    })
-    document.getElementById('s10').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://uchet.kz/fran/our-fran.html')
-    })
-    document.getElementById('s11').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://ab.uchet.kz/')
-    })
-    document.getElementById('s12').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://uchet.kz/hrassistant/')
-    })
-    document.getElementById('s13').addEventListener("click", function () {
-        ipcRenderer.send('loadService','https://uchet.kz/pages/partners/')
-    })
+    /*
+    s0 https://uchet.kz/month/
+    s1 https://uchet.kz/lp/5prichin/
+    s2 https://buh.uchet.kz/
+    s3 https://ukassa.kz/
+    s4 https://edo.uchet.kz/
+    s5 https://profitraining.kz/
+    s6 https://pk.uchet.kz/
+    s7 https://pob.uchet.kz/
+    s8 https://dashboard.uchet.kz/
+    s9 https://audit.uchet.kz/
+    s10 https://uchet.kz/fran/our-fran.html
+    s11 https://ab.uchet.kz/
+    s12 https://uchet.kz/hrassistant/
+    s13 https://uchet.kz/pages/partners/
+     */
+
 })
