@@ -1,14 +1,17 @@
-const {ipcRenderer} = require('electron')
+const { contextBridge, ipcRenderer } = require('electron/renderer')
+
+contextBridge.exposeInMainWorld('electronAPI', {
+    loadUrl: (url) => ipcRenderer.invoke('load-url', url),
+    sidebarToggle: () => ipcRenderer.invoke('sidebar-toggle'),
+    openSettings: () => ipcRenderer.invoke('settings-open')
+})
 
 window.addEventListener('DOMContentLoaded', () => {
 
-   document.getElementById('sidebar-toggle').addEventListener("click", function () {
-        ipcRenderer.send('sidebar-toggle', '')
-    })
+    /*document.getElementById('s1').addEventListener("click", function () {
+        ipcRenderer.send('settings-open','')
+    })*/
 
-    document.getElementById('s1').addEventListener("click", function () {
-        ipcRenderer.send('loadService','')
-    })
     /*
     s0 https://uchet.kz/month/
     s1 https://uchet.kz/lp/5prichin/

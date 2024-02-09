@@ -17,7 +17,6 @@ const preferences = new ElectronPreferences({
         debounce: 150, // debounce preference save settings event; 0 to disable
     },
 
-
     // Override default preference BrowserWindow values
     //browserWindowOverrides: { /* ... */ },
 
@@ -115,7 +114,6 @@ function createWindow() {
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
-    //preferences.show();
     setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar','sidebar.html')), 1000)
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
@@ -152,22 +150,6 @@ function createWindow() {
     })
 }
 
-ipcMain.on('sidebar-toggle', (event, arg) => {
-    // sends arg to the renderer
-    // win.webContents.send('target', arg)
-    //dialog.showErrorBox('loadService', arg)
-    sidebarWidth = sidebar.getBounds().width
-    switch (sidebarWidth) {
-        case 88:
-            sidebarWidth = 260;
-            break;
-        case 260:
-            sidebarWidth = 88
-            break;
-    }
-    resizeMain()
-})
-
 function resizeMain () {
     // store window's new size in variable
     let newBounds = mainWindow.getBounds();
@@ -198,8 +180,8 @@ app.whenReady().then(() => {
     ])
 
     tray.setContextMenu(trayMenu)
-    tray.setToolTip('Uchet Desktop')
-    tray.setTitle('Uchet Desktop')
+    tray.setToolTip('UDesk')
+    tray.setTitle('UDesk')
 })
 
 // This method will be called when Electron has finished
@@ -226,13 +208,29 @@ app.on('activate', function () {
     }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+// =====================================================================================
+// You can also put them in separate files and require them here.
 
-ipcMain.on('loadService', (event, arg) => {
-    // sends arg to the renderer
-    // win.webContents.send('target', arg)
-    mainView.webContents.loadURL(arg)
-    //dialog.showErrorBox('loadService', arg)
+ipcMain.handle('settings-open', () => {
+    preferences.show();
 })
 
+ipcMain.handle('load-url', (event, url) => {
+    //console.log(url) // prints "ping" in the Node console
+    //dialog.showErrorBox('loadService', arg)
+    //event.reply('asynchronous-reply', 'pong')
+    mainView.webContents.loadURL(url)
+})
+
+ipcMain.handle('sidebar-toggle', (event, arg) => {
+    sidebarWidth = sidebar.getBounds().width
+    switch (sidebarWidth) {
+        case 88:
+            sidebarWidth = 260;
+            break;
+        case 260:
+            sidebarWidth = 88
+            break;
+    }
+    resizeMain()
+})

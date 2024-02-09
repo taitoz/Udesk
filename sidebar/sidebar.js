@@ -4,12 +4,17 @@ const body = document.querySelector('body'),
     toggle = body.querySelector(".toggle"),
     searchBtn = body.querySelector(".search-box"),
     modeSwitch = body.querySelector(".toggle-switch"),
-    modeText = body.querySelector(".mode-text");
+    modeText = body.querySelector(".mode-text"),
+    settings = body.querySelector(".settings");
 toggle.addEventListener("click", () => {
     sidebar.classList.toggle("close");
+    window.electronAPI.sidebarToggle();
+})
+settings.addEventListener("click", () =>{
+    window.electronAPI.openSettings();
 })
 searchBtn.addEventListener("click", () => {
-    sidebar.classList.remove("close");
+    //sidebar.classList.remove("close");
 })
 modeSwitch.addEventListener("click", () => {
     body.classList.toggle("dark");
@@ -24,17 +29,17 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch('sidebar.json')
         .then(response => response.json())
         .then(data => {
-            data.forEach(buildNewItem);
+            data.forEach(buildMenuItem);
         })
         .catch(error => console.error("Error fetching JSON data:", error));
 });
 
-function buildNewItem(item, index) {
+function buildMenuItem(item, index) {
 
     let li = document.createElement("li");
     li.setAttribute("class", "nav-link");
     let a = document.createElement("a");
-    a.setAttribute("href", item.link);
+    a.setAttribute("href", "#");
     let ico = document.createElement("i");
     ico.setAttribute("class", item.icon);
     let span = document.createElement("span");
@@ -43,6 +48,10 @@ function buildNewItem(item, index) {
     a.appendChild(ico);
     a.appendChild(span);
     li.appendChild(a);
+
+    li.addEventListener('click', async () => {
+        const filePath = await window.electronAPI.loadUrl(item.link)
+    })
 
     document.getElementById('menuItems').appendChild(li);
 }
