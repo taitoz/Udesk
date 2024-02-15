@@ -1,91 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!----======== CSS ======== -->
+    <!--<title> Drop Down Sidebar Menu | CodingLab </title>-->
     <link rel="stylesheet" href="sidebar.css">
-
-    <!----===== Boxicons CSS ===== -->
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-
+    <!-- Boxiocns CDN Link -->
+    <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
-<nav id="sidebar" class="sidebar close">
-    <header>
-        <div class="image-text">
-        <span class="image">
-<!--          <img src="logo.png" alt="">-->
-        </span>
-            <i id="sidebar-toggle" class='bx bx-menu icon toggle'></i>
-
-            <div class="text logo-text">
-                <span class="name">AppName</span>
-                <span class="version">v 1.0</span>
-            </div>
-        </div>
-    </header>
-
-    <div id="menu-bar" class="menu-bar">
-        <div class="menu">
-
-            <li class="search-box">
-                <i class='bx bx-search icon'></i>
-                <input type="text" placeholder=" Search...">
-            </li>
-
-            <ul id="menuItems" class="menu-links">
-
-<!--                <li class="nav-link">-->
-<!--                    <a href="#">-->
-<!--                        <i class='bx bx-home-alt icon'></i>-->
-<!--                        <span class="text nav-text">Dashboard</span>-->
-<!--                    </a>-->
-<!--                </li>-->
-
-            </ul>
-        </div>
-
-        <div class="bottom-content">
-
-            <li class="nav-link settings">
-                <a href="#">
-                    <i class='bx bx-cog icon'></i>
-                    <span class="text nav-text">Settings</span>
-                </a>
-            </li>
-
-            <li class="">
-                <a href="#">
-                    <i class='bx bx-log-out icon'></i>
-                    <span class="text nav-text">Logout</span>
-                </a>
-            </li>
-
-            <li class="mode">
-                <div class="sun-moon">
-                    <i class='bx bx-moon icon moon'></i>
-                    <i class='bx bx-sun icon sun'></i>
-                </div>
-                <span class="mode-text text">Dark mode</span>
-
-                <div class="toggle-switch">
-                    <span class="switch"></span>
-                </div>
-            </li>
-
-        </div>
+<div class="sidebar close">
+    <div class="logo-details">
+        <i class='bx bxl-c-plus-plus'></i>
+        <span class="logo_name">CodingLab</span>
     </div>
+    <ul id="menuItems" class="nav-links">
+        <li>
+            <div class="iocn-link">
+                <a href="#">
+                    <i class='bx bx-menu'></i>
+                    <span class="link_name">Menu</span>
+                </a>
+            </div>
+        </li>
+        <li>
+            <a href="#">
+                <i class='bx bx-grid-alt'></i>
+                <span class="link_name">Dashboard</span>
+            </a>
+        </li>
 
-</nav>
+        <li>
+            <div class="iocn-link">
+                <a href="#">
+                    <i class='bx bx-collection'></i>
+                    <span class="link_name">Category</span>
+                </a>
+                <i class='bx bxs-chevron-down arrow'></i>
+            </div>
+            <ul class="sub-menu">
+                <li><a href="#">HTML & CSS</a></li>
+                <li><a href="#">JavaScript</a></li>
+            </ul>
+        </li>
 
+        <li>
+            <div class="profile-details">
+                <ul>
+                    <li class="toggle-switch">
+                        <a href="#">
+                            <i class='bx bx-cog'></i>
+                            <span class="link_name">Settings</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <i class='bx bx-log-out'></i>
+                            <span class="link_name">Exit</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+
+    </ul>
+</div>
 <!--<script src="./assets/js/sidebarRenderer.js"></script>-->
 <script src="sidebar.js"></script>
-
 </body>
 
 </html>

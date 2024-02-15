@@ -71,7 +71,7 @@ let sidebar
 let mainView
 
 let i18n = new (require('./translations/i18n'))
-let sidebarWidth = 88
+let sidebarWidth = 70
 
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
@@ -225,11 +225,11 @@ ipcMain.handle('load-url', (event, url) => {
 ipcMain.handle('sidebar-toggle', (event, arg) => {
     sidebarWidth = sidebar.getBounds().width
     switch (sidebarWidth) {
-        case 88:
+        case 70:
             sidebarWidth = 260;
             break;
         case 260:
-            sidebarWidth = 88
+            sidebarWidth = 70
             break;
     }
     resizeMain()
