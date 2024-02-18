@@ -52,6 +52,7 @@ body.light {
     min-width: var(--sidebar-closed-width);
     text-align: center;
     line-height: 50px;
+    -webkit-app-region: drag;
 }
 .sidebar .app-details .app-name{
     font-size: 22px;

@@ -1,12 +1,12 @@
 {
-    "name": "Uchet-Electron-App",
+    "name": "udesk",
     "productName": "Uchet.kz Desktop",
     "description": "Uchet.kz Desktop Application",
     "version": "0.1.0",
     "main": "main.js",
     "devDependencies": {
         "asar": "^3.2.0",
-        "electron": "^27.1.2",
+        "electron": "29.0.0-beta.7",
         "electron-installer-dmg": "^4.0.0",
         "electron-packager": "^17.1.2",
         "electron-squirrel-startup": "^1.0.0",
@@ -28,7 +28,6 @@
         "afterPack": "./internals/scripts/AfterPack.js"
     },
     "dependencies": {
-        "custom-electron-titlebar": "^4.2.8",
         "electron-preferences": "^2.8.2"
     }
 }

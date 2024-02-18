@@ -8,16 +8,11 @@ if (setupEvents.handleSquirrelEvent()) {
 // Module to control application life.
 let path = require('path')
 // Module to create native browser window.
-const {BrowserView, BrowserWindow, ipcMain, Menu, nativeImage, app, Tray, dialog,nativeTheme} = require('electron')
+const {BrowserView, BrowserWindow, ipcMain, Menu, nativeImage, app, Tray, dialog} = require('electron')
 
 const ElectronPreferences = require('electron-preferences');
 const prefOptions = require('./preferences/pref-options.js');
 const preferences = new ElectronPreferences(prefOptions)
-
-const { setupTitlebar, attachTitlebarToWindow } = require('custom-electron-titlebar/main')
-
-// setup the titlebar main process
-setupTitlebar();
 
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -40,6 +35,7 @@ function createWindow() {
         minWidth: 1024,
         minHeight: 768,
         useContentSize: true,
+        frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,
         icon: path.join(__dirname, 'assets/icons/48.ico'),
@@ -47,7 +43,7 @@ function createWindow() {
         //   offscreen: true
         // }
         titleBarStyle: 'hidden',
-        titleBarOverlay: true,
+        titleBarOverlay: false,
         webPreferences: {
             sandbox: false,
             preload: path.join(__dirname, 'preload.js')
@@ -60,7 +56,7 @@ function createWindow() {
         }
     })
     mainWindow.addBrowserView(sidebar)
-    sidebar.setBounds({x: 0, y: 0, width: sidebarWidth, height: mainWindow.getBounds().height})
+    sidebar.setBounds({x: 0, y: 30, width: sidebarWidth, height: mainWindow.getBounds().height})
     sidebar.setAutoResize({width: true, height: false})
 
     mainView = new BrowserView()
@@ -68,14 +64,14 @@ function createWindow() {
     sidebar.setAutoResize({width: true, height: false})
     mainView.setBounds({
         x: sidebarWidth,
-        y: 0,
+        y: 30,
         width: mainWindow.getBounds().width - sidebarWidth,
         height: mainWindow.getBounds().height
     })
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
-    setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar','sidebar.html')), 1000)
+    setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar', 'sidebar.html')), 1000)
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
@@ -84,7 +80,7 @@ function createWindow() {
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
-        resizeMain()
+        //resizeMain()
     })
 
     // Emitted when the window is closed.
@@ -97,12 +93,6 @@ function createWindow() {
 
     //TODO
     //require('./mainmenu')
-
-    /* const menu = Menu.buildFromTemplate(exampleMenuTemplate)
-	Menu.setApplicationMenu(menu) */
-
-    // Attach listeners
-    attachTitlebarToWindow(mainWindow)
 
     mainWindow.once('ready-to-show', () => {
         mainWindow.show()
@@ -118,7 +108,7 @@ function createWindow() {
     })
 }
 
-function resizeMain () {
+function resizeMain() {
     // store window's new size in variable
     let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
@@ -129,6 +119,7 @@ function resizeMain () {
 function get() {
     return mainView;
 }
+
 // Export the publicly available functions.
 module.exports = {get};
 
@@ -167,26 +158,11 @@ app.on('window-all-closed', function () {
 app.on('activate', function () {
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (mainWindow === null) {
-        createWindow()
-    }
+    if (mainWindow === null) createWindow()
 })
 
 // =====================================================================================
 // You can also put them in separate files and require them here.
-
-ipcMain.handle('dark-mode:toggle', () => {
-    if (nativeTheme.shouldUseDarkColors) {
-        nativeTheme.themeSource = 'light'
-    } else {
-        nativeTheme.themeSource = 'dark'
-    }
-    return nativeTheme.shouldUseDarkColors
-})
-
-ipcMain.handle('dark-mode:system', () => {
-    nativeTheme.themeSource = 'system'
-})
 
 ipcMain.handle('settings-open', () => {
     preferences.show();
