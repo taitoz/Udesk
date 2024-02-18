@@ -1,23 +1,23 @@
 {
   "menuItems": [
     {
-      "name": "Test1",
-      "icon": "bx bx-bell icon",
-      "link": "#"
+      "name": "Главная",
+      "icon": "bx bx-home-alt",
+      "link": "https://udesk-upd-srv.vercel.app/"
     },
     {
-      "name": "Test2",
-      "icon": "bx bx-bar-chart-alt-2 icon",
+      "name": "Сервисы",
+      "icon": "bx bx-collection",
       "innerItems": [
         {
           "name": "Test2-1",
-          "icon": "bx bx-bar-chart-alt-2 icon",
-          "link": ""
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "http://ya.ru"
         },
         {
           "name": "Test2-2",
-          "icon": "bx bx-bar-chart-alt-2 icon",
-          "link": ""
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "http://google.com"
         }
       ]
     }

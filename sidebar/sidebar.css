@@ -129,7 +129,7 @@ body.light {
 .sidebar .nav-links li .sub-menu a{
     color: var(--text-color);
     font-size: 15px;
-    padding: 5px 0px 10px var(--sidebar-closed-width);
+    padding: 5px 0 10px var(--sidebar-closed-width);
     white-space: nowrap;
 }
 .sidebar .nav-links li .sub-menu a:hover{
@@ -162,8 +162,6 @@ body.light {
     display: block;
 }
 .sidebar .nav-links li .sub-menu.blank{
-    opacity: 1;
-    pointer-events: auto;
     padding: 3px 20px 6px 16px;
     opacity: 0;
     pointer-events: none;
