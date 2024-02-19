@@ -8,61 +8,17 @@ if (setupEvents.handleSquirrelEvent()) {
 // Module to control application life.
 let path = require('path')
 // Module to create native browser window.
-const {BrowserView, BrowserWindow, ipcMain, Menu, nativeImage, app, Tray, dialog} = require('electron')
+const {BrowserView, BrowserWindow, ipcMain, Menu, nativeImage, app, Tray, dialog,nativeTheme} = require('electron')
 
 const ElectronPreferences = require('electron-preferences');
+const prefOptions = require('./preferences/pref-options.js');
+const preferences = new ElectronPreferences(prefOptions)
 
-const preferences = new ElectronPreferences({
-    config: {
-        debounce: 150, // debounce preference save settings event; 0 to disable
-    },
+const { setupTitlebar, attachTitlebarToWindow } = require('custom-electron-titlebar/main')
 
-    // Override default preference BrowserWindow values
-    //browserWindowOverrides: { /* ... */ },
+// setup the titlebar main process
+setupTitlebar();
 
-    // Create an optional menu bar
-    //menu: Menu.buildFromTemplate(/* ... */),
-
-    // Provide a custom CSS file, relative to your appPath.
-    css: 'preference-styles.css',
-
-    // Preference file path. Where your preferences are saved (required)
-    dataStore: path.join(app.getPath("userData"), 'preferences.json'),
-
-    // Preference default values
-    defaults: {
-        about: {
-            name: 'Albert'
-        }
-    },
-
-    // Preference sections visible to the UI
-    sections: [
-        {
-            id: 'about',
-            label: 'About You',
-            icon: 'single-01', // See the list of available icons below
-            form: {
-                groups: [
-                    {
-                        label: 'About You', // optional
-                        fields: [
-                            {
-                                label: 'Name',
-                                key: 'name',
-                                type: 'text',
-                                help: 'What is your name?'
-                            },
-                            // ...
-                        ]
-                    },
-                    // ...
-                ]
-            }
-        },
-        // ...
-    ]
-})
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -79,7 +35,6 @@ app.commandLine.appendSwitch('ignore-certificate-errors')
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        titleBarStyle: 'hidden-inset',
         width: 1024,
         height: 768,
         minWidth: 1024,
@@ -91,6 +46,12 @@ function createWindow() {
         // webPreferences: {
         //   offscreen: true
         // }
+        titleBarStyle: 'hidden',
+        titleBarOverlay: true,
+        webPreferences: {
+            sandbox: false,
+            preload: path.join(__dirname, 'preload.js')
+        }
     })
 
     sidebar = new BrowserView({
@@ -100,11 +61,11 @@ function createWindow() {
     })
     mainWindow.addBrowserView(sidebar)
     sidebar.setBounds({x: 0, y: 0, width: sidebarWidth, height: mainWindow.getBounds().height})
-    sidebar.setAutoResize({width: true, height: false});
+    sidebar.setAutoResize({width: true, height: false})
 
     mainView = new BrowserView()
     mainWindow.addBrowserView(mainView)
-    sidebar.setAutoResize({width: true, height: false});
+    sidebar.setAutoResize({width: true, height: false})
     mainView.setBounds({
         x: sidebarWidth,
         y: 0,
@@ -134,7 +95,14 @@ function createWindow() {
         mainWindow = null
     })
 
-    require('./mainmenu')
+    //TODO
+    //require('./mainmenu')
+
+    /* const menu = Menu.buildFromTemplate(exampleMenuTemplate)
+	Menu.setApplicationMenu(menu) */
+
+    // Attach listeners
+    attachTitlebarToWindow(mainWindow)
 
     mainWindow.once('ready-to-show', () => {
         mainWindow.show()
@@ -152,7 +120,7 @@ function createWindow() {
 
 function resizeMain () {
     // store window's new size in variable
-    let newBounds = mainWindow.getBounds();
+    let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
     sidebar.setBounds({x: 0, y: 0, width: sidebarWidth, height: newBounds.height})
     mainView.setBounds({x: sidebarWidth, y: 0, width: newBounds.width - sidebarWidth, height: newBounds.height})
@@ -161,15 +129,12 @@ function resizeMain () {
 function get() {
     return mainView;
 }
-
 // Export the publicly available functions.
 module.exports = {get};
 
 app.whenReady().then(() => {
-
     //const icon = nativeImage.createFromPath()
     const tray = new Tray(path.join(__dirname, "assets", "icons", "24.ico"))
-
     const trayMenu = Menu.buildFromTemplate([
         {
             label: i18n.__('Close'),
@@ -178,7 +143,6 @@ app.whenReady().then(() => {
             }
         }
     ])
-
     tray.setContextMenu(trayMenu)
     tray.setToolTip('UDesk')
     tray.setTitle('UDesk')
@@ -210,6 +174,19 @@ app.on('activate', function () {
 
 // =====================================================================================
 // You can also put them in separate files and require them here.
+
+ipcMain.handle('dark-mode:toggle', () => {
+    if (nativeTheme.shouldUseDarkColors) {
+        nativeTheme.themeSource = 'light'
+    } else {
+        nativeTheme.themeSource = 'dark'
+    }
+    return nativeTheme.shouldUseDarkColors
+})
+
+ipcMain.handle('dark-mode:system', () => {
+    nativeTheme.themeSource = 'system'
+})
 
 ipcMain.handle('settings-open', () => {
     preferences.show();

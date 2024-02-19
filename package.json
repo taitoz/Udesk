@@ -28,6 +28,7 @@
         "afterPack": "./internals/scripts/AfterPack.js"
     },
     "dependencies": {
+        "custom-electron-titlebar": "^4.2.8",
         "electron-preferences": "^2.8.2"
     }
 }
