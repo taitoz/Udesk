@@ -4,46 +4,45 @@
     <meta charset="UTF-8">
     <title>Hello World!</title>
 
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css"/>
     <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
 </head>
 <body>
 
 <header id="titlebar">
-    <div id="drag-region">
 
-        <div id="controls-left" class="controls">
-            <div class="button" id="menu-button">
-                <i class='bx bx-menu'></i>
-            </div>
-            <div class="button" id="back-button">
-                <i class='bx bx-arrow-back'></i>
-            </div>
-            <div class="button" id="reload-button">
-                <i class='bx bx-revision'></i>
-            </div>
+    <div id="controls-left" class="controls">
+        <div class="button" id="menu-button">
+            <i class='bx bx-menu'></i>
         </div>
-
-        <div id="window-title">
-            <span>Test</span>
+        <div class="button" id="back-button">
+            <i class='bx bx-arrow-back'></i>
         </div>
-
-        <div class="controls">
-            <div class="button" id="min-button">
-                <i class='bx bx-minus'></i>
-            </div>
-            <div class="button" id="max-button">
-                <i class='bx bx-checkbox'></i>
-            </div>
-            <div class="button" id="restore-button">
-                <i class='bx bx-menu'></i>
-            </div>
-            <div class="button" id="close-button">
-                <i class='bx bx-x'></i>
-            </div>
-
+        <div class="button" id="reload-button">
+            <i class='bx bx-revision'></i>
         </div>
     </div>
+
+    <div id="window-title" class="draggable">
+        <span>Test</span>
+    </div>
+
+    <div class="controls">
+        <div class="button" id="min-button">
+            <i class='bx bx-minus'></i>
+        </div>
+        <div class="button" id="max-button">
+            <i class='bx bx-checkbox'></i>
+        </div>
+        <div class="button" id="restore-button">
+            <i class='bx bx-copy'></i>
+        </div>
+        <div class="button" id="close-button">
+            <i class='bx bx-x'></i>
+        </div>
+
+    </div>
+
 </header>
 
 <div id="main">

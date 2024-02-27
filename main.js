@@ -43,8 +43,8 @@ function createWindow() {
         // webPreferences: {
         //   offscreen: true
         // }
-        titleBarStyle: 'hidden',
-        titleBarOverlay: false,
+        //titleBarStyle: 'hidden',
+        //titleBarOverlay: false,
         webPreferences: {
             sandbox: false,
             preload: path.join(__dirname, 'preload.js')
@@ -52,8 +52,8 @@ function createWindow() {
     })
 
     titleBar = new BrowserView({
-        //focusable: false,
         webPreferences: {
+            nodeIntergration: true,
             preload: path.join(__dirname, 'titlebar', 'titlebarPreload.js')
         }
     })
@@ -82,8 +82,8 @@ function createWindow() {
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
-    setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'titlebar', 'titlebar.html')), 1000)
-    setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar', 'sidebar.html')), 1000)
+    setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'titlebar', 'titlebar.html')), 0)
+    setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar', 'sidebar.html')), 0)
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
@@ -175,13 +175,20 @@ app.on('activate', function () {
 
 // =====================================================================================
 // You can also put them in separate files and require them here.
-ipcMain.handle('win-close', () => {
-    dialog.showErrorBox('close')
-    //app.quit()
+ipcMain.handle('win-reload', () => {
+    app.quit()
 })
-
+ipcMain.handle('win-close', () => {
+    mainWindow.close()
+})
+ipcMain.handle('win-minimize', () => {
+    mainWindow.minimize()
+})
+ipcMain.handle('win-maximize', () => {
+    (mainWindow.isMaximized()) ? mainWindow.unmaximize() : mainWindow.maximize()
+})
 ipcMain.handle('settings-open', () => {
-    preferences.show();
+    preferences.show()
 })
 
 ipcMain.handle('load-url', (event, url) => {

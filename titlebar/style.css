@@ -1,8 +1,23 @@
 /* Basic styling */
-* {margin: 0; padding: 0; border: 0; vertical-align: baseline;}
-html {box-sizing: border-box;}
-*, *:before, *:after {box-sizing: inherit;}
-html, body {height: 100%; margin: 0;}
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    vertical-align: baseline;
+}
+
+html {
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
 
 body {
     font-family: "Segoe UI", sans-serif;
@@ -33,18 +48,19 @@ body {
 }
 
 #titlebar {
-    padding: 4px;
+    padding: 3px;
 }
 
-#titlebar #drag-region {
-    width: 100%;
-    height: 100%;
+.draggable {
     -webkit-user-select: none;
     user-select: none;
     -webkit-app-region: drag;
+    /*background: #1B91F7;*/
 }
 
 #titlebar {
+    width: 100%;
+    height: 100%;
     color: #FFF;
 }
 
@@ -57,14 +73,15 @@ body {
     grid-column: 1;
     display: flex;
     align-items: center;
-    margin-left: 208px;
+    margin-left: 140px;
+    margin-right: 140px;
     overflow: hidden;
     font-family: "Segoe UI", sans-serif;
     font-size: 12px;
 }
 
 .maximized #window-title {
-    margin-left: 212px;
+    margin-left: 140px;
 }
 
 #window-title span {
@@ -87,10 +104,6 @@ body {
     height: 100%;
 }
 
-.controls {
-    -webkit-app-region: no-drag;
-}
-
 .controls .button {
     grid-row: 1 / span 1;
     display: flex;
@@ -98,6 +111,7 @@ body {
     align-items: center;
     width: 100%;
     height: 100%;
+    user-select: none;
 }
 
 @media (-webkit-device-pixel-ratio: 1.5), (device-pixel-ratio: 1.5),
@@ -109,16 +123,12 @@ body {
     }
 }
 
-.controls .button {
-    user-select: none;
-}
-
 .controls .button:hover {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .controls .button:active {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 #close-button:hover {
@@ -128,6 +138,7 @@ body {
 #close-button:active {
     background: #F1707A !important;
 }
+
 #close-button:active .icon {
     filter: invert(1);
 }
@@ -135,9 +146,11 @@ body {
 #min-button {
     grid-column: 1;
 }
+
 #max-button, #restore-button {
     grid-column: 2;
 }
+
 #close-button {
     grid-column: 3;
 }
