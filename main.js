@@ -19,6 +19,7 @@ const preferences = new ElectronPreferences(prefOptions)
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 let sidebar
+let titleBar
 let mainView
 
 let i18n = new (require('./translations/i18n'))
@@ -50,6 +51,16 @@ function createWindow() {
         }
     })
 
+    titleBar = new BrowserView({
+        //focusable: false,
+        webPreferences: {
+            preload: path.join(__dirname, 'titlebar', 'titlebarPreload.js')
+        }
+    })
+    mainWindow.addBrowserView(titleBar)
+    titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: 30})
+    titleBar.setAutoResize({width: true, height: false})
+
     sidebar = new BrowserView({
         webPreferences: {
             preload: path.join(__dirname, 'sidebar', 'sidebarPreload.js')
@@ -71,6 +82,7 @@ function createWindow() {
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
+    setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'titlebar', 'titlebar.html')), 1000)
     setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar', 'sidebar.html')), 1000)
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
@@ -163,6 +175,10 @@ app.on('activate', function () {
 
 // =====================================================================================
 // You can also put them in separate files and require them here.
+ipcMain.handle('win-close', () => {
+    dialog.showErrorBox('close')
+    //app.quit()
+})
 
 ipcMain.handle('settings-open', () => {
     preferences.show();
