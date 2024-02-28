@@ -1,9 +1,16 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer')
 
 contextBridge.exposeInMainWorld('electronAPI', {
+
     loadUrl: (url) => ipcRenderer.invoke('load-url', url),
     sidebarToggle: () => ipcRenderer.invoke('sidebar-toggle'),
-    openSettings: () => ipcRenderer.invoke('settings-open')
+    openSettings: () => ipcRenderer.invoke('settings-open'),
+
+    goBack: () => ipcRenderer.invoke('win-back'),
+    reload: () => ipcRenderer.invoke('win-reload'),
+    minimize: () => ipcRenderer.invoke('win-minimize'),
+    maximize: () => ipcRenderer.invoke('win-maximize'),
+    close: () => ipcRenderer.invoke('win-close')
 })
 
 window.addEventListener('DOMContentLoaded', () => {

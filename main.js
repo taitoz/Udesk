@@ -24,6 +24,7 @@ let mainView
 
 let i18n = new (require('./translations/i18n'))
 let sidebarWidth = 70
+let titleBarHeight = 30
 
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
@@ -35,7 +36,7 @@ function createWindow() {
         height: 768,
         minWidth: 1024,
         minHeight: 768,
-        useContentSize: true,
+        //useContentSize: true,
         frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,
@@ -53,37 +54,36 @@ function createWindow() {
 
     titleBar = new BrowserView({
         webPreferences: {
-            nodeIntergration: true,
-            preload: path.join(__dirname, 'titlebar', 'titlebarPreload.js')
+            preload: path.join(__dirname, 'panels', 'panelsPreload.js')
         }
     })
     mainWindow.addBrowserView(titleBar)
-    titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: 30})
+    titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
     titleBar.setAutoResize({width: true, height: false})
 
     sidebar = new BrowserView({
         webPreferences: {
-            preload: path.join(__dirname, 'sidebar', 'sidebarPreload.js')
+            preload: path.join(__dirname, 'panels', 'panelsPreload.js')
         }
     })
     mainWindow.addBrowserView(sidebar)
-    sidebar.setBounds({x: 0, y: 30, width: sidebarWidth, height: mainWindow.getBounds().height})
-    sidebar.setAutoResize({width: true, height: false})
+    sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: mainWindow.getBounds().height})
+    sidebar.setAutoResize({width: false, height: true})
 
     mainView = new BrowserView()
     mainWindow.addBrowserView(mainView)
-    sidebar.setAutoResize({width: true, height: false})
+    mainView.setAutoResize({width: true, height: true})
     mainView.setBounds({
         x: sidebarWidth,
-        y: 30,
+        y: titleBarHeight,
         width: mainWindow.getBounds().width - sidebarWidth,
-        height: mainWindow.getBounds().height
+        height: mainWindow.getBounds().height - titleBarHeight
     })
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
-    setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'titlebar', 'titlebar.html')), 0)
-    setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'sidebar', 'sidebar.html')), 0)
+    setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')), 0)
+    setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
@@ -124,8 +124,8 @@ function resizeMain() {
     // store window's new size in variable
     let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
-    sidebar.setBounds({x: 0, y: 0, width: sidebarWidth, height: newBounds.height})
-    mainView.setBounds({x: sidebarWidth, y: 0, width: newBounds.width - sidebarWidth, height: newBounds.height})
+    sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: newBounds.height})
+    mainView.setBounds({x: sidebarWidth, y: titleBarHeight, width: newBounds.width - sidebarWidth, height: newBounds.height})
 }
 
 function get() {
@@ -175,8 +175,11 @@ app.on('activate', function () {
 
 // =====================================================================================
 // You can also put them in separate files and require them here.
+ipcMain.handle('win-back', () => {
+    mainView.webContents.goBack()
+})
 ipcMain.handle('win-reload', () => {
-    app.quit()
+    mainView.webContents.reload()
 })
 ipcMain.handle('win-close', () => {
     mainWindow.close()
@@ -186,6 +189,7 @@ ipcMain.handle('win-minimize', () => {
 })
 ipcMain.handle('win-maximize', () => {
     (mainWindow.isMaximized()) ? mainWindow.unmaximize() : mainWindow.maximize()
+    resizeMain()
 })
 ipcMain.handle('settings-open', () => {
     preferences.show()
