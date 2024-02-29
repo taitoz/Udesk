@@ -1,3 +1,4 @@
+
 function buildMenuItem(item) {
     let li = document.createElement("li")
 
@@ -81,14 +82,14 @@ function addEvents() {
     body.querySelector(".bx-cog").addEventListener("click", () => {
         window.electronAPI.openSettings()
     })
-    body.querySelector(".bx-sun").addEventListener("click", () => {
-        body.classList.toggle("light")
+    // body.querySelector(".bx-sun").addEventListener("click", () => {
+        // body.classList.toggle("light")
         // if (body.classList.contains("dark")) {
         //   modeText.innerText = "Light mode"
         // } else {
         //   modeText.innerText = "Dark mode"
         // }
-    })
+    // })
 
 }
 
@@ -111,3 +112,7 @@ function buildMenu() {
 //let dataObject = JSON.parse(dataJSON)
 //buildMenu(dataObject)
 buildMenu()
+
+window.electronAPI.onThemeToggle((value) => {
+    document.querySelector("body").classList.toggle("light")
+})

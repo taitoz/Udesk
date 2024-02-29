@@ -34,7 +34,7 @@ body.light {
     height: calc(100% - 60px);
     width: var(--sidebar-width);
     background: var(--sidebar-color);
-    z-index: 100;
+    /*z-index: 100;*/
 }
 .sidebar.close{
     width: var(--sidebar-closed-width);
@@ -198,21 +198,20 @@ body.light {
 
 /*=== titleBar ==================================================*/
 
-#titlebar {
+.titleBar {
+    padding: 3px;
     display: block;
     position: fixed;
     top: 0;
     height: 32px;
     width: calc(100% - 2px);
+    color: var(--text-color);
+    background: var(--sidebar-color);
 }
 
-.maximized #titlebar {
+.maximized .titleBar {
     width: 100%;
     padding: 0;
-}
-
-#titlebar {
-    padding: 3px;
 }
 
 .draggable {
@@ -220,15 +219,11 @@ body.light {
     user-select: none;
     -webkit-app-region: drag;
     /*background: #1B91F7;*/
+    color: var(--text-color);
+    background: var(--sidebar-color);
 }
 
-#titlebar {
-    width: 100%;
-    height: 100%;
-    color: #FFF;
-}
-
-#titlebar #drag-region {
+.titleBar #drag-region {
     display: grid;
     grid-template-columns: auto 138px;
 }
@@ -279,11 +274,13 @@ body.light {
 }
 
 .controls .button:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--primary-color-light);
+    /*     background: rgba(255, 255, 255, 0.1); */
 }
 
 .controls .button:active {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--primary-color-light);
+    /*     background: rgba(255, 255, 255, 0.2); */
 }
 
 #close-button:hover {

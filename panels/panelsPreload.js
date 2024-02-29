@@ -1,6 +1,12 @@
-const { contextBridge, ipcRenderer } = require('electron/renderer')
+const {contextBridge, ipcRenderer} = require('electron/renderer')
+
 
 contextBridge.exposeInMainWorld('electronAPI', {
+
+    onThemeToggle: (callback) => ipcRenderer.on('theme-toggle', (_event, value) => callback(value)),
+    // onThemeToggle: (value) => ipcRenderer.on("theme-toggle", (_event, value) => {
+    //     alert("received data1" + value)
+    // }),
 
     loadUrl: (url) => ipcRenderer.invoke('load-url', url),
     sidebarToggle: () => ipcRenderer.invoke('sidebar-toggle'),

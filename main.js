@@ -8,12 +8,13 @@ if (setupEvents.handleSquirrelEvent()) {
 // Module to control application life.
 let path = require('path')
 // Module to create native browser window.
-const {BrowserView, BrowserWindow, ipcMain, Menu, nativeImage, app, Tray, dialog} = require('electron')
+const {BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme, app, Tray, dialog} = require('electron')
 
 const ElectronPreferences = require('electron-preferences');
 const prefOptions = require('./preferences/pref-options.js');
 const preferences = new ElectronPreferences(prefOptions)
 
+nativeTheme.themeSource = preferences.preferences?.theme?.theme ?? 'dark';
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -36,7 +37,6 @@ function createWindow() {
         height: 768,
         minWidth: 1024,
         minHeight: 768,
-        //useContentSize: true,
         frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,
@@ -82,9 +82,12 @@ function createWindow() {
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
-    setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')), 0)
-    setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
+    //setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')), 0)
+    titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html'))
+    //setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
+    sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html'))
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
+    mainView.webContents.loadFile(path.join(app.getPath("userData"), 'preferences.json'))
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
@@ -125,7 +128,12 @@ function resizeMain() {
     let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
     sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: newBounds.height})
-    mainView.setBounds({x: sidebarWidth, y: titleBarHeight, width: newBounds.width - sidebarWidth, height: newBounds.height})
+    mainView.setBounds({
+        x: sidebarWidth,
+        y: titleBarHeight,
+        width: newBounds.width - sidebarWidth,
+        height: newBounds.height
+    })
 }
 
 function get() {
@@ -172,9 +180,28 @@ app.on('activate', function () {
     // dock icon is clicked and there are no other windows open.
     if (mainWindow === null) createWindow()
 })
+// You can also put them in separate files and require them here
+// =====================================================================================
+preferences.on('save', preferences => {
+    //console.log('Preferences were saved.', JSON.stringify(preferences, null, 4));
+    nativeTheme.themeSource = preferences?.theme?.theme ?? 'system';
+});
+preferences.on('click', (key) => {
+    if (key === 'do-action-on-main') {
+        console.log('We are logging something in the main process because of a button click in the preferences window!');
+    }
+});
+nativeTheme.on("updated", () => {
+    titleBar.webContents.send('theme-toggle', nativeTheme.themeSource);
+    sidebar.webContents.send('theme-toggle', nativeTheme.themeSource);
+    // if (nativeTheme.shouldUseDarkColors) {
+    //     console.log("Dark Theme Chosen by User");
+    // } else {
+    //     console.log("Light Theme Chosen by User");
+    // }
+});
 
 // =====================================================================================
-// You can also put them in separate files and require them here.
 ipcMain.handle('win-back', () => {
     mainView.webContents.goBack()
 })
@@ -196,7 +223,7 @@ ipcMain.handle('settings-open', () => {
 })
 
 ipcMain.handle('load-url', (event, url) => {
-    //console.log(url) // prints "ping" in the Node console
+    //console.log(url)
     //dialog.showErrorBox('loadService', arg)
     //event.reply('asynchronous-reply', 'pong')
     mainView.webContents.loadURL(url)
