@@ -100,6 +100,7 @@ function buildMenu() {
     fetch('sidebar.json')
         .then(response => response.json())
         .then(data => {
+            window.electronAPI.loadUrl(data.menuItems[0].link)
             data.menuItems.forEach((item) => {
                 document.getElementById("menuItems").appendChild(buildMenuItem(item))
             })

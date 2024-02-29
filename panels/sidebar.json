@@ -3,21 +3,77 @@
     {
       "name": "Главная",
       "icon": "bx bx-home-alt",
-      "link": "https://udesk-upd-srv.vercel.app/"
+      "link": "https://udesk-upd-srv.vercel.app/",
+      "link1": "https://uchet.kz/month/"
     },
     {
       "name": "Сервисы",
       "icon": "bx bx-collection",
       "innerItems": [
         {
-          "name": "Test2-1",
+          "name": "Подписка",
           "icon": "bx bx-bar-chart-alt-2",
-          "link": "http://ya.ru"
+          "link": "https://uchet.kz/lp/5prichin/"
         },
         {
-          "name": "Test2-2",
+          "name": "Бухгалтерия",
           "icon": "bx bx-bar-chart-alt-2",
-          "link": "http://google.com"
+          "link": "https://buh.uchet.kz/"
+        },
+        {
+          "name": "Онлайн касса",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://ukassa.kz/"
+        },
+        {
+          "name": "Эдо",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://edo.uchet.kz/"
+        },
+        {
+          "name": "Обучение",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://profitraining.kz/"
+        },
+        {
+          "name": "Проверка контрагента",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://pk.uchet.kz/"
+        },
+        {
+          "name": "ПОБ",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://pob.uchet.kz/"
+        },
+        {
+          "name": "Dashboard",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://dashboard.uchet.kz/"
+        },
+        {
+          "name": "Аудит",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://audit.uchet.kz/"
+        },
+        {
+          "name": "Аутсорсинг",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://uchet.kz/fran/our-fran.html"
+        },
+        {
+          "name": "Арсенал бухгалтера",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://ab.uchet.kz/"
+        },
+        {
+          "name": "Кадровый помощник",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://uchet.kz/hrassistant/"
+        },
+        {
+          "name": "Партнёры",
+          "icon": "bx bx-bar-chart-alt-2",
+          "link": "https://uchet.kz/pages/partners/"
         }
       ]
     }

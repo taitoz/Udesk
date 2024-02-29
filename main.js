@@ -87,7 +87,7 @@ function createWindow() {
     //setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
     sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html'))
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
-    mainView.webContents.loadFile(path.join(app.getPath("userData"), 'preferences.json'))
+    mainView.webContents.loadFile(`index.html`)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
