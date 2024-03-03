@@ -14,12 +14,12 @@ function getInstallerConfig () {
   const outPath = path.join(rootPath, 'release-builds')
 
   return Promise.resolve({
-    appDirectory: path.join(outPath, 'uchet-desktop-win32-ia32/'),
+    appDirectory: path.join(outPath, 'udesk-win32-ia32/'),
     authors: 'Uchet.kz',
     noMsi: true,
     outputDirectory: path.join(outPath, 'windows-installer'),
-    exe: 'uchet-desktop.exe',
-    setupExe: 'UchetDesktopInstaller.exe',
-    setupIcon: path.join(rootPath, 'assets', 'icons', '48.ico')
+    exe: 'udesk.exe',
+    setupExe: 'UdeskInstaller.exe',
+    setupIcon: path.join(rootPath, 'assets', 'ico', 'logo.ico')
   })
 }

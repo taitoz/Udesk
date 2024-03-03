@@ -33,14 +33,14 @@ app.commandLine.appendSwitch('ignore-certificate-errors')
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 1024,
-        height: 768,
-        minWidth: 1024,
-        minHeight: 768,
+        width: 1280,
+        height: 950,
+        minWidth: 1280,
+        minHeight: 950,
         frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,
-        icon: path.join(__dirname, 'assets/icons/48.ico'),
+        icon: path.join(__dirname, 'assets/ico/logo.ico'),
         // webPreferences: {
         //   offscreen: true
         // }
@@ -145,7 +145,7 @@ module.exports = {get};
 
 app.whenReady().then(() => {
     //const icon = nativeImage.createFromPath()
-    const tray = new Tray(path.join(__dirname, "assets", "icons", "24.ico"))
+    const tray = new Tray(path.join(__dirname, "assets", "ico", "logo.ico"))
     const trayMenu = Menu.buildFromTemplate([
         {
             label: i18n.__('Close'),

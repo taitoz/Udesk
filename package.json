@@ -1,8 +1,8 @@
 {
     "name": "udesk",
-    "productName": "Uchet.kz Desktop",
-    "description": "Uchet.kz Desktop Application",
-    "version": "0.1.0",
+    "productName": "Udesk",
+    "description": "Udesk Application",
+    "version": "1.0.0",
     "main": "main.js",
     "devDependencies": {
         "asar": "^3.2.0",
@@ -14,9 +14,9 @@
     },
     "scripts": {
         "start": "electron .",
-        "package-win": "electron-packager . uchet-desktop --overwrite --asar --platform=win32 --arch=ia32 --icon=assets/icons/48.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Uchet.kz Desktop\"",
-        "package-linux": "electron-packager . uchet-desktop --overwrite --asar --platform=linux --arch=x64 --icon=assets/icons/png/48.png --prune=true --out=release-builds",
-        "package-mac": "electron-packager . uchet-desktop --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/32.icns --prune=true --out=release-builds",
+        "package-win": "electron-packager . udesk --overwrite --asar --platform=win32 --arch=ia32 --icon=assets/ico/logo.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Udesk\"",
+        "package-linux": "electron-packager . udesk --overwrite --asar --platform=linux --arch=x64 --icon=assets/png/logo.png --prune=true --out=release-builds",
+        "package-mac": "electron-packager . udesk --overwrite --platform=darwin --arch=x64 --icon=assets/mac/logo.icns --prune=true --out=release-builds",
         "create-installer-mac": "node installers/mac/createinstaller.js",
         "create-installer-win": "node installers/windows/createinstaller.js"
     },

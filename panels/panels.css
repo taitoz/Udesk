@@ -45,19 +45,21 @@ body.light {
     display: flex;
     align-items: center;
 }
-.sidebar .app-details i{
+.sidebar .app-details img{
+    margin-left: 12px;
     font-size: 30px;
     color: var(--text-color);
     height: 50px;
-    min-width: var(--sidebar-closed-width);
+    /*min-width: var(--sidebar-closed-width);*/
     text-align: center;
     line-height: 50px;
     -webkit-app-region: drag;
 }
 .sidebar .app-details .app-name{
+    margin-left: 12px;
     font-size: 22px;
     color: var(--text-color);
-    font-weight: 600;
+    font-weight: 400;
 }
 .sidebar.close .app-details .app-name{
     opacity: 0;
@@ -132,6 +134,7 @@ body.light {
     font-size: 15px;
     padding: 5px 0 10px var(--sidebar-closed-width);
     white-space: nowrap;
+    cursor: pointer;
 }
 .sidebar .nav-links li .sub-menu a:hover{
     background: var(--primary-color-light);
@@ -248,10 +251,12 @@ body.light {
     text-overflow: ellipsis;
     white-space: nowrap;
     line-height: 1.5;
+    color: var(--sidebar-color);
 }
 
 #controls-left {
     left: 0;
+    margin-left: 12px;
 }
 
 .controls {
