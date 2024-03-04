@@ -7,6 +7,7 @@ npm run package-win
 build installer
 npm run create-installer-win
 
+npm run dist  as admin
 
 https://github.com/electron/simple-samples
 https://github.com/electron/electron-quick-start

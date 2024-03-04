@@ -2,11 +2,13 @@
     "name": "udesk",
     "productName": "Udesk",
     "description": "Udesk Application",
+    "author": "uchet.kz",
     "version": "1.0.0",
     "main": "main.js",
     "devDependencies": {
         "asar": "^3.2.0",
         "electron": "29.0.0-beta.7",
+        "electron-builder": "^24.13.3",
         "electron-installer-dmg": "^4.0.0",
         "electron-packager": "^17.1.2",
         "electron-squirrel-startup": "^1.0.0",
@@ -14,6 +16,7 @@
     },
     "scripts": {
         "start": "electron .",
+        "dist": "electron-builder",
         "package-win": "electron-packager . udesk --overwrite --asar --platform=win32 --arch=ia32 --icon=assets/ico/logo.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Udesk\"",
         "package-linux": "electron-packager . udesk --overwrite --asar --platform=linux --arch=x64 --icon=assets/png/logo.png --prune=true --out=release-builds",
         "package-mac": "electron-packager . udesk --overwrite --platform=darwin --arch=x64 --icon=assets/mac/logo.icns --prune=true --out=release-builds",
@@ -21,13 +24,29 @@
         "create-installer-win": "node installers/windows/createinstaller.js"
     },
     "build": {
+        "appId": "udesk",
+        "dmg": {
+            "title": "${productName} ${version}"
+        },
+        "linux": {
+            "target": [
+                "AppImage",
+                "deb"
+            ]
+        },
+        "win": {
+            "target": ["squirrel"],
+            "defaultArch": "ia32",
+            "verifyUpdateCodeSignature": false,
+            "icon": "assets/ico/logo.ico"
+        },
         "electronLanguages": [
             "ru_RU"
-        ],
-        "afterSign": "./after-sign.js",
-        "afterPack": "./internals/scripts/AfterPack.js"
+        ]
     },
     "dependencies": {
+        "electron-builder-squirrel-windows": "^24.13.3",
+        "electron-log": "^5.1.1",
         "electron-preferences": "^2.8.2",
         "electron-simple-updater": "^2.0.10"
     }

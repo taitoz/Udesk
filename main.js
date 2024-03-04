@@ -11,33 +11,40 @@ let path = require('path')
 const {BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
     app, Tray, dialog} = require('electron')
 
+const log = require('electron-log/main');
+log.initialize()
+
 const server = 'https://udesk-upd-srv.vercel.app'
 //const url = `${server}/update/${process.platform}/${app.getVersion()}`
 const url = `${server}/update/win32/${app.getVersion()}`
+log.info(app.getVersion())
 
 const updater = require('electron-simple-updater');
-updater.init({
-    url:'updates.json',
-    checkUpdateOnStart: true,
-    autoDownload: false,
-    disabled: false,
-    logger: {
-        info(...args) { console.log('update-log', 'info', ...args); },
-        warn(...args) { console.log('update-log', 'warn', ...args); },
-    }
-});
+// updater.init({
+//     url:'https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json',
+//     checkUpdateOnStart: true,
+//     autoDownload: true,
+//     disabled: false,
+//     logger: {
+//         info(...args) { log.info('update-log', 'info', ...args) },
+//         warn(...args) { log.warn('update-log', 'warn', ...args) },
+//         error(...args) { log.error('update-log', 'error', ...args)}
+//     }
+// });
 
-//updater.init('https://raw.githubusercontent.com/megahertz/electron-simple-updater/master/example/updates.json');
+updater.init('https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json');
+
+log.info(updater.buildId)
 
 updater
     .on('checking-for-update', (event, releaseNotes, releaseName) => {
-    console.log('checking-for-update')
+        log.info('checking-for-update')
 })
-    .on('update-not-available', (event, releaseNotes, releaseName) => {
-    console.log('update-not-available')
+    .on('update-not-available', () => {
+        log.info('update-not-available')
 })
     .on('update-available', (event, releaseNotes, releaseName) => {
-    console.log('update-available')
+        log.info('update-available')
 })
     .on('update-downloaded', (event, releaseNotes, releaseName) => {
     const dialogOpts = {
@@ -54,8 +61,8 @@ updater
     })
 })
 .on('error', (message) => {
-    console.error('There was a problem updating the application')
-    console.error(message)
+    log.error('There was a problem updating the application')
+    log.error(message)
 })
 
 
