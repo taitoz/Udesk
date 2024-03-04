@@ -29,6 +29,6 @@
     },
     "dependencies": {
         "electron-preferences": "^2.8.2",
-        "electron-updater": "^5.3.0"
+        "electron-simple-updater": "^2.0.10"
     }
 }

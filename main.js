@@ -14,20 +14,32 @@ const {BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
 const server = 'https://udesk-upd-srv.vercel.app'
 //const url = `${server}/update/${process.platform}/${app.getVersion()}`
 const url = `${server}/update/win32/${app.getVersion()}`
-const { autoUpdater } = require("electron-updater");
 
+const updater = require('electron-simple-updater');
+updater.init({
+    url:'updates.json',
+    checkUpdateOnStart: true,
+    autoDownload: false,
+    disabled: false,
+    logger: {
+        info(...args) { console.log('update-log', 'info', ...args); },
+        warn(...args) { console.log('update-log', 'warn', ...args); },
+    }
+});
 
+//updater.init('https://raw.githubusercontent.com/megahertz/electron-simple-updater/master/example/updates.json');
 
-autoUpdater.on('checking-for-update', (event, releaseNotes, releaseName) => {
-    console.log(event.message)
+updater
+    .on('checking-for-update', (event, releaseNotes, releaseName) => {
+    console.log('checking-for-update')
 })
-autoUpdater.on('update-not-available', (event, releaseNotes, releaseName) => {
-    console.log(event.releaseDate)
+    .on('update-not-available', (event, releaseNotes, releaseName) => {
+    console.log('update-not-available')
 })
-autoUpdater.on('update-available', (event, releaseNotes, releaseName) => {
-    console.log(event.releaseDate)
+    .on('update-available', (event, releaseNotes, releaseName) => {
+    console.log('update-available')
 })
-autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+    .on('update-downloaded', (event, releaseNotes, releaseName) => {
     const dialogOpts = {
         type: 'info',
         buttons: ['Restart', 'Later'],
@@ -38,10 +50,10 @@ autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
     }
 
     dialog.showMessageBox(dialogOpts).then((returnValue) => {
-        if (returnValue.response === 0) autoUpdater.quitAndInstall()
+        if (returnValue.response === 0) updater.quitAndInstall()
     })
 })
-autoUpdater.on('error', (message) => {
+.on('error', (message) => {
     console.error('There was a problem updating the application')
     console.error(message)
 })
@@ -159,13 +171,6 @@ function createWindow() {
         //mainView.setBounds({x: sidebarWidth, y: 0, width: mainWindow.getBounds().width - sidebarWidth, height: mainWindow.getBounds().height})
     })
 
-    setInterval(() => {
-        autoUpdater.setFeedURL(url)
-        console.log(autoUpdater.getUpdateInfoAndProvider())
-        //console.log(app.getVersion())
-        //dialog.showErrorBox('autoUpdater', autoUpdater.getFeedURL())
-        autoUpdater.checkForUpdates()
-    }, 2000)
 }
 
 function resizeMain() {

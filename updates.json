@@ -1,0 +1,20 @@
+{
+  "win": {
+    "readme": "v1.0.0 alpha release",
+    "update": "https://github.com/taitoz/uchet-desktop/releases/download/win-v1.0.0",
+    "install": "https://github.com/taitoz/uchet-desktop/releases/download/win-v1.0.0/UdeskInstaller.v1.0-alpha.exe",
+    "version": "1.0.0"
+  },
+  "mac": {
+    "readme": "v1.0.0 alpha release",
+    "update": "https://github.com/taitoz/uchet-desktop/releases/download/mac-v1.0.0/release.json",
+    "install": "https://github.com/taitoz/uchet-desktop/releases/download/mac-v1.0.0/UdeskInstaller.v1.0-alpha.dmg",
+    "version": "1.0.0"
+  },
+  "linux": {
+    "update": "https://github.com/taitoz/uchet-desktop/releases/download/linux-v1.0.0/UdeskInstaller.v1.0-alpha.AppImage",
+    "install": "https://github.com/taitoz/uchet-desktop/releases/download/linux-v1.0.0/UdeskInstaller.v1.0-alpha.AppImage",
+    "version": "1.0.0",
+    "sha256": "50e30322cdc83c0af182fff773920d6e093eff7d4c22bf19bca5cbdf762ab1fb"
+  }
+}
