@@ -53,7 +53,7 @@ function buildMenuItem(item) {
 
 function addEvents() {
     const sidebar = document.querySelector(".sidebar")
-    document.querySelector(".bx-menu").addEventListener("click", () => {
+    document.querySelector(".app-details").addEventListener("click", () => {
         sidebar.classList.toggle("close")
         window.electronAPI.sidebarToggle()
     })

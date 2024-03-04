@@ -28,6 +28,7 @@
         "afterPack": "./internals/scripts/AfterPack.js"
     },
     "dependencies": {
-        "electron-preferences": "^2.8.2"
+        "electron-preferences": "^2.8.2",
+        "electron-updater": "^5.3.0"
     }
 }

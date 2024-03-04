@@ -8,7 +8,44 @@ if (setupEvents.handleSquirrelEvent()) {
 // Module to control application life.
 let path = require('path')
 // Module to create native browser window.
-const {BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme, app, Tray, dialog} = require('electron')
+const {BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
+    app, Tray, dialog} = require('electron')
+
+const server = 'https://udesk-upd-srv.vercel.app'
+//const url = `${server}/update/${process.platform}/${app.getVersion()}`
+const url = `${server}/update/win32/${app.getVersion()}`
+const { autoUpdater } = require("electron-updater");
+
+
+
+autoUpdater.on('checking-for-update', (event, releaseNotes, releaseName) => {
+    console.log(event.message)
+})
+autoUpdater.on('update-not-available', (event, releaseNotes, releaseName) => {
+    console.log(event.releaseDate)
+})
+autoUpdater.on('update-available', (event, releaseNotes, releaseName) => {
+    console.log(event.releaseDate)
+})
+autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+    const dialogOpts = {
+        type: 'info',
+        buttons: ['Restart', 'Later'],
+        title: 'Application Update',
+        message: process.platform === 'win32' ? releaseNotes : releaseName,
+        detail:
+            'A new version has been downloaded. Restart the application to apply the updates.'
+    }
+
+    dialog.showMessageBox(dialogOpts).then((returnValue) => {
+        if (returnValue.response === 0) autoUpdater.quitAndInstall()
+    })
+})
+autoUpdater.on('error', (message) => {
+    console.error('There was a problem updating the application')
+    console.error(message)
+})
+
 
 const ElectronPreferences = require('electron-preferences');
 const prefOptions = require('./preferences/pref-options.js');
@@ -34,9 +71,9 @@ function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         width: 1280,
-        height: 950,
+        height: 800,
         minWidth: 1280,
-        minHeight: 950,
+        minHeight: 800,
         frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,
@@ -121,6 +158,14 @@ function createWindow() {
         //mainView.show()
         //mainView.setBounds({x: sidebarWidth, y: 0, width: mainWindow.getBounds().width - sidebarWidth, height: mainWindow.getBounds().height})
     })
+
+    setInterval(() => {
+        autoUpdater.setFeedURL(url)
+        console.log(autoUpdater.getUpdateInfoAndProvider())
+        //console.log(app.getVersion())
+        //dialog.showErrorBox('autoUpdater', autoUpdater.getFeedURL())
+        autoUpdater.checkForUpdates()
+    }, 2000)
 }
 
 function resizeMain() {
@@ -230,6 +275,7 @@ ipcMain.handle('load-url', (event, url) => {
 })
 
 ipcMain.handle('sidebar-toggle', (event, arg) => {
+    //TODO send to renderer
     sidebarWidth = sidebar.getBounds().width
     switch (sidebarWidth) {
         case 70:
