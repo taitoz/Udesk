@@ -79,6 +79,10 @@ function addEvents() {
     document.getElementById('settings-button').addEventListener("click", () => {
         window.electronAPI.openSettings()
     })
+
+    document.getElementById('profile-button').addEventListener("click", () => {
+        window.electronAPI.loadUrl('https://id.uchet.kz/account/login/')
+    })
     // body.querySelector(".bx-sun").addEventListener("click", () => {
         // body.classList.toggle("light")
         // if (body.classList.contains("dark")) {

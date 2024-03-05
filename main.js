@@ -1,69 +1,61 @@
 //handle setup events as quickly as possible
 // const setupEvents = require('./installers/setupEvents')
 // if (setupEvents.handleSquirrelEvent()) {
-    // squirrel event handled and app will exit in 1000ms, so don't do anything else
+// squirrel event handled and app will exit in 1000ms, so don't do anything else
 //     return;
 // }
 
 // Module to control application life.
 let path = require('path')
 // Module to create native browser window.
-const {BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
-    app, Tray, dialog} = require('electron')
+const {
+    BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
+    app, Tray, dialog
+} = require('electron')
 
 const log = require('electron-log/main');
 log.initialize()
 
-const server = 'https://udesk-upd-srv.vercel.app'
-//const url = `${server}/update/${process.platform}/${app.getVersion()}`
-const url = `${server}/update/win32/${app.getVersion()}`
-log.info(app.getVersion())
+//const server = 'https://udesk-upd-srv.vercel.app'
 
 const updater = require('electron-simple-updater');
-// updater.init({
-//     url:'https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json',
-//     checkUpdateOnStart: true,
-//     autoDownload: true,
-//     disabled: false,
-//     logger: {
-//         info(...args) { log.info('update-log', 'info', ...args) },
-//         warn(...args) { log.warn('update-log', 'warn', ...args) },
-//         error(...args) { log.error('update-log', 'error', ...args)}
-//     }
-// });
-
-updater.init('https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json');
+updater.init({
+    url: 'https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json',
+    checkUpdateOnStart: true,
+    autoDownload: true,
+    disabled: false,
+    logger: {
+        info(...args) {
+            log.info('update-log', 'info', ...args)
+        },
+        warn(...args) {
+            log.warn('update-log', 'warn', ...args)
+        },
+        error(...args) {
+            log.error('update-log', 'error', ...args)
+        }
+    }
+});
 
 log.info(updater.buildId)
 
 updater
-    .on('checking-for-update', () => {
-        log.info('checking-for-update')
-})
-    .on('update-not-available', () => {
-        log.info('update-not-available')
-})
-    .on('update-available', () => {
-        log.info('update-available')
-})
     .on('update-downloaded', (event, releaseNotes, releaseName) => {
-    const dialogOpts = {
-        type: 'info',
-        buttons: ['Restart', 'Later'],
-        title: 'Application Update',
-        message: process.platform === 'win32' ? releaseNotes : releaseName,
-        detail:
-            'A new version has been downloaded. Restart the application to apply the updates.'
-    }
-
-    dialog.showMessageBox(dialogOpts).then((returnValue) => {
-        if (returnValue.response === 0) updater.quitAndInstall()
+        const dialogOpts = {
+            type: 'info',
+            buttons: ['Обновить сейчас', 'Позже'],
+            title: 'Доступно обновление',
+            message: process.platform === 'win32' ? releaseNotes : releaseName,
+            detail: 'Новая версия готова к установке.'
+        }
+        dialog.showMessageBox(dialogOpts).then((returnValue) => {
+            if (returnValue.response === 0) updater.quitAndInstall()
+        })
     })
-})
-.on('error', (message) => {
-    log.error('There was a problem updating the application')
-    log.error(message)
-})
+    .on('error', (message) => {
+        log.error('There was a problem updating the application')
+        log.error(message)
+    })
 
 
 const ElectronPreferences = require('electron-preferences');
@@ -90,9 +82,9 @@ function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         width: 1280,
-        height: 800,
+        height: 850,
         minWidth: 1280,
-        minHeight: 800,
+        minHeight: 850,
         frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,

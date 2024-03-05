@@ -20,7 +20,7 @@
     "scripts": {
         "start": "electron .",
         "pack": "electron-builder --dir",
-        "dist": "GENERATE_SOURCEMAP=false electron-builder -- --publish never",
+        "dist": "electron-builder -- --publish never",
         "dist-win": "GENERATE_SOURCEMAP=false electron-builder -w",
         "package-win": "electron-packager . udesk --overwrite --asar --platform=win32 --arch=ia32 --icon=assets/ico/logo.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Udesk\"",
         "package-linux": "electron-packager . udesk --overwrite --asar --platform=linux --arch=x64 --icon=assets/png/logo.png --prune=true --out=release-builds",

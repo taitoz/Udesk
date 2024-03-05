@@ -3,8 +3,17 @@
     {
       "name": "Главная",
       "icon": "bx bx-home-alt",
-      "link": "https://udesk-upd-srv.vercel.app/",
-      "link1": "https://uchet.kz/month/"
+      "link": "https://uchet.kz"
+    },
+    {
+      "name": "YouTube",
+      "icon": "bx bx-film",
+      "link": "https://www.youtube.com/user/uchetkz/videos"
+    },
+    {
+      "name": "Веб 1С",
+      "icon": "bx bx-server",
+      "link": "https://buh.uchet.kz/K4nynmaraquisir1117/ru_RU/"
     },
     {
       "name": "Сервисы",
@@ -26,7 +35,7 @@
           "link": "https://ukassa.kz/"
         },
         {
-          "name": "Эдо",
+          "name": "ЭДО",
           "icon": "bx bx-bar-chart-alt-2",
           "link": "https://edo.uchet.kz/"
         },
@@ -64,16 +73,6 @@
           "name": "Арсенал бухгалтера",
           "icon": "bx bx-bar-chart-alt-2",
           "link": "https://ab.uchet.kz/"
-        },
-        {
-          "name": "Кадровый помощник",
-          "icon": "bx bx-bar-chart-alt-2",
-          "link": "https://uchet.kz/hrassistant/"
-        },
-        {
-          "name": "Партнёры",
-          "icon": "bx bx-bar-chart-alt-2",
-          "link": "https://uchet.kz/pages/partners/"
         }
       ]
     }

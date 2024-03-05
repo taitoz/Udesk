@@ -2,7 +2,7 @@
   "win32-x64-prod": {
     "readme": "v1.0.1 alpha release",
     "update": "https://github.com/taitoz/UdeskUpdSrv/releases/download/win32-x64-prod-v1.0.1",
-    "install": "https://github.com/taitoz/UdeskUpdSrv/releases/download/win32-x64-prod-v1.0.1/UdeskInstaller.1.0.1.exe",
+    "install": "https://github.com/taitoz/UdeskUpdSrv/releases/download/win32-x64-prod-v1.0.1/udesk.Setup.1.0.1.exe",
     "version": "1.0.1"
   },
   "mac": {
