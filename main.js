@@ -1,9 +1,9 @@
 //handle setup events as quickly as possible
-const setupEvents = require('./installers/setupEvents')
-if (setupEvents.handleSquirrelEvent()) {
+// const setupEvents = require('./installers/setupEvents')
+// if (setupEvents.handleSquirrelEvent()) {
     // squirrel event handled and app will exit in 1000ms, so don't do anything else
-    return;
-}
+//     return;
+// }
 
 // Module to control application life.
 let path = require('path')
@@ -37,13 +37,13 @@ updater.init('https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.
 log.info(updater.buildId)
 
 updater
-    .on('checking-for-update', (event, releaseNotes, releaseName) => {
+    .on('checking-for-update', () => {
         log.info('checking-for-update')
 })
     .on('update-not-available', () => {
         log.info('update-not-available')
 })
-    .on('update-available', (event, releaseNotes, releaseName) => {
+    .on('update-available', () => {
         log.info('update-available')
 })
     .on('update-downloaded', (event, releaseNotes, releaseName) => {
@@ -241,6 +241,7 @@ app.on('activate', function () {
 // =====================================================================================
 preferences.on('save', preferences => {
     //console.log('Preferences were saved.', JSON.stringify(preferences, null, 4));
+    console.log(preferences['notes']['images'][0])
     nativeTheme.themeSource = preferences?.theme?.theme ?? 'system';
 });
 preferences.on('click', (key) => {
@@ -287,7 +288,6 @@ ipcMain.handle('load-url', (event, url) => {
 })
 
 ipcMain.handle('sidebar-toggle', (event, arg) => {
-    //TODO send to renderer
     sidebarWidth = sidebar.getBounds().width
     switch (sidebarWidth) {
         case 70:
@@ -297,5 +297,6 @@ ipcMain.handle('sidebar-toggle', (event, arg) => {
             sidebarWidth = 70
             break;
     }
+    sidebar.webContents.send('sidebar-toggle');
     resizeMain()
 })

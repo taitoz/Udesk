@@ -54,14 +54,12 @@ function buildMenuItem(item) {
 function addEvents() {
     const sidebar = document.querySelector(".sidebar")
     document.querySelector(".app-details").addEventListener("click", () => {
-        sidebar.classList.toggle("close")
         window.electronAPI.sidebarToggle()
     })
 
     let sidebarBtn = document.querySelectorAll(".bx-collection")
     sidebarBtn.forEach((item) => {
         item.addEventListener("click", (e) => {
-            sidebar.classList.toggle("close")
             window.electronAPI.sidebarToggle()
             let liParent = e.target.parentElement.parentElement.parentElement
             //console.log(e.target.parentElement.parentElement.parentElement)
@@ -78,8 +76,7 @@ function addEvents() {
         })
     })
 
-    const body = document.querySelector("body")
-    body.querySelector(".bx-cog").addEventListener("click", () => {
+    document.getElementById('settings-button').addEventListener("click", () => {
         window.electronAPI.openSettings()
     })
     // body.querySelector(".bx-sun").addEventListener("click", () => {
@@ -113,6 +110,10 @@ function buildMenu() {
 //let dataObject = JSON.parse(dataJSON)
 //buildMenu(dataObject)
 buildMenu()
+
+window.electronAPI.onSidebarToggle((value) => {
+    document.querySelector(".sidebar").classList.toggle("close")
+})
 
 window.electronAPI.onThemeToggle((value) => {
     document.querySelector("body").classList.toggle("light")

@@ -7,11 +7,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // onThemeToggle: (value) => ipcRenderer.on("theme-toggle", (_event, value) => {
     //     alert("received data1" + value)
     // }),
+    onSidebarToggle: (callback) => ipcRenderer.on('sidebar-toggle', (_event, value) => callback(value)),
+    sidebarToggle: () => ipcRenderer.invoke('sidebar-toggle'),
 
     loadUrl: (url) => ipcRenderer.invoke('load-url', url),
-    sidebarToggle: () => ipcRenderer.invoke('sidebar-toggle'),
     openSettings: () => ipcRenderer.invoke('settings-open'),
-
     goBack: () => ipcRenderer.invoke('win-back'),
     reload: () => ipcRenderer.invoke('win-reload'),
     minimize: () => ipcRenderer.invoke('win-minimize'),
