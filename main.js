@@ -19,32 +19,41 @@ log.initialize()
 //const server = 'https://udesk-upd-srv.vercel.app'
 
 const updater = require('electron-simple-updater');
-updater.init({
-    url: 'https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json',
-    checkUpdateOnStart: true,
-    autoDownload: true,
-    disabled: false,
-    logger: {
-        info(...args) {
-            log.info('update-log', 'info', ...args)
-        },
-        warn(...args) {
-            log.warn('update-log', 'warn', ...args)
-        },
-        error(...args) {
-            log.error('update-log', 'error', ...args)
-        }
-    }
-});
-
 log.info(updater.buildId)
-
 updater
+    .init({
+        url: 'https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json',
+        checkUpdateOnStart: true,
+        autoDownload: true,
+        disabled: false,
+        logger: {
+            info(...args) {
+                log.info('update-log', 'info', ...args)
+            },
+            warn(...args) {
+                log.warn('update-log', 'warn', ...args)
+            },
+            error(...args) {
+                log.error('update-log', 'error', ...args)
+            }
+        }
+    })
+    .on('update-available', (event, releaseNotes, releaseName) => {
+        const dialogOpts = {
+            type: 'info',
+            buttons: ['Ok'],
+            title: 'Обновление',
+            message: 'Доступно обновление, скачивание продолжится в фоновом режиме ' +
+                'не закрывайте приложение до окончания загрузки',
+            detail: process.platform === 'win32' ? releaseNotes : releaseName
+        }
+        dialog.showMessageBox(dialogOpts).then()
+    })
     .on('update-downloaded', (event, releaseNotes, releaseName) => {
         const dialogOpts = {
             type: 'info',
             buttons: ['Обновить сейчас', 'Позже'],
-            title: 'Доступно обновление',
+            title: 'Обновление',
             message: process.platform === 'win32' ? releaseNotes : releaseName,
             detail: 'Новая версия готова к установке.'
         }
@@ -131,11 +140,11 @@ function createWindow() {
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
     //setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')), 0)
-    titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html'))
+    titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')).then()
     //setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
-    sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html'))
+    sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
-    mainView.webContents.loadFile(`index.html`)
+    mainView.webContents.loadFile(`index.html`).then()
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
@@ -276,7 +285,7 @@ ipcMain.handle('load-url', (event, url) => {
     //console.log(url)
     //dialog.showErrorBox('loadService', arg)
     //event.reply('asynchronous-reply', 'pong')
-    mainView.webContents.loadURL(url)
+    mainView.webContents.loadURL(url).then()
 })
 
 ipcMain.handle('sidebar-toggle', (event, arg) => {

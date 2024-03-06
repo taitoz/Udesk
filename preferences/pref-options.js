@@ -8,7 +8,7 @@ module.exports ={
   },
 
   // Override default preference BrowserWindow values
-  //browserWindowOverrides: { /* ... */ },
+  browserWindowOverrides: { title:"Настройки" },
 
   // Create an optional menu bar
   //menu: Menu.buildFromTemplate(/* ... */),
@@ -49,7 +49,7 @@ module.exports ={
       },
     },
 
-    {
+/*    {
       id: 'menuItems',
       label: 'menu Items',
       icon: 'single-01',
@@ -62,9 +62,9 @@ module.exports ={
                 label: 'name',
                 key: 'name',
                 type: 'text',
-                /**
+                /!**
                  * Optional text to be displayed beneath the field.
-                 */
+                 *!/
                 help: 'name?',
               },
               {
@@ -75,7 +75,7 @@ module.exports ={
               }]
           }]
       }
-    },
+    },*/
 
     {
       id: 'menuItems',
