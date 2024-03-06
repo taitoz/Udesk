@@ -233,12 +233,12 @@ app.on('activate', function () {
 // =====================================================================================
 preferences.on('save', preferences => {
     //console.log('Preferences were saved.', JSON.stringify(preferences, null, 4));
-    console.log(preferences['notes']['images'][0])
+    //console.log(preferences['notes']['images'][0])
     nativeTheme.themeSource = preferences?.theme?.theme ?? 'system';
 });
 preferences.on('click', (key) => {
-    if (key === 'do-action-on-main') {
-        console.log('We are logging something in the main process because of a button click in the preferences window!');
+    if (key === 'resetButton') {
+        console.log('resetButton event');
     }
 });
 nativeTheme.on("updated", () => {
