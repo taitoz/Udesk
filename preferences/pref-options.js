@@ -78,23 +78,23 @@ module.exports ={
     },*/
 
     {
-      id: 'menuItems',
-      label: 'menuItems',
+      id: 'menu',
+      label: 'menu',
       icon: 'widget',
       form: {
         groups: [
           {
-            label: 'menuItems',
+            label: 'Items',
             fields: [
               {
-                label: 'links',
-                key: 'places',
+                label: 'Items',
+                key: 'menuItems',
                 type: 'list',
-                size: 10,
+                size: 3,
                 style: {
-                  width: '75%',
+                  width: '100%',
                 },
-                help: 'An ordered list of links',
+                help: 'An ordered list of items',
                 orderable: true,
               },
               {
