@@ -67,9 +67,12 @@ updater
     })
 
 
-const ElectronPreferences = require('electron-preferences');
-const prefOptions = require('./preferences/pref-options.js');
-const preferences = new ElectronPreferences(prefOptions)
+//const ElectronPreferences = require('electron-preferences');
+//const prefOptions = require('./preferences/pref-options.js');
+//const preferences = new ElectronPreferences(prefOptions)
+let preferences = new (require('./preferences/preferences.js'))
+//const preferences =
+
 
 nativeTheme.themeSource = preferences.preferences?.theme?.theme ?? 'dark';
 
