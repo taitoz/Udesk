@@ -2,3 +2,6 @@
 /release-builds
 dist/
 /primeng-settings/node_modules/
+/primeng-settings/dist/
+/primeng-menu/node_modules/
+/primeng-menu/dist/
