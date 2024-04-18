@@ -12,7 +12,7 @@ const routes: Routes = [
   // { path: 'map/:id/:subId', component: AppMapComponent},
   // { path: 'map', component: AppMapComponent, canActivate: [AppRoutesGuard], data: { isAdmin: false}},
   // { path: 'edit', component: MapEditComponent, canActivate: [AppRoutesGuard]},
-  // { path: 'test', component: AddMapStyleComponent},
+   { path: 'test', component: AppComponent},
 
   // otherwise redirect to index
   {path: '**', pathMatch: 'full', redirectTo: ''}

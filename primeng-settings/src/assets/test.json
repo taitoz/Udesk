@@ -1,37 +1,18 @@
 [
   {
     "data": {
-      "id": 0,
-      "key": "Шымкент",
-      "value": "Интерактивная 3D карта застройки города Шымкент, дата обновления: 02.10.2019",
-      "type": "header"
-    },
-    "children": [
-      {
-        "data": {
-          "id": 0,
-          "key": "Основной чертеж",
-          "value": "cjtbpofm32cgv1fk1tlmreica",
-          "type": "mapStyle"
-        }
-      }
-    ],
-    "parent": null
-  },
-  {
-    "data": {
       "id": 1,
-      "key": "Уральск",
-      "value": "Интерактивная 3D карта застройки города Уральск, дата обновления: 23.04.2019",
-      "type": "header"
+      "key": "menu-1",
+      "value": "link-1",
+      "type": "L1"
     },
     "children": [
       {
         "data": {
           "id": 0,
-          "key": "Основной чертеж",
-          "value": "cjulbm3bi2rpm1fpaqptfsdbm",
-          "type": "mapStyle"
+          "key": "submenu-1",
+          "value": "sublink-1",
+          "type": "L2"
         }
       }
     ],
@@ -40,49 +21,25 @@
   {
     "data": {
       "id": 2,
-      "key": "Актау",
-      "value": "Интерактивная 3D карта застройки города Актау, дата обновления: 11.03.2023",
-      "type": "header"
+      "key": "menu-2",
+      "value": "link-2",
+      "type": "L1"
     },
     "children": [
       {
         "data": {
           "id": 0,
-          "key": "Основной чертеж",
-          "value": "ck6umt35a1rnx1iryhf9klaxq",
-          "type": "mapStyle"
+          "key": "submenu-1",
+          "value": "sublink-1",
+          "type": "L2"
         }
       },
       {
         "data": {
           "id": 1,
-          "key": "Функциональное зонирование",
-          "value": "ck6umvgh50mas1ilrnqax522a",
-          "type": "mapStyle"
-        }
-      },
-      {
-        "data": {
-          "id": 2,
-          "key": "Планировочные ограничения",
-          "value": "ck6un05b60mbv1io30nz3q7a3",
-          "type": "mapStyle"
-        }
-      },
-      {
-        "data": {
-          "id": 3,
-          "key": "Инженерные сети",
-          "value": "ck6un2q0j0jrh1ipsnpbcjc7m",
-          "type": "mapStyle"
-        }
-      },
-      {
-        "data": {
-          "id": 4,
-          "key": "Земельные участки",
-          "value": "ck6un8iv50mjz1io3q622ypyf",
-          "type": "mapStyle"
+          "key": "submenu-2",
+          "value": "sublink-2",
+          "type": "L2"
         }
       }
     ],
@@ -91,25 +48,25 @@
   {
     "data": {
       "id": 3,
-      "key": "Демонстрация модели здания",
-      "value": "Техническая демонстрация визуализации 3D модели здания, дата обновления: 27.11.2023",
-      "type": "header"
+      "key": "menu-3",
+      "value": "link-3",
+      "type": "L1"
     },
     "children": [
       {
         "data": {
           "id": 0,
-          "key": "Основной чертеж",
-          "value": "cjouixplh22fl2snvaz36bv0t",
-          "type": "mapStyle"
+          "key": "submenu-1",
+          "value": "sublink-1",
+          "type": "L2"
         },
         "children": [
           {
             "data": {
               "id": 0,
-              "key": "Example 1",
-              "value": "cjouixplh22fl2snvaz36bv0t",
-              "type": "treeViewObject"
+              "key": "subsubmenu-1",
+              "value": "subsublink-1",
+              "type": "L3"
             }
           }
         ]

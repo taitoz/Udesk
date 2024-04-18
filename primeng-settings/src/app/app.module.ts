@@ -4,17 +4,16 @@ import {FormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
-
-import {AppComponent} from './app.component';
-import {NodeService} from './nodeservice';
+import {NgxElectronModule} from 'ngx-electron';
+import {FileService} from './fileService';
 import {PrimeNgModule} from './primeng.module';
-import {AdminComponent} from './app-admin.component';
+import {AppComponent} from './app.component';
 import {AppRouters} from './app.routes';
-
 
 
 @NgModule({
     imports: [
+        NgxElectronModule,
         PrimeNgModule,
         BrowserModule,
         BrowserAnimationsModule,
@@ -22,9 +21,9 @@ import {AppRouters} from './app.routes';
         FormsModule,
         AppRouters
     ],
-    declarations: [AppComponent, AdminComponent],
+    declarations: [AppComponent],
     bootstrap: [AppComponent],
-    providers: [NodeService]
+    providers: [FileService]
 })
 
 export class AppModule {
