@@ -1,6 +1,4 @@
 <div class="card">
-  <p-toast position="bottom-right"></p-toast>
-
 <!--  <h5>Programmatic</h5>-->
 <!--  <div style="padding: .5em 0 1em 0">-->
 <!--    <p-button-->
@@ -65,9 +63,12 @@
               </p-treeTableCellEditor>
 <!--              <p-toggleButton styleClass="" onIcon="pi pi-pencil" offIcon="pi pi-pencil" [(ngModel)]="edit"-->
 <!--                              (onChange)="onSelect($event)" *ngIf="col.header ==='id'"></p-toggleButton>-->
-              <button pButton type="button" icon="pi pi-save" class="p-button-text"
-                      pTooltip="Сохранить" tooltipPosition="top"
-                      (click)="nodeSave()" *ngIf="col.header ==='id'"></button>
+              <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
+                      pTooltip="Add" tooltipPosition="top"
+                      (click)="addItem(rowData, false)" *ngIf="col.header ==='id'"></button>
+                <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
+                        pTooltip="Add child" tooltipPosition="top"
+                        (click)="addItem(rowData, true)" *ngIf="col.header ==='id'"></button>
               <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger"
                       pTooltip="Удалить" tooltipPosition="top"
                       [disabled]="unSavedEdits" (click)="delete(rowData)" *ngIf="col.header ==='id'"></button>
@@ -77,12 +78,11 @@
       </p-treeTable>
       <!--<p-splitButton label="" icon="pi pi-pencil" [model]="items"></p-splitButton>-->
       <!--<button pButton type="button" icon="pi pi-pencil" class="p-button-text" (click)="toggleEdit()"></button>-->
-      <button pButton type="button" label="Add L1" icon="pi pi-plus" class="p-button-outlined"
-              [disabled]="unSavedEdits" (click)="addHeaderItem()"></button>
-      <button pButton type="button" label="Add L2" icon="pi pi-plus" class="p-button-outlined"
-              [disabled]="isNotHeaderNode" (click)="addMapStyleItem()"></button>
-      <button pButton type="button" label="Add L3" icon="pi pi-plus" class="p-button-outlined"
-              [disabled]="true" (click)="addTreeViewObject()"></button>
+        <button pButton type="button" icon="pi pi-save" class="p-button-text"
+                pTooltip="Сохранить" tooltipPosition="top"
+                (click)="nodeSave()"></button>
+      <button pButton type="button" label="toggleTheme" icon="pi pi-plus" class="p-button-outlined"
+               (click)="toggleTheme()"></button>
 
       <button type="button" (click)="showDialog()" pButton icon="pi pi-info-circle" label="Show"></button>
 
@@ -99,6 +99,8 @@
 
   </p-tabView>
 </div>
+<p-toast position="bottom-center"></p-toast>
+<p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="10000"></p-confirmDialog>
 
 
 

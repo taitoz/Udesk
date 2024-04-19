@@ -1,17 +1,16 @@
-import {Component, NgZone, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
-import {MessageService, SelectItem, TreeNode} from 'primeng-lts/api';
+import {Component, Inject, NgZone, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
+import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng-lts/api';
 import {DialogService, DynamicDialogRef} from 'primeng-lts/dynamicdialog';
 import {FileService} from './fileService';
 import {ElectronService} from 'ngx-electron';
-
-declare var ipcRenderer: any;
+import {DOCUMENT} from '@angular/common';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
     encapsulation: ViewEncapsulation.Emulated,
-    providers: [MessageService]
+    providers: [MessageService, ConfirmationService]
 })
 
 export class AppComponent implements OnInit, OnDestroy {
@@ -19,7 +18,7 @@ export class AppComponent implements OnInit, OnDestroy {
     activeIndex = 0;
     treeNodesData: TreeNode[];
     cols: any[];
-    selectedNode: TreeNode;
+    //selectedNode: TreeNode;
     selectedNodes: TreeNode[];
 
     unSavedEdits = false;
@@ -29,6 +28,7 @@ export class AppComponent implements OnInit, OnDestroy {
     selectedNodeType: string;
 
     ref: DynamicDialogRef;
+    public isLightTheme = true;
 
     constructor(
         private electronService: ElectronService,
@@ -36,6 +36,8 @@ export class AppComponent implements OnInit, OnDestroy {
         private fileService: FileService,
         private messageService: MessageService,
         public dialogService: DialogService,
+        private confirmationService: ConfirmationService,
+        @Inject(DOCUMENT) private document: Document
     ) {
         if (this.electronService.isElectronApp) {
             this.electronService.ipcRenderer.on('asynchronous-reply', (event, arg) => {
@@ -61,9 +63,9 @@ export class AppComponent implements OnInit, OnDestroy {
         ];
 
         this.cols = [
-            {field: 'key', header: 'Название', editable: true, width: 300},
-            {field: 'value', header: 'Значение', editable: true, width: 500},
-            {field: 'type', header: 'Тип', editable: false, width: 200},
+            {field: 'key', header: 'Name', editable: true, width: 300},
+            {field: 'value', header: 'Link', editable: true, width: 500},
+            {field: 'type', header: 'Type', editable: false, width: 200},
             {field: 'id', header: 'id', editable: false, width: 200},
             // {width: 100}
         ];
@@ -108,7 +110,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     onSelect(event) {
         if (event.node != null) {
-            this.selectedNode = event.node;
+            //this.selectedNode = event.node;
             this.selectedNodeType = event.node.data.type;
             this.isNotHeaderNode = (event.node.data.type !== 'header');
             // this.messageService.add({severity: 'info', summary: 'Node Selected', detail: this.selectedNode.data.key});
@@ -116,29 +118,12 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     onTypeSelect(event) {
-        this.selectedNode.data.type = event.value;
+        //this.selectedNode.data.type = event.value;
     }
+
 
     nodeSave() {
-        if (this.selectedNode == null) {
-            this.messageService.add({severity: 'error', summary: 'Объект сохранения не выбран'});
-        }
-        if (this.selectedNode.data.type === 'mapStyle') {
-            this.selectedNode = this.selectedNode.parent;
-        }
-        if (this.selectedNode.data.type === 'treeViewObject') {
-            this.selectedNode = this.selectedNode.parent.parent;
-        }
-
-        this.upsertToDb(this.selectedNode);
-        // this.edit = !this.edit;
-        this.unSavedEdits = false;
-        // let txt = this.edit ? 'Enabled' : 'Disabled';
-        // this.messageService.add({severity: 'success', summary: 'Success', detail: txt});
-    }
-
-    upsertToDb(obj: TreeNode) {
-        this.removeTreeParent(obj);
+        this.treeNodesData.forEach(node => this.removeTreeParent(node));
         this.fileService.saveTestData(this.treeNodesData);
 
         if (this.electronService.isElectronApp) {
@@ -161,71 +146,107 @@ export class AppComponent implements OnInit, OnDestroy {
         });
     }
 
-    delete(selectedNode: TreeNode) {
-        console.log(selectedNode);
-        var i;
-        for (i = 0; i < this.treeNodesData.length; i++) {
-            if (this.treeNodesData[i].data === selectedNode) {
-                this.treeNodesData.splice(i,1);
+    deleteNodeByData(data: any, nodes: TreeNode[]) {
+        let i;
+        for (i = 0; i < nodes.length; i++) {
+            if (nodes[i].data === data) {
+                nodes.splice(i, 1);
+                return;
             }
 
+            if (nodes[i].children) {
+                this.deleteNodeByData(data, nodes[i].children);
+            }
         }
-
-        // if (this.selectedNode == null) {
-        //     this.messageService.add({severity: 'error', summary: 'Объект удаления не выбран'});
-        //     return;
-        // }
-        // switch (this.selectedNode.data.type) {
-        //     case 'mapStyle': {
-        //         const index = this.selectedNode.parent.children.indexOf(this.selectedNode);
-        //         this.selectedNode.parent.children.splice(index, 1);
-        //         // TODO
-        //         if (this.selectedNode.parent.children.length === 0) {
-        //             this.selectedNode = this.selectedNode.parent;
-        //             //this.delete();
-        //         } else {
-        //             this.upsertToDb(this.selectedNode.parent);
-        //         }
-        //         break;
-        //     }
-        // }
-        this.treeNodesData = [...this.treeNodesData];
     }
 
-    addHeaderItem() {
-        this.unSavedEdits = true;
-        const newMapStyleNode = {
-            data: {id: 0, key: 'Название', value: 'mapStyleID', type: 'mapStyle'},
+    delete(selectedNodeData: any) {
+        if (this.treeNodesData.length === 1) {
+            this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
+            return;
+        }
+        this.confirmationService.confirm({
+            header: 'Подтверждение',
+            message: 'Удалить?',
+            acceptLabel: 'Да',
+            rejectLabel: 'Нет',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.deleteNodeByData(selectedNodeData, this.treeNodesData);
+                this.treeNodesData = [...this.treeNodesData];
+                this.messageService.add({severity: 'success', summary: 'Deleted'});
+            },
+            reject: () => {
+            }
+        });
+
+    }
+
+    getNodeByData(data: any, nodes: TreeNode[]) {
+        for (let node of nodes) {
+            if (node.data === data) {
+                return node;
+            }
+            if (node.children) {
+                let matchedNode = this.getNodeByData(data, node.children);
+                if (matchedNode) {
+                    return matchedNode;
+                }
+            }
+        }
+    }
+
+    newNode(id: any): TreeNode<any> {
+        return {
+            data: {id: id, key: 'key', value: 'value', type: 'type'},
             children: []
         };
-        const newId = this.treeNodesData[this.treeNodesData.length - 1].data.id + 1;
-        const newHeaderNode = {
-            data: {id: newId, key: 'Название', value: 'Описание', type: 'header'},
-            children: []
-        };
+    }
 
-        newHeaderNode.children.push(newMapStyleNode);
-        this.treeNodesData.push(newHeaderNode);
-        this.selectedNode = newHeaderNode;
-
+    addItem(selectedNodeData: any, asChild: boolean) {
+        //this.unSavedEdits = true;
+        let node = this.getNodeByData(selectedNodeData, this.treeNodesData);
+        //console.log(node);
+        const newId = Date.now();
+        if (asChild) {
+            node.children.push(this.newNode(newId));
+            node.expanded = true;
+        } else {
+            if (node.parent) {
+                node.parent.children.push(this.newNode(newId));
+            } else {
+                this.treeNodesData.push(this.newNode(newId));
+            }
+        }
+        //this.selectedNode = newHeaderNode;
         this.treeNodesData = [...this.treeNodesData];
         // this.messageService.add({severity: 'success', summary: this.selectedNode.data[key]});
     }
 
-    addMapStyleItem() {
-        const newMapStyleNode = {
-            data: {id: 0, key: 'Название', value: 'mapStyleID', type: 'mapStyle'},
-            children: []
-        };
-        // this.selectedNode.parent.children.push(newMapStyleNode);
-        this.selectedNode.children.push(newMapStyleNode);
-        // this.selectedNode = newHeaderNode;
-        this.treeNodesData = [...this.treeNodesData];
-        // this.messageService.add({severity: 'success', summary: this.selectedNode.data[key]});
+    onThemeSwitchChange() {
+        this.isLightTheme = !this.isLightTheme;
+
+        document.body.setAttribute(
+            'data-theme',
+            this.isLightTheme ? 'light' : 'dark'
+        );
     }
 
-    addTreeViewObject() {
-
+    toggleTheme() {
+        const head = this.document.getElementsByTagName('head')[0];
+        let themeLink = this.document.getElementById(
+            'client-theme'
+        ) as HTMLLinkElement;
+        if (themeLink) {
+            themeLink.href = (themeLink.href.includes('Light')) ?
+                'assets/primeThemeDark.css' : 'assets/primeThemeLight.css';
+        } else {
+            const style = this.document.createElement('link');
+            style.id = 'client-theme';
+            style.rel = 'stylesheet';
+            style.type = 'text/css';
+            style.href = 'assets/primeThemeLight.css';
+            head.appendChild(style);
+        }
     }
-
 }
