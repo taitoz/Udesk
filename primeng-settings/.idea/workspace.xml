@@ -5,7 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3faf92ab-8fb4-4200-83f5-7bdc8377f22a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/PrimeTheme.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../panels/panelsPreload.js" beforeDir="false" afterPath="$PROJECT_DIR$/../panels/panelsPreload.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../panels/sidebar.js" beforeDir="false" afterPath="$PROJECT_DIR$/../panels/sidebar.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../preferences/preferences.js" beforeDir="false" afterPath="$PROJECT_DIR$/../preferences/preferences.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/angular.json" beforeDir="false" afterPath="$PROJECT_DIR$/angular.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/app.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/app.component.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/app.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/app.component.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/app.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/app.module.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/app.routes.guard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/app.routes.guard.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/primeng.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/primeng.module.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/polyfills.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/polyfills.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,22 +47,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_ADD_EXTERNAL_FILES": "true",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "dev",
-    "last_opened_file_path": "/home/developer/_Repos/uchet-desktop/primeng-settings/src/assets",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "ts.external.directory.path": "/home/developer/_Repos/uchet-desktop/primeng-settings/node_modules/typescript/lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/_Repo/UchetElectronApp/primeng-settings&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\user\\_Repo\\UchetElectronApp\\primeng-settings\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/assets" />
@@ -91,6 +107,12 @@
       <workItem from="1712832762697" duration="4028000" />
       <workItem from="1713430221104" duration="11970000" />
       <workItem from="1713502444329" duration="21222000" />
+      <workItem from="1710271580821" duration="2266000" />
+      <workItem from="1714558138182" duration="16054000" />
+      <workItem from="1714578721310" duration="35000" />
+      <workItem from="1714579210498" duration="39000" />
+      <workItem from="1714579268390" duration="307000" />
+      <workItem from="1714579843474" duration="2091000" />
     </task>
     <servers />
   </component>

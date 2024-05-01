@@ -28,7 +28,7 @@
             ],
             "styles": [
               "src/styles.css",
-              "node_modules/primeng-lts/resources/primeng.min.css",
+              "node_modules/primeng/resources/primeng.min.css",
               "node_modules/primeflex/primeflex.css",
               "node_modules/primeicons/primeicons.css",
               "node_modules/boxicons/css/boxicons.min.css",
@@ -47,7 +47,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -65,18 +64,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "primeng-settings:build"
+            "buildTarget": "primeng-settings:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "primeng-settings:build:production"
+              "buildTarget": "primeng-settings:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "primeng-settings:build"
+            "buildTarget": "primeng-settings:build"
           }
         },
         "test": {
@@ -142,5 +141,7 @@
       }
     }
   },
-  "defaultProject": "primeng-settings"
+  "cli": {
+    "analytics": false
+  }
 }

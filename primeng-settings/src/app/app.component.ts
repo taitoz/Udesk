@@ -1,9 +1,10 @@
 import {Component, Inject, NgZone, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
-import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng-lts/api';
-import {DialogService, DynamicDialogRef} from 'primeng-lts/dynamicdialog';
+import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng/api';
+import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {FileService} from './fileService';
-import {ElectronService} from 'ngx-electron';
+import { ElectronService } from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
+import {nativeTheme} from 'electron';
 
 @Component({
     selector: 'app-root',
@@ -39,22 +40,27 @@ export class AppComponent implements OnInit, OnDestroy {
         private confirmationService: ConfirmationService,
         @Inject(DOCUMENT) private document: Document
     ) {
-        if (this.electronService.isElectronApp) {
-            this.electronService.ipcRenderer.on('asynchronous-reply', (event, arg) => {
-                this.ngZone.run(() => {
-                    console.log(`Asynchronous message reply: ${arg}`);
-                });
-            });
-        }
+        // if (this.electronService.isElectronApp) {
+        //     this.electronService.ipcRenderer.on('asynchronous-reply', (event, arg) => {
+        //         this.ngZone.run(() => {
+        //             console.log(`Asynchronous message reply: ${arg}`);
+        //         });
+        //     });
+        // }
     }
 
     ngOnInit() {
 
-        this.fileService.loadTestData().subscribe(result => {
-            this.treeNodesData = result;
-            // console.log(result);
-        });
-        // this.loadTestData();
+        if (this.electronService.isElectronApp) {
+            //this.electronService.shell.beep();
+            this.treeNodesData = this.electronService.ipcRenderer.sendSync('sideBarMenu:get')
+            console.log('menu loaded from electron');
+        } else {
+            this.fileService.loadTestData().subscribe(result => {
+                this.treeNodesData = result;
+                console.log('menu loaded from file');
+            });
+        }
 
         this.nodeTypes = [
             {label: 'L1', value: 'L1'},
@@ -64,10 +70,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.cols = [
             {field: 'key', header: 'Name', editable: true, width: 300},
-            {field: 'value', header: 'Link', editable: true, width: 500},
-            {field: 'type', header: 'Type', editable: false, width: 200},
-            {field: 'id', header: 'id', editable: false, width: 200},
-            // {width: 100}
+            {field: 'value', header: 'Link', editable: true, width: 300},
+            //{field: 'type', header: 'Type', editable: false, width: 200},
+            {field: 'id', header: 'id', editable: false, width: 300},
+            //{width: 100}
         ];
     }
 
@@ -90,22 +96,6 @@ export class AppComponent implements OnInit, OnDestroy {
             return nodeType.label;
         }
         return value;
-    }
-
-    showDialog() {
-        /*    this.ref = this.dialogService.open(AppIndexComponent, {
-              header: 'header',
-              height: '90%',
-              width: '90%',
-              footer: 'footer',
-              // contentStyle: {"max-height": "500px", "overflow": "auto"},
-              baseZIndex: 10000
-            });
-            this.ref.onClose.subscribe((product: string) => {
-              if (product) {
-                this.messageService.add({severity: 'info', summary: 'Product Selected', detail: product});
-              }
-            });*/
     }
 
     onSelect(event) {
@@ -232,14 +222,36 @@ export class AppComponent implements OnInit, OnDestroy {
         );
     }
 
+    showDialog() {
+        /*    this.ref = this.dialogService.open(AppIndexComponent, {
+              header: 'header',
+              height: '90%',
+              width: '90%',
+              footer: 'footer',
+              // contentStyle: {"max-height": "500px", "overflow": "auto"},
+              baseZIndex: 10000
+            });
+            this.ref.onClose.subscribe((product: string) => {
+              if (product) {
+                this.messageService.add({severity: 'info', summary: 'Product Selected', detail: product});
+              }
+            });*/
+    }
+
     toggleTheme() {
+        let theme = 'light';
         const head = this.document.getElementsByTagName('head')[0];
         let themeLink = this.document.getElementById(
             'client-theme'
         ) as HTMLLinkElement;
         if (themeLink) {
-            themeLink.href = (themeLink.href.includes('Light')) ?
-                'assets/primeThemeDark.css' : 'assets/primeThemeLight.css';
+            if (themeLink.href.includes('Light')) {
+                themeLink.href = 'assets/primeThemeDark.css'
+                theme = 'dark'
+            } else {
+                themeLink.href = 'assets/primeThemeLight.css'
+                theme = 'light'
+            }
         } else {
             const style = this.document.createElement('link');
             style.id = 'client-theme';
@@ -248,5 +260,7 @@ export class AppComponent implements OnInit, OnDestroy {
             style.href = 'assets/primeThemeLight.css';
             head.appendChild(style);
         }
+
+        this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
     }
 }

@@ -4,7 +4,7 @@
 // squirrel event handled and app will exit in 1000ms, so don't do anything else
 //     return;
 // }
-
+const fs = require('fs')
 // Module to control application life.
 let path = require('path')
 // Module to create native browser window.
@@ -107,8 +107,8 @@ function createWindow() {
         //titleBarStyle: 'hidden',
         //titleBarOverlay: false,
         webPreferences: {
-            sandbox: false,
-            preload: path.join(__dirname, 'preload.js')
+            // sandbox: false,
+            // preload: path.join(__dirname, 'preload.js')
         }
     })
 
@@ -130,7 +130,12 @@ function createWindow() {
     sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: mainWindow.getBounds().height})
     sidebar.setAutoResize({width: false, height: true})
 
-    mainView = new BrowserView()
+    mainView = new BrowserView({
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    })
     mainWindow.addBrowserView(mainView)
     mainView.setAutoResize({width: true, height: true})
     mainView.setBounds({
@@ -147,11 +152,13 @@ function createWindow() {
     //setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
     sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
-    mainView.webContents.loadFile(`index.html`).then()
+    //mainView.webContents.loadFile(`index.html`).then()
+    mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then()
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
-    //mainWindow.webContents.openDevTools()
+    mainView.webContents.openDevTools({ mode: 'detach' });
+    sidebar.webContents.openDevTools({ mode: 'detach' });
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -218,6 +225,8 @@ app.whenReady().then(() => {
     tray.setContextMenu(trayMenu)
     tray.setToolTip('UDesk')
     tray.setTitle('UDesk')
+
+
 })
 
 // This method will be called when Electron has finished
@@ -303,4 +312,20 @@ ipcMain.handle('sidebar-toggle', (event, arg) => {
     }
     sidebar.webContents.send('sidebar-toggle');
     resizeMain()
+})
+
+ipcMain.on('settings:toggleTheme', (event, theme) => {
+    //console.log(theme)
+    nativeTheme.themeSource = theme;
+})
+
+ipcMain.on('sideBarMenu:get', (event) => {
+    fs.readFile(path.join(__dirname, 'primeng-settings', 'dist', 'assets', 'test.json'),
+        'utf8', (err, data) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        event.returnValue = JSON.parse(data);
+    });
 })

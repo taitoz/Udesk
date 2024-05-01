@@ -54,8 +54,8 @@
                             'margin-top': i == 0 ? '-30px': '0', 'margin-left': i == 0 ? '40px': '0' }" *ngIf="col.editable">
                     <!--<button type="button" pButton pRipple icon="pi pi-check" class="flex justify-content-center"-->
                     <!--     click)="nodeSave()" *ngIf="edit"></button>-->
-                    <p-dropdown appendTo="body" [options]="nodeTypes" [(ngModel)]="selectedNodeType"
-                                (onChange)="onTypeSelect($event)" *ngIf="col.header == 'Тип'"></p-dropdown>
+<!--                    <p-dropdown appendTo="body" [options]="nodeTypes" [(ngModel)]="selectedNodeType"-->
+<!--                                (onChange)="onTypeSelect($event)" *ngIf="col.header == 'Тип'"></p-dropdown>-->
                   </div>
                 </ng-template>
                 <ng-template pTemplate="output" *ngIf="col.header !='id'">{{ getNodeTypeLabel(rowData[col.field]) }}</ng-template>

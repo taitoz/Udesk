@@ -95,13 +95,19 @@ function addEvents() {
 }
 
 function buildMenu() {
+
+    let data = window.electronAPI.loadMenu()
+    //window.electronAPI.loadMenu((value) => {
+        console.log(data)
+    //})
+
     /*menuObject.menuItems.forEach((item) => {
         document.getElementById("menuItems").appendChild(buildMenuItem(item))
     })*/
     fetch('sidebar.json')
         .then(response => response.json())
         .then(data => {
-            window.electronAPI.loadUrl(data.menuItems[0].link)
+            //window.electronAPI.loadUrl(data.menuItems[0].link)
             data.menuItems.forEach((item) => {
                 document.getElementById("menuItems").appendChild(buildMenuItem(item))
             })

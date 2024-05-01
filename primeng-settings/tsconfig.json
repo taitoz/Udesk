@@ -11,7 +11,7 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es2015",
+    "target": "es5",
     "typeRoots": [
       "node_modules/@types"
     ],
@@ -22,11 +22,14 @@
     "module": "es2020",
     "baseUrl": "./",
     "paths": {
-      "primeng/*": ["node_modules/primeng-lts/*"]
+      "primeng/*": ["node_modules/primeng/*"]
     }
   },
+  "files": [
+    "src/main.ts",
+    "src/polyfills.ts"
+  ],
   "include": [
-    "src/**/*",
-    "typings/**/*" // <-- don't forget this line!
+    "src/**/*.d.ts"
   ]
 }

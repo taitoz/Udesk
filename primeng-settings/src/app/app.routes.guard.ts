@@ -1,17 +1,23 @@
 import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot} from '@angular/router';
+import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree} from '@angular/router';
+import {Observable} from 'rxjs';
+
 // import {SessionStorageService} from 'angular-web-storage';
 
 @Injectable({providedIn: 'root'})
 export class AppRoutesGuard implements CanActivate {
 
   constructor(
-    private router: Router,
-    // private sessionStorage: SessionStorageService
+      private router: Router,
+      // private sessionStorage: SessionStorageService
   ) {
   }
 
-  canActivate() {
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree | Observable<boolean | UrlTree> | Promise<boolean | UrlTree> {
+        throw new Error('Method not implemented.');
+    }
+
+  //canActivate() {
     /*const isAuthenticated = this.sessionStorage.get('isAuthenticated');
     if (isAuthenticated) {
       return true; // Allow access if the user is authenticated
@@ -19,7 +25,7 @@ export class AppRoutesGuard implements CanActivate {
       this.router.navigate(['/']); // Redirect to index if not authenticated
       return false; // Prevent access to the route
     }*/
-  }
+  //}
 
   // canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
 
