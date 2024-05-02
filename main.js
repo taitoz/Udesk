@@ -66,15 +66,7 @@ updater
         log.error(message)
     })
 
-
-//const ElectronPreferences = require('electron-preferences');
-//const prefOptions = require('./preferences/pref-options.js');
-//const preferences = new ElectronPreferences(prefOptions)
-let preferences = new (require('./preferences/preferences.js'))
-//const preferences =
-
-
-nativeTheme.themeSource = preferences.preferences?.theme?.theme ?? 'dark';
+import settings from 'electron-settings';
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -157,7 +149,7 @@ function createWindow() {
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
-    mainView.webContents.openDevTools({ mode: 'detach' });
+    //mainView.webContents.openDevTools({ mode: 'detach' });
     sidebar.webContents.openDevTools({ mode: 'detach' });
 
     // catch resize event emitted on window
@@ -226,7 +218,7 @@ app.whenReady().then(() => {
     tray.setToolTip('UDesk')
     tray.setTitle('UDesk')
 
-
+    initSettings()
 })
 
 // This method will be called when Electron has finished
@@ -252,16 +244,6 @@ app.on('activate', function () {
 })
 // You can also put them in separate files and require them here
 // =====================================================================================
-preferences.on('save', preferences => {
-    //console.log('Preferences were saved.', JSON.stringify(preferences, null, 4));
-    //console.log(preferences['notes']['images'][0])
-    nativeTheme.themeSource = preferences?.theme?.theme ?? 'system';
-});
-preferences.on('click', (key) => {
-    if (key === 'resetButton') {
-        console.log('resetButton event');
-    }
-});
 nativeTheme.on("updated", () => {
     titleBar.webContents.send('theme-toggle', nativeTheme.themeSource);
     sidebar.webContents.send('theme-toggle', nativeTheme.themeSource);
@@ -290,7 +272,7 @@ ipcMain.handle('win-maximize', () => {
     resizeMain()
 })
 ipcMain.handle('settings-open', () => {
-    preferences.show()
+    mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then()
 })
 
 ipcMain.handle('load-url', (event, url) => {
@@ -329,3 +311,8 @@ ipcMain.on('sideBarMenu:get', (event) => {
         event.returnValue = JSON.parse(data);
     });
 })
+
+function initSettings(){
+    
+    nativeTheme.themeSource = settings.getSync('theme') ?? 'dark';
+}

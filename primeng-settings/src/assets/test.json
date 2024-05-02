@@ -4,7 +4,7 @@
       "id": 1,
       "key": "menu-1",
       "value": "link-1",
-      "type": "L1"
+      "icon": "bx bx-home-alt"
     },
     "children": [
       {
@@ -12,7 +12,7 @@
           "id": 0,
           "key": "submenu-1",
           "value": "sublink-1",
-          "type": "L2"
+          "icon": ""
         }
       }
     ],
@@ -23,7 +23,7 @@
       "id": 2,
       "key": "menu-2",
       "value": "link-2",
-      "type": "L1"
+      "icon": "bx bx-film"
     },
     "children": [
       {
@@ -31,7 +31,7 @@
           "id": 0,
           "key": "submenu-1",
           "value": "sublink-1",
-          "type": "L2"
+          "icon": ""
         }
       },
       {
@@ -39,7 +39,7 @@
           "id": 1,
           "key": "submenu-2",
           "value": "sublink-2",
-          "type": "L2"
+          "icon": ""
         }
       }
     ],
@@ -50,7 +50,7 @@
       "id": 3,
       "key": "menu-3",
       "value": "link-3",
-      "type": "L1"
+      "icon": "bx bx-server"
     },
     "children": [
       {
@@ -58,7 +58,7 @@
           "id": 0,
           "key": "submenu-1",
           "value": "sublink-1",
-          "type": "L2"
+          "icon": ""
         },
         "children": [
           {
@@ -66,7 +66,7 @@
               "id": 0,
               "key": "subsubmenu-1",
               "value": "subsublink-1",
-              "type": "L3"
+              "icon": ""
             }
           }
         ]

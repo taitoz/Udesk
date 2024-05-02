@@ -3,5 +3,7 @@
 dist/
 /primeng-settings/node_modules/
 /primeng-settings/dist/
+/primeng-settings/package-lock.json
+/primeng-settings/.idea/
 /primeng-menu/node_modules/
 /primeng-menu/dist/

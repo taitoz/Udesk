@@ -5,22 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3faf92ab-8fb4-4200-83f5-7bdc8377f22a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../panels/panelsPreload.js" beforeDir="false" afterPath="$PROJECT_DIR$/../panels/panelsPreload.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.idea/UchetElectronApp.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/UchetElectronApp.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../panels/sidebar.html" beforeDir="false" afterPath="$PROJECT_DIR$/../panels/sidebar.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../panels/sidebar.js" beforeDir="false" afterPath="$PROJECT_DIR$/../panels/sidebar.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../preferences/preferences.js" beforeDir="false" afterPath="$PROJECT_DIR$/../preferences/preferences.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/angular.json" beforeDir="false" afterPath="$PROJECT_DIR$/angular.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/app.component.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/app.component.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/app.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/app.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/app.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/app.module.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/app.routes.guard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/app.routes.guard.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/primeng.module.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/primeng.module.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/polyfills.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/polyfills.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/assets/test.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/assets/test.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -60,7 +51,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\user\\_Repo\\UchetElectronApp\\primeng-settings\\node_modules\\typescript\\lib&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/home/developer/_Repos/uchet-desktop/primeng-settings/node_modules/typescript/lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -113,6 +104,9 @@
       <workItem from="1714579210498" duration="39000" />
       <workItem from="1714579268390" duration="307000" />
       <workItem from="1714579843474" duration="2091000" />
+      <workItem from="1714640541849" duration="226000" />
+      <workItem from="1714640987069" duration="256000" />
+      <workItem from="1714645308992" duration="223000" />
     </task>
     <servers />
   </component>
