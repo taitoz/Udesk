@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "primeng-issue-template": {
+    "primeng-settings": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
@@ -13,7 +13,11 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/primeng-issue-template",
+            "allowedCommonJsDependencies": [
+              "rxjs/Rx"
+            ],
+            "aot": true,
+            "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -23,48 +27,55 @@
               "src/assets"
             ],
             "styles": [
-                "src/styles.css",
-                "node_modules/primeng/resources/themes/saga-blue/theme.css",
-                "node_modules/primeng/resources/primeng.min.css",
-                "node_modules/primeflex/primeflex.css",
-                "node_modules/primeicons/primeicons.css",
-                "node_modules/@fullcalendar/core/main.css"
+              "src/styles.css",
+              "node_modules/primeng/resources/primeng.min.css",
+              "node_modules/primeflex/primeflex.css",
+              "node_modules/primeicons/primeicons.css",
+              "node_modules/boxicons/css/boxicons.min.css",
+              "node_modules/quill/dist/quill.snow.css"
             ],
             "scripts": []
           },
           "configurations": {
             "production": {
-              "fileReplacements": [{
-                "replace": "src/environments/environment.ts",
-                "with": "src/environments/environment.prod.ts"
-              }],
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
-              "buildOptimizer": true
+              "buildOptimizer": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
             }
           }
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "primeng-issue-template:build"
+            "buildTarget": "primeng-settings:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "primeng-issue-template:build:production"
+              "buildTarget": "primeng-settings:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "primeng-issue-template:build"
+            "buildTarget": "primeng-settings:build"
           }
         },
         "test": {
@@ -75,10 +86,11 @@
             "tsConfig": "src/tsconfig.spec.json",
             "karmaConfig": "src/karma.conf.js",
             "styles": [
-                "src/styles.css",
-                "node_modules/primeng/resources/themes/nova-light/theme.css",
-                "node_modules/primeng/resources/primeng.min.css",
-                "node_modules/primeicons/primeicons.css"
+              "src/styles.css",
+              "node_modules/primeng/resources/themes/nova-light/theme.css",
+              "node_modules/primeng/resources/primeng.min.css",
+              "node_modules/quill/dist/quill.snow.css",
+              "node_modules/primeicons/primeicons.css"
             ],
             "scripts": [],
             "assets": [
@@ -101,7 +113,7 @@
         }
       }
     },
-    "primeng-issue-template-e2e": {
+    "primeng-settings-e2e": {
       "root": "e2e/",
       "projectType": "application",
       "architect": {
@@ -109,11 +121,11 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "primeng-issue-template:serve"
+            "devServerTarget": "primeng-settings:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "primeng-issue-template:serve:production"
+              "devServerTarget": "primeng-settings:serve:production"
             }
           }
         },
@@ -129,5 +141,7 @@
       }
     }
   },
-  "defaultProject": "primeng-issue-template"
+  "cli": {
+    "analytics": false
+  }
 }

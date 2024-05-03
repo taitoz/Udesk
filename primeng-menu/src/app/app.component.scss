@@ -1,0 +1,19 @@
+:host ::ng-deep .p-tabview-nav {
+  i, span {
+    vertical-align: middle;
+  }
+
+  span {
+    margin: 0 .5rem;
+  }
+}
+
+:host ::ng-deep .p-dropdown {
+  width: 9rem;
+}
+
+:host ::ng-deep input {
+  height: 30px;
+  font-size: 1rem;
+  font-weight: normal;
+}

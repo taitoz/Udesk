@@ -117,7 +117,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.fileService.saveTestData(this.treeNodesData);
 
         if (this.electronService.isElectronApp) {
-            this.electronService.ipcRenderer.send('save-data', this.treeNodesData);
+            this.electronService.ipcRenderer.send('sideBarMenu:set', this.treeNodesData);
         }
 
         this.treeNodesData = [...this.treeNodesData];

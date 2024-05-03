@@ -1,20 +1,28 @@
-import { NgModule }      from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+import {NgModule} from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {FormsModule} from '@angular/forms';
+import {HttpClientModule} from '@angular/common/http';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {FileService} from './fileService';
+import {PrimeNgModule} from './primeng.module';
+import {AppComponent} from './app.component';
+import {AppRouters} from './app.routes';
 
-import { AppComponent }   from './app.component';
-
-import { PanelMenuModule } from 'primeng/panelmenu';
 
 @NgModule({
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    PanelMenuModule,
-  ],
-  declarations: [ AppComponent ],
-  bootstrap:    [ AppComponent ]
+    imports: [
+        PrimeNgModule,
+        BrowserModule,
+        BrowserAnimationsModule,
+        HttpClientModule,
+        FormsModule,
+        AppRouters
+    ],
+    declarations: [AppComponent],
+    bootstrap: [AppComponent],
+    providers: [FileService]
 })
 
-export class AppModule { }
+export class AppModule {
+}

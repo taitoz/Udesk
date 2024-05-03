@@ -66,7 +66,8 @@ updater
         log.error(message)
     })
 
-import settings from 'electron-settings';
+const settings = require('electron-settings');
+initSettings()
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -82,7 +83,9 @@ let titleBarHeight = 30
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
 
+
 function createWindow() {
+
     // Create the browser window.
     mainWindow = new BrowserWindow({
         width: 1280,
@@ -149,8 +152,9 @@ function createWindow() {
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
+    //mainWindow.webContents.openDevTools({mode: 'detach'});
     //mainView.webContents.openDevTools({ mode: 'detach' });
-    sidebar.webContents.openDevTools({ mode: 'detach' });
+    sidebar.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -217,8 +221,6 @@ app.whenReady().then(() => {
     tray.setContextMenu(trayMenu)
     tray.setToolTip('UDesk')
     tray.setTitle('UDesk')
-
-    initSettings()
 })
 
 // This method will be called when Electron has finished
@@ -300,19 +302,25 @@ ipcMain.on('settings:toggleTheme', (event, theme) => {
     //console.log(theme)
     nativeTheme.themeSource = theme;
 })
-
+ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
+    settings.setSync('sideBarMenu', sideBarMenu);
+    sidebar.webContents.reload();
+})
 ipcMain.on('sideBarMenu:get', (event) => {
-    fs.readFile(path.join(__dirname, 'primeng-settings', 'dist', 'assets', 'test.json'),
-        'utf8', (err, data) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        event.returnValue = JSON.parse(data);
-    });
+    event.returnValue = settings.getSync('sideBarMenu');
 })
 
-function initSettings(){
-    
+function initSettings() {
+    //file path /home/developer/.config/Udesk/settings.json
+    if (!settings.hasSync('sideBarMenu')) {
+        fs.readFile(path.join(__dirname, 'primeng-settings', 'dist', 'assets', 'test.json'),
+            'utf8', (err, data) => {
+                settings.setSync('sideBarMenu', JSON.parse(data))
+            });
+    }
+    if (!settings.hasSync('theme')) {
+        settings.setSync('theme', 'dark')
+    }
     nativeTheme.themeSource = settings.getSync('theme') ?? 'dark';
+    //console.log()
 }
