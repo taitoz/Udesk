@@ -20,30 +20,32 @@ import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {DialogModule} from 'primeng/dialog';
 import {MultiSelectModule} from 'primeng/multiselect';
 import {ContextMenuModule} from 'primeng/contextmenu';
+import {PanelMenuModule} from 'primeng/panelmenu';
 
 @NgModule({
   exports: [
-    TabViewModule,
-    ButtonModule,
-    TreeTableModule,
-    TableModule,
-    ToggleButtonModule,
-    SplitButtonModule,
-    ToastModule,
-    DropdownModule,
-    TooltipModule,
-    PanelModule,
-    ProgressSpinnerModule,
-    StepsModule,
-    DynamicDialogModule,
-    DataViewModule,
-    InputTextModule,
-    InputTextareaModule,
-    ConfirmDialogModule,
-    CardModule,
-    DialogModule,
-    MultiSelectModule,
-    ContextMenuModule,
+    // TabViewModule,
+    // ButtonModule,
+    // TreeTableModule,
+    // TableModule,
+    // ToggleButtonModule,
+    // SplitButtonModule,
+    // ToastModule,
+    // DropdownModule,
+    // TooltipModule,
+    // PanelModule,
+    // ProgressSpinnerModule,
+    // StepsModule,
+    // DynamicDialogModule,
+    // DataViewModule,
+    // InputTextModule,
+    // InputTextareaModule,
+    // ConfirmDialogModule,
+    // CardModule,
+    // DialogModule,
+    // MultiSelectModule,
+    // ContextMenuModule,
+    PanelMenuModule
   ],
   providers: [DialogService]
 })

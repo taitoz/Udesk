@@ -1,7 +1,7 @@
 import {Component, Inject, OnInit, ViewEncapsulation} from '@angular/core';
 import {MenuItem, MessageService, TreeNode} from 'primeng/api';
 import {FileService} from './fileService';
-import { ElectronService } from 'ngx-electronyzer';
+import {ElectronService} from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 
 @Component({
@@ -15,7 +15,7 @@ import {DOCUMENT} from '@angular/common';
 export class AppComponent implements OnInit {
 
     treeNodesData: TreeNode[];
-    items: MenuItem[] | undefined;
+    items: MenuItem[] = [];
 
     public isLightTheme = true;
 
@@ -36,18 +36,40 @@ export class AppComponent implements OnInit {
 
     ngOnInit() {
 
-        // if (this.electronService.isElectronApp) {
-        //     //this.electronService.shell.beep();
-        //     this.treeNodesData = this.electronService.ipcRenderer.sendSync('sideBarMenu:get')
-        //     console.log('menu loaded from electron');
-        // } else {
+        if (this.electronService.isElectronApp) {
+            //this.electronService.shell.beep();
+            this.treeNodesData = this.electronService.ipcRenderer.sendSync('sideBarMenu:get');
+            console.log('treeNodesData loaded from electron');
+        } else {
             this.fileService.loadTestData().subscribe(result => {
-                this.items = result;
-                console.log('menu loaded from file');
+                this.treeNodesData = result;
+                console.log('treeNodesData loaded from file');
             });
-        // }
+        }
+        this.loadMenuItemsFromTreeNodesData();
 
+    }
 
+    loadMenuItemsFromTreeNodesData() {
+
+        this.treeNodesData.forEach(treeNode => {
+            let menuItem = {
+                label: treeNode.data.key,
+                icon: treeNode.data.icon,
+                items: []
+            };
+            if (treeNode.children) {
+                treeNode.children.forEach(innerTreeNode => {
+                    let innerMenuItem = {
+                        label: innerTreeNode.data.key,
+                        icon: innerTreeNode.data.icon,
+                        items: []
+                    };
+                    menuItem.items.push(innerMenuItem);
+                });
+            }
+            this.items.push(menuItem);
+        });
     }
 
     onThemeSwitchChange() {
@@ -67,11 +89,11 @@ export class AppComponent implements OnInit {
         ) as HTMLLinkElement;
         if (themeLink) {
             if (themeLink.href.includes('Light')) {
-                themeLink.href = 'assets/primeThemeDark.css'
-                theme = 'dark'
+                themeLink.href = 'assets/primeThemeDark.css';
+                theme = 'dark';
             } else {
-                themeLink.href = 'assets/primeThemeLight.css'
-                theme = 'light'
+                themeLink.href = 'assets/primeThemeLight.css';
+                theme = 'light';
             }
         } else {
             const style = this.document.createElement('link');

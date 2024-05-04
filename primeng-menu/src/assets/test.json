@@ -1,0 +1,77 @@
+[
+  {
+    "data": {
+      "id": 1,
+      "key": "menu-1",
+      "value": "link-1",
+      "icon": "bx bx-home-alt"
+    },
+    "children": [
+      {
+        "data": {
+          "id": 0,
+          "key": "submenu-1",
+          "value": "sublink-1",
+          "icon": ""
+        }
+      }
+    ],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 2,
+      "key": "menu-2",
+      "value": "link-2",
+      "icon": "bx bx-film"
+    },
+    "children": [
+      {
+        "data": {
+          "id": 0,
+          "key": "submenu-1",
+          "value": "sublink-1",
+          "icon": ""
+        }
+      },
+      {
+        "data": {
+          "id": 1,
+          "key": "submenu-2",
+          "value": "sublink-2",
+          "icon": ""
+        }
+      }
+    ],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 3,
+      "key": "menu-3",
+      "value": "link-3",
+      "icon": "bx bx-server"
+    },
+    "children": [
+      {
+        "data": {
+          "id": 0,
+          "key": "submenu-1",
+          "value": "sublink-1",
+          "icon": ""
+        },
+        "children": [
+          {
+            "data": {
+              "id": 0,
+              "key": "subsubmenu-1",
+              "value": "subsublink-1",
+              "icon": ""
+            }
+          }
+        ]
+      }
+    ],
+    "parent": null
+  }
+]

@@ -118,7 +118,9 @@ function createWindow() {
 
     sidebar = new BrowserView({
         webPreferences: {
-            preload: path.join(__dirname, 'panels', 'panelsPreload.js')
+            nodeIntegration: true,
+            contextIsolation: false,
+            //preload: path.join(__dirname, 'panels', 'panelsPreload.js')
         }
     })
     mainWindow.addBrowserView(sidebar)
@@ -145,7 +147,8 @@ function createWindow() {
     //setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')), 0)
     titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')).then()
     //setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
-    sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
+    //sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
+    sidebar.webContents.loadFile(path.join(__dirname, 'primeng-menu', 'dist', 'index.html')).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
     mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then()

@@ -62,11 +62,11 @@ export class AppComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.nodeTypes = [
-            {label: 'L1', value: 'L1'},
-            {label: 'L2', value: 'L2'},
-            {label: 'L3', value: 'L3'}
-        ];
+        // this.nodeTypes = [
+        //     {label: 'L1', value: 'L1'},
+        //     {label: 'L2', value: 'L2'},
+        //     {label: 'L3', value: 'L3'}
+        // ];
 
         this.cols = [
             {field: 'key', header: 'Name', editable: true, width: 300},
