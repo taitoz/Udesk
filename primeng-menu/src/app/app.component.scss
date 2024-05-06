@@ -1,22 +1,14 @@
 ///* Header text on hover */
 //
-//::ng-deep p-panelmenu .p-component.p-panelmenu-header.p-highlight>a {
-//  color: white;
-//}
-//
-//
-///* Header text normal */
-//
-//::ng-deep p-panelmenu .p-component.p-panelmenu-header>a {
-//  color: red;
-//}
-//
-//
-///* Expand icon on contents */
-//
-//::ng-deep .p-panelmenu .p-panelmenu-content .p-menuitem .p-menuitem-link .p-panelmenu-icon {
-//  color: red;
-//}
+::ng-deep .p-panelmenu {
+  width: 260px;
+}
+::ng-deep .p-menuitem-text {
+  font-weight: 400;
+}
+::ng-deep .p-menuitem-icon {
+  font-size: 1.4em;
+}
 //
 //
 ///* icons in content next to text */

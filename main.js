@@ -148,7 +148,7 @@ function createWindow() {
     titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')).then()
     //setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
     //sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
-    sidebar.webContents.loadFile(path.join(__dirname, 'primeng-menu', 'dist', 'index.html')).then()
+    loadSidebar();
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
     mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then()
@@ -201,6 +201,11 @@ function resizeMain() {
         width: newBounds.width - sidebarWidth,
         height: newBounds.height
     })
+}
+
+function loadSidebar(){
+    const url = `file://${__dirname}/primeng-menu/dist/index.html`;
+    sidebar.webContents.loadURL(url)
 }
 
 function get() {
@@ -264,6 +269,7 @@ ipcMain.handle('win-back', () => {
     mainView.webContents.goBack()
 })
 ipcMain.handle('win-reload', () => {
+    if (mainView.webContents.getURL().includes('settings')) return;
     mainView.webContents.reload()
 })
 ipcMain.handle('win-close', () => {
@@ -307,7 +313,7 @@ ipcMain.on('settings:toggleTheme', (event, theme) => {
 })
 ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
     settings.setSync('sideBarMenu', sideBarMenu);
-    sidebar.webContents.reload();
+    loadSidebar();
 })
 ipcMain.on('sideBarMenu:get', (event) => {
     event.returnValue = settings.getSync('sideBarMenu');

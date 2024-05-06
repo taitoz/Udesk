@@ -1,4 +1,4 @@
-import {Component, Inject, OnInit, ViewEncapsulation} from '@angular/core';
+import {Component, Inject, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MenuItem, MessageService, TreeNode} from 'primeng/api';
 import {FileService} from './fileService';
 import {ElectronService} from 'ngx-electronyzer';
@@ -15,9 +15,10 @@ import {DOCUMENT} from '@angular/common';
 export class AppComponent implements OnInit {
 
     treeNodesData: TreeNode[];
-    items: MenuItem[] = [];
+    menuItems: MenuItem[] = [];
 
     public isLightTheme = true;
+    @ViewChild('menubar') menuBar: any;
 
     constructor(
         private electronService: ElectronService,
@@ -68,8 +69,9 @@ export class AppComponent implements OnInit {
                     menuItem.items.push(innerMenuItem);
                 });
             }
-            this.items.push(menuItem);
+            this.menuItems.push(menuItem);
         });
+        //this.menuItems = [...this.menuItems];
     }
 
     onThemeSwitchChange() {

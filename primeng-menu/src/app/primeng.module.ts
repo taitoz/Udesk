@@ -21,6 +21,7 @@ import {DialogModule} from 'primeng/dialog';
 import {MultiSelectModule} from 'primeng/multiselect';
 import {ContextMenuModule} from 'primeng/contextmenu';
 import {PanelMenuModule} from 'primeng/panelmenu';
+import { AvatarModule } from 'primeng/avatar';
 
 @NgModule({
   exports: [
@@ -45,7 +46,8 @@ import {PanelMenuModule} from 'primeng/panelmenu';
     // DialogModule,
     // MultiSelectModule,
     // ContextMenuModule,
-    PanelMenuModule
+    PanelMenuModule,
+    AvatarModule
   ],
   providers: [DialogService]
 })
