@@ -22,11 +22,15 @@ import {MultiSelectModule} from 'primeng/multiselect';
 import {ContextMenuModule} from 'primeng/contextmenu';
 import {PanelMenuModule} from 'primeng/panelmenu';
 import { AvatarModule } from 'primeng/avatar';
+import { BadgeModule } from 'primeng/badge';
+import { RippleModule } from 'primeng/ripple';
 
 @NgModule({
   exports: [
     // TabViewModule,
-    // ButtonModule,
+    ButtonModule,
+    BadgeModule,
+    RippleModule,
     // TreeTableModule,
     // TableModule,
     // ToggleButtonModule,

@@ -12,18 +12,18 @@ export class FileService {
 
     loadTestData(): Observable<TreeNode[]> {
         return new Observable<TreeNode[]>((observer) => {
-            const testData = this.sessionStorage.get('testData');
-            if (testData != null) {
-                observer.next(testData);
-                observer.complete();
-            } else {
+            //const testData = this.sessionStorage.get('testData');
+            // if (testData != null) {
+            //     observer.next(testData);
+            //     observer.complete();
+            // } else {
                 this.http.get<TreeNode[]>('assets/test.json').subscribe((response: TreeNode[]) => {
-                        this.saveTestData(response);
+                        //this.saveTestData(response);
                         observer.next(response);
                         observer.complete();
                     }
                 );
-            }
+            //}
         });
     }
 
