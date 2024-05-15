@@ -75,6 +75,10 @@ function addEvents() {
         })
     })
 
+    document.getElementById('menu-button').addEventListener("click", () => {
+        window.electronAPI.menubarToggle();
+    });
+
     document.getElementById('settings-button').addEventListener("click", () => {
         window.electronAPI.openSettings()
     })
@@ -120,7 +124,7 @@ function buildMenu() {
 //let dataJSON = '{"menuItems": [{"name": "Test1","icon": "bx bx-bell icon","link": "#"},{"name": "Test2","icon": "bx bx-bar-chart-alt-2 icon","innerItems": [{"name": "Test2-1","icon": "bx bx-bar-chart-alt-2 icon","link": ""},{"name": "Test2-2","icon": "bx bx-bar-chart-alt-2 icon","link": ""}]}]}'
 //let dataObject = JSON.parse(dataJSON)
 //buildMenu(dataObject)
-buildMenu()
+//buildMenu()
 
 window.electronAPI.onSidebarToggle((value) => {
     document.querySelector(".sidebar").classList.toggle("close")

@@ -1,8 +1,5 @@
 function addEvents() {
     //document.getElementById('drag-region').style.webkitAppRegion = "drag"
-    document.getElementById('menu-button').addEventListener("click", () => {
-        window.electronAPI.sidebarToggle();
-    });
 
     document.getElementById('back-button').addEventListener("click", () => {
         window.electronAPI.goBack();

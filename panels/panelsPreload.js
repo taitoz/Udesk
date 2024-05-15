@@ -10,7 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     //     alert("received data1" + value)
     // }),
     onSidebarToggle: (callback) => ipcRenderer.on('sidebar-toggle', (_event, value) => callback(value)),
-    sidebarToggle: () => ipcRenderer.invoke('sidebar-toggle'),
+    menubarToggle: () => ipcRenderer.invoke('menubar-toggle'),
 
     loadUrl: (url) => ipcRenderer.invoke('load-url', url),
     openSettings: () => ipcRenderer.invoke('settings-open'),

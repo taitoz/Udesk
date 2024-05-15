@@ -73,11 +73,13 @@ initSettings()
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 let sidebar
+let menubar
 let titleBar
 let mainView
 
 let i18n = new (require('./translations/i18n'))
 let sidebarWidth = 70
+let menubarWidth = 230
 let titleBarHeight = 30
 
 app.disableHardwareAcceleration()
@@ -115,17 +117,31 @@ function createWindow() {
     mainWindow.addBrowserView(titleBar)
     titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
     titleBar.setAutoResize({width: true, height: false})
+    titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')).then()
 
     sidebar = new BrowserView({
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            preload: path.join(__dirname, 'panels', 'panelsPreload.js')
+        }
+    })
+    mainWindow.addBrowserView(sidebar)
+    sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: mainWindow.getBounds().height})
+    sidebar.setAutoResize({width: true, height: true})
+    sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
+
+    menubar = new BrowserView({
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
             //preload: path.join(__dirname, 'panels', 'panelsPreload.js')
         }
     })
-    mainWindow.addBrowserView(sidebar)
-    sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: mainWindow.getBounds().height})
-    sidebar.setAutoResize({width: false, height: true})
+    mainWindow.addBrowserView(menubar)
+    menubar.setBounds({x: sidebarWidth, y: titleBarHeight, width: menubarWidth, height: mainWindow.getBounds().height})
+    menubar.setAutoResize({width: true, height: true})
+    loadMenubar();
 
     mainView = new BrowserView({
         webPreferences: {
@@ -136,19 +152,14 @@ function createWindow() {
     mainWindow.addBrowserView(mainView)
     mainView.setAutoResize({width: true, height: true})
     mainView.setBounds({
-        x: sidebarWidth,
+        x: (sidebarWidth + menubarWidth),
         y: titleBarHeight,
-        width: mainWindow.getBounds().width - sidebarWidth,
+        width: mainWindow.getBounds().width - (sidebarWidth + menubarWidth),
         height: mainWindow.getBounds().height - titleBarHeight
     })
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
-    //setTimeout(() => titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')), 0)
-    titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')).then()
-    //setTimeout(() => sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')), 0)
-    //sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
-    loadSidebar();
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
     mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then()
@@ -194,18 +205,18 @@ function resizeMain() {
     // store window's new size in variable
     let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
-    sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: newBounds.height})
+    sidebar.setBounds({x: 0, y: titleBarHeight, width: (sidebarWidth + menubarWidth), height: newBounds.height})
     mainView.setBounds({
-        x: sidebarWidth,
+        x: (sidebarWidth + menubarWidth),
         y: titleBarHeight,
-        width: newBounds.width - sidebarWidth,
+        width: newBounds.width - (sidebarWidth + menubarWidth),
         height: newBounds.height
     })
 }
 
-function loadSidebar(){
+function loadMenubar(){
     const url = `file://${__dirname}/primeng-menu/dist/index.html`;
-    sidebar.webContents.loadURL(url)
+    menubar.webContents.loadURL(url)
 }
 
 function get() {
@@ -293,17 +304,17 @@ ipcMain.handle('load-url', (event, url) => {
     mainView.webContents.loadURL(url).then()
 })
 
-ipcMain.handle('sidebar-toggle', (event, arg) => {
-    sidebarWidth = sidebar.getBounds().width
-    switch (sidebarWidth) {
-        case 70:
-            sidebarWidth = 260;
+ipcMain.handle('menubar-toggle', (event, arg) => {
+    menubarWidth = menubar.getBounds().width
+    switch (menubarWidth) {
+        case 0:
+            menubarWidth = 230;
             break;
-        case 260:
-            sidebarWidth = 70
+        case 230:
+            menubarWidth = 0
             break;
     }
-    sidebar.webContents.send('sidebar-toggle');
+    //sidebar.webContents.send('sidebar-toggle');
     resizeMain()
 })
 
@@ -313,7 +324,7 @@ ipcMain.on('settings:toggleTheme', (event, theme) => {
 })
 ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
     settings.setSync('sideBarMenu', sideBarMenu);
-    loadSidebar();
+    loadMenubar();
 })
 ipcMain.on('sideBarMenu:get', (event) => {
     event.returnValue = settings.getSync('sideBarMenu');
