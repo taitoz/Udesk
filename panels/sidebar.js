@@ -53,13 +53,13 @@ function buildMenuItem(item) {
 function addEvents() {
     const sidebar = document.querySelector(".sidebar")
     document.querySelector(".app-details").addEventListener("click", () => {
-        window.electronAPI.sidebarToggle()
+        //window.electronAPI.sidebarToggle()
     })
 
     let sidebarBtn = document.querySelectorAll(".bx-collection")
     sidebarBtn.forEach((item) => {
         item.addEventListener("click", (e) => {
-            window.electronAPI.sidebarToggle()
+            //window.electronAPI.sidebarToggle()
             let liParent = e.target.parentElement.parentElement.parentElement
             //console.log(e.target.parentElement.parentElement.parentElement)
             liParent.classList.toggle("showMenu")
@@ -125,8 +125,9 @@ function buildMenu() {
 //let dataObject = JSON.parse(dataJSON)
 //buildMenu(dataObject)
 //buildMenu()
+addEvents()
 
-window.electronAPI.onSidebarToggle((value) => {
+window.electronAPI.menubarToggle((value) => {
     document.querySelector(".sidebar").classList.toggle("close")
 })
 

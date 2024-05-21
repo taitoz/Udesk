@@ -121,8 +121,6 @@ function createWindow() {
 
     sidebar = new BrowserView({
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
             preload: path.join(__dirname, 'panels', 'panelsPreload.js')
         }
     })
@@ -205,7 +203,19 @@ function resizeMain() {
     // store window's new size in variable
     let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
-    sidebar.setBounds({x: 0, y: titleBarHeight, width: (sidebarWidth + menubarWidth), height: newBounds.height})
+    sidebar.setBounds({
+        x: 0,
+        y: titleBarHeight,
+        width: sidebarWidth,
+        height: newBounds.height
+    })
+    menubar.setBounds({
+        x: sidebarWidth,
+        y: titleBarHeight,
+        width: menubarWidth,
+        height: newBounds.height
+    })
+
     mainView.setBounds({
         x: (sidebarWidth + menubarWidth),
         y: titleBarHeight,

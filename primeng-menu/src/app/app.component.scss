@@ -10,7 +10,12 @@
   //font-size: 1.4em;
 }
 
-.app-details .app-name{
+.app-details {
+  margin-left: 12px;
+  height: 48px;
+}
+
+.app-name {
   margin-left: 12px;
   font-size: 22px;
   color: var(--text-color);
