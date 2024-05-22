@@ -160,13 +160,15 @@ function createWindow() {
     //mainWindow.loadFile('index.html')
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
-    mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then()
+    mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then(() => {
+        //mainView.webContents.
+    })
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
     //mainView.webContents.openDevTools({ mode: 'detach' });
-    sidebar.webContents.openDevTools({mode: 'detach'});
+    menubar.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -278,6 +280,7 @@ app.on('activate', function () {
 nativeTheme.on("updated", () => {
     titleBar.webContents.send('theme-toggle', nativeTheme.themeSource);
     sidebar.webContents.send('theme-toggle', nativeTheme.themeSource);
+    menubar.webContents.send('theme-toggle', nativeTheme.themeSource);
     // if (nativeTheme.shouldUseDarkColors) {
     //     console.log("Dark Theme Chosen by User");
     // } else {

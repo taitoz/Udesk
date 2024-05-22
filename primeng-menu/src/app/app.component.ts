@@ -17,7 +17,7 @@ export class AppComponent implements OnInit {
     treeNodesData: TreeNode[];
     menuItems: MenuItem[] = [];
 
-    public isLightTheme = true;
+    //public isLightTheme = true;
     @ViewChild('menubar') menuBar: any;
 
     constructor(
@@ -63,10 +63,12 @@ export class AppComponent implements OnInit {
             value: treeNode.data.value,
             command: () => {
                 console.log(treeNode.data.value);
-                this.electronService.ipcRenderer.invoke('load-url', treeNode.data.value)
+                if (this.electronService.isElectronApp) {
+                    this.electronService.ipcRenderer.invoke('load-url', treeNode.data.value)
+                }
             },
-            icon: (treeNode.data.icon) ? treeNode.data.icon : 'pi pi-circle-off',
-            //badge: treeNode.data.id +' ',
+            // icon: (treeNode.data.icon) ? treeNode.data.icon : 'pi pi-circle-off',
+            // badge: treeNode.data.id +' ',
             items: []
         };
         if (treeNode.children) {

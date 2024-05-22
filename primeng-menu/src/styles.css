@@ -1,8 +1,13 @@
 @import "assets/primeThemeDark.css";
-/*@import "./themes.scss";*/
+/*@import "node_modules/primeng/resources/themes/saga-blue/theme.css";*/
 
 body {
+    width: 230px;
+    height: calc(100vh - 60px);
+    top: 60px;
     padding: 0;
     margin: 0;
     background-color: var(--surface-a);
+    border-left: 1px solid #383838;
+    border-right: 1px solid #383838;
 }

@@ -1,7 +1,7 @@
 ///* Header text on hover */
 //
 ::ng-deep .p-panelmenu {
-  width: 260px;
+  width: 100%;
 }
 ::ng-deep .p-menuitem-text {
   //font-weight: 400;
@@ -11,8 +11,7 @@
 }
 
 .app-details {
-  margin-left: 12px;
-  height: 48px;
+  height: 67px;
 }
 
 .app-name {
