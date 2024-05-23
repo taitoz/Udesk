@@ -160,7 +160,7 @@ function createWindow() {
     //mainWindow.loadFile('index.html')
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
-    mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then(() => {
+    mainView.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
         mainView.webContents.send('loadComponent', 'test');
     })
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
@@ -227,7 +227,7 @@ function resizeMain() {
 }
 
 function loadMenubar(){
-    const url = `file://${__dirname}/primeng-settings/dist/index.html`;
+    const url = `file://${__dirname}/primeng-ui/dist/index.html`;
     menubar.webContents.loadURL(url).then(() => {
         menubar.webContents.send('loadComponent', 'menu');
     })
@@ -309,7 +309,7 @@ ipcMain.handle('win-maximize', () => {
     resizeMain()
 })
 ipcMain.handle('settings-open', () => {
-    mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then()
+    mainView.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then()
 })
 
 ipcMain.handle('load-url', (event, url) => {
@@ -348,7 +348,7 @@ ipcMain.on('sideBarMenu:get', (event) => {
 function initSettings() {
     //file path /home/developer/.config/Udesk/settings.json
     if (!settings.hasSync('sideBarMenu')) {
-        fs.readFile(path.join(__dirname, 'primeng-settings', 'dist', 'assets', 'test.json'),
+        fs.readFile(path.join(__dirname, 'primeng-ui', 'dist', 'assets', 'test.json'),
             'utf8', (err, data) => {
                 settings.setSync('sideBarMenu', JSON.parse(data))
             });

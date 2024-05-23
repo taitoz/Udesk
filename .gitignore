@@ -2,8 +2,8 @@
 /release-builds/
 /dist/
 /installers/
-/primeng-settings/node_modules/
-/primeng-settings/dist/
-/primeng-settings/package-lock.json
-/primeng-settings/.idea/
-/primeng-settings/.angular/
+/primeng-ui/node_modules/
+/primeng-ui/dist/
+/primeng-ui/package-lock.json
+/primeng-ui/.idea/
+/primeng-ui/.angular/
