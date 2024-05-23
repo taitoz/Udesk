@@ -22,34 +22,40 @@ import {MultiSelectModule} from 'primeng/multiselect';
 import {ContextMenuModule} from 'primeng/contextmenu';
 import {AvatarModule} from 'primeng/avatar';
 import {PanelMenuModule} from 'primeng/panelmenu';
+import {MenuModule} from 'primeng/menu';
+import {RippleModule} from 'primeng/ripple';
+import {BadgeModule} from 'primeng/badge';
 
 @NgModule({
-  exports: [
-    TabViewModule,
-    ButtonModule,
-    TreeTableModule,
-    TableModule,
-    ToggleButtonModule,
-    SplitButtonModule,
-    ToastModule,
-    DropdownModule,
-    TooltipModule,
-    PanelModule,
-    ProgressSpinnerModule,
-    StepsModule,
-    DynamicDialogModule,
-    DataViewModule,
-    InputTextModule,
-    InputTextareaModule,
-    ConfirmDialogModule,
-    CardModule,
-    DialogModule,
-    MultiSelectModule,
-    ContextMenuModule,
-    PanelMenuModule,
-    AvatarModule
-  ],
-  providers: [DialogService]
+    exports: [
+        TabViewModule,
+        ButtonModule,
+        TreeTableModule,
+        TableModule,
+        ToggleButtonModule,
+        SplitButtonModule,
+        ToastModule,
+        DropdownModule,
+        TooltipModule,
+        PanelModule,
+        ProgressSpinnerModule,
+        StepsModule,
+        DynamicDialogModule,
+        DataViewModule,
+        InputTextModule,
+        InputTextareaModule,
+        ConfirmDialogModule,
+        CardModule,
+        DialogModule,
+        MultiSelectModule,
+        ContextMenuModule,
+        PanelMenuModule,
+        AvatarModule,
+        MenuModule,
+        RippleModule,
+        BadgeModule
+    ],
+    providers: [DialogService]
 })
 
 export class PrimeNgModule {

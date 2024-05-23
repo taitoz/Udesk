@@ -121,13 +121,18 @@ function createWindow() {
 
     sidebar = new BrowserView({
         webPreferences: {
-            preload: path.join(__dirname, 'panels', 'panelsPreload.js')
+            nodeIntegration: true,
+            contextIsolation: false,
+            //preload: path.join(__dirname, 'panels', 'panelsPreload.js')
         }
     })
     mainWindow.addBrowserView(sidebar)
     sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: mainWindow.getBounds().height})
     sidebar.setAutoResize({width: true, height: true})
-    sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
+    // sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
+    sidebar.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
+        sidebar.webContents.send('loadComponent', 'sidebar');
+    })
 
     menubar = new BrowserView({
         webPreferences: {
@@ -161,13 +166,14 @@ function createWindow() {
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
     mainView.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
-        mainView.webContents.send('loadComponent', 'test');
+        mainView.webContents.send('loadComponent', '');
     })
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
-    mainView.webContents.openDevTools({ mode: 'detach' });
+    //mainView.webContents.openDevTools({ mode: 'detach' });
+    sidebar.webContents.openDevTools({mode: 'detach'});
     //menubar.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window

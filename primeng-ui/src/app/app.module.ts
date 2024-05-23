@@ -10,6 +10,7 @@ import {SettingsComponent} from './settings.component';
 import {AppRouters} from './app.routes';
 import {MenuComponent} from './menu.component';
 import {AppComponent} from './app.component';
+import {SidebarComponent} from './sidebar.component';
 
 
 @NgModule({
@@ -21,7 +22,7 @@ import {AppComponent} from './app.component';
         FormsModule,
         AppRouters
     ],
-    declarations: [AppComponent, SettingsComponent, MenuComponent],
+    declarations: [AppComponent, SettingsComponent, MenuComponent, SidebarComponent],
     bootstrap: [AppComponent],
     providers: [FileService]
 })
