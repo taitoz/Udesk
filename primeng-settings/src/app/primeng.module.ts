@@ -20,6 +20,8 @@ import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {DialogModule} from 'primeng/dialog';
 import {MultiSelectModule} from 'primeng/multiselect';
 import {ContextMenuModule} from 'primeng/contextmenu';
+import {AvatarModule} from 'primeng/avatar';
+import {PanelMenuModule} from 'primeng/panelmenu';
 
 @NgModule({
   exports: [
@@ -44,6 +46,8 @@ import {ContextMenuModule} from 'primeng/contextmenu';
     DialogModule,
     MultiSelectModule,
     ContextMenuModule,
+    PanelMenuModule,
+    AvatarModule
   ],
   providers: [DialogService]
 })

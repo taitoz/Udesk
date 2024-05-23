@@ -161,14 +161,14 @@ function createWindow() {
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
     mainView.webContents.loadFile(path.join(__dirname, 'primeng-settings', 'dist', 'index.html')).then(() => {
-        //mainView.webContents.
+        mainView.webContents.send('loadComponent', 'test');
     })
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
-    //mainView.webContents.openDevTools({ mode: 'detach' });
-    menubar.webContents.openDevTools({mode: 'detach'});
+    mainView.webContents.openDevTools({ mode: 'detach' });
+    //menubar.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -227,8 +227,10 @@ function resizeMain() {
 }
 
 function loadMenubar(){
-    const url = `file://${__dirname}/primeng-menu/dist/index.html`;
-    menubar.webContents.loadURL(url)
+    const url = `file://${__dirname}/primeng-settings/dist/index.html`;
+    menubar.webContents.loadURL(url).then(() => {
+        menubar.webContents.send('loadComponent', 'menu');
+    })
 }
 
 function get() {

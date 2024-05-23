@@ -6,8 +6,10 @@ import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
 import {FileService} from './fileService';
 import {PrimeNgModule} from './primeng.module';
-import {AppComponent} from './app.component';
+import {SettingsComponent} from './settings.component';
 import {AppRouters} from './app.routes';
+import {MenuComponent} from './menu.component';
+import {AppComponent} from './app.component';
 
 
 @NgModule({
@@ -19,7 +21,7 @@ import {AppRouters} from './app.routes';
         FormsModule,
         AppRouters
     ],
-    declarations: [AppComponent],
+    declarations: [AppComponent, SettingsComponent, MenuComponent],
     bootstrap: [AppComponent],
     providers: [FileService]
 })
