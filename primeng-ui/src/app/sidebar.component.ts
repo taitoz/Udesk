@@ -69,6 +69,10 @@ export class SidebarComponent implements OnInit {
     ];
   }
 
+  menubarToggle(){
+    this.electronService.ipcRenderer.invoke('menubar-toggle').then();
+  }
+
   toggleTheme(theme) {
     const head = this.document.getElementsByTagName('head')[0];
     let themeLink = this.document.getElementById('client-theme') as HTMLLinkElement;
