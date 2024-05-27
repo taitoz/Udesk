@@ -11,6 +11,7 @@ import {AppRouters} from './app.routes';
 import {MenuComponent} from './menu.component';
 import {AppComponent} from './app.component';
 import {SidebarComponent} from './sidebar.component';
+import {NgOptimizedImage} from '@angular/common';
 
 
 @NgModule({
@@ -20,7 +21,8 @@ import {SidebarComponent} from './sidebar.component';
         BrowserAnimationsModule,
         HttpClientModule,
         FormsModule,
-        AppRouters
+        AppRouters,
+        NgOptimizedImage
     ],
     declarations: [AppComponent, SettingsComponent, MenuComponent, SidebarComponent],
     bootstrap: [AppComponent],
