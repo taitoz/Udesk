@@ -80,7 +80,7 @@ let mainView
 let i18n = new (require('./translations/i18n'))
 let sidebarWidth = 70
 let menubarWidth = 230
-let titleBarHeight = 30
+let titleBarHeight = 34
 
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
@@ -111,13 +111,18 @@ function createWindow() {
 
     titleBar = new BrowserView({
         webPreferences: {
-            preload: path.join(__dirname, 'panels', 'panelsPreload.js')
+            nodeIntegration: true,
+            contextIsolation: false,
+            //preload: path.join(__dirname, 'panels', 'panelsPreload.js')
         }
     })
     mainWindow.addBrowserView(titleBar)
     titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
     titleBar.setAutoResize({width: true, height: false})
-    titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')).then()
+    //titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')).then()
+    titleBar.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
+        titleBar.webContents.send('loadComponent', 'titlebar');
+    })
 
     sidebar = new BrowserView({
         webPreferences: {
