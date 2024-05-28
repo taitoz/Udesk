@@ -80,7 +80,7 @@ let mainView
 let i18n = new (require('./translations/i18n'))
 let sidebarWidth = 70
 let menubarWidth = 230
-let titleBarHeight = 34
+let titleBarHeight = 32
 
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
@@ -178,7 +178,7 @@ function createWindow() {
     // Open the DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
     //mainView.webContents.openDevTools({ mode: 'detach' });
-    sidebar.webContents.openDevTools({mode: 'detach'});
+    //sidebar.webContents.openDevTools({mode: 'detach'});
     //menubar.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
@@ -302,20 +302,20 @@ nativeTheme.on("updated", () => {
 });
 
 // =====================================================================================
-ipcMain.handle('win-back', () => {
+ipcMain.handle('back', () => {
     mainView.webContents.goBack()
 })
-ipcMain.handle('win-reload', () => {
-    if (mainView.webContents.getURL().includes('settings')) return;
+ipcMain.handle('reload', () => {
+    if (mainView.webContents.getURL().includes('primeng-ui')) return;
     mainView.webContents.reload()
 })
-ipcMain.handle('win-close', () => {
+ipcMain.handle('close', () => {
     mainWindow.close()
 })
-ipcMain.handle('win-minimize', () => {
+ipcMain.handle('minimize', () => {
     mainWindow.minimize()
 })
-ipcMain.handle('win-maximize', () => {
+ipcMain.handle('maximize', () => {
     (mainWindow.isMaximized()) ? mainWindow.unmaximize() : mainWindow.maximize()
     resizeMain()
 })
