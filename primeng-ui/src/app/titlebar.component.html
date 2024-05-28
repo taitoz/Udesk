@@ -1,0 +1,40 @@
+<div class="draggable flex justify-content-between align-items-center surface-section relative lg:static surface-border h32"> <!--border-bottom-1-->
+
+    <!--<div class="flex align-items-center">-->
+    <p-button icon="pi pi-arrow-left" (click)="callRenderer('open-link:calendar')" [plain]="true" [text]="true"/>
+    <p-button class="text-gray-300 hover:text-white" icon="pi pi-undo" (click)="callRenderer('open-link:calendar')" [plain]="true" [text]="true"/>
+    <!--</div>-->
+
+    <ul class="list-none p-0 m-0 hidden lg:flex lg:align-items-center select-none lg:flex-row lg:ml-auto surface-section
+            border-1 lg:border-none surface-border right-0 top-100 z-1 shadow-2 lg:shadow-none absolute lg:static h32">
+        <li>
+            <a pRipple=""
+               class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
+                       hover:bg-gray-800 text-gray-300 hover:text-white transition-duration-150 transition-colors h32"
+               (click)="callRenderer('minimize')"
+            >
+                <i class="pi pi-minus mr-2 lg:mr-0 text-base"></i>
+            </a>
+        </li>
+        <li>
+            <a pRipple=""
+               class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
+                       hover:bg-gray-800 text-gray-300 hover:text-white transition-duration-150 transition-colors h32"
+               (click)="callRenderer('maximize')"
+            >
+                <i class="pi pi-clone -rotate-90 mr-2 lg:mr-0 text-base"></i>
+            </a>
+        </li>
+        <li>
+            <a pRipple=""
+               class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
+                       hover:bg-red-500 text-gray-300 hover:text-white transition-duration-150 transition-colors h32"
+               (click)="callRenderer('close')"
+            >
+                <i class="pi pi-times mr-2 lg:mr-0 text-base"></i>
+            </a>
+        </li>
+    </ul>
+
+</div>
+

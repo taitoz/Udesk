@@ -1,0 +1,11 @@
+.h32 {
+    height: 32px;
+    /*width: calc(100% - 2px);*/
+}
+
+.draggable {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-app-region: drag;
+    /*background: #1B91F7;*/
+}

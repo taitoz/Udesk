@@ -4,6 +4,7 @@ import {AppRoutesGuard} from './app.routes.guard';
 import {SettingsComponent} from './settings.component';
 import {MenuComponent} from './menu.component';
 import {SidebarComponent} from './sidebar.component';
+import {TitlebarComponent} from './titlebar.component';
 
 const routes: Routes = [
 
@@ -14,6 +15,7 @@ const routes: Routes = [
     // { path: 'map/:id/:subId', component: AppMapComponent},
     // { path: 'map', component: AppMapComponent, canActivate: [AppRoutesGuard], data: { isAdmin: false}},
     // { path: 'edit', component: MapEditComponent, canActivate: [AppRoutesGuard]},
+    {path: 'titlebar', component: TitlebarComponent},
     {path: 'sidebar', component: SidebarComponent},
     {path: 'menu', component: MenuComponent},
 

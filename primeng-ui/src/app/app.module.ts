@@ -12,6 +12,7 @@ import {MenuComponent} from './menu.component';
 import {AppComponent} from './app.component';
 import {SidebarComponent} from './sidebar.component';
 import {NgOptimizedImage} from '@angular/common';
+import {TitlebarComponent} from './titlebar.component';
 
 
 @NgModule({
@@ -24,7 +25,7 @@ import {NgOptimizedImage} from '@angular/common';
         AppRouters,
         NgOptimizedImage
     ],
-    declarations: [AppComponent, SettingsComponent, MenuComponent, SidebarComponent],
+    declarations: [AppComponent, SettingsComponent, MenuComponent, SidebarComponent, TitlebarComponent],
     bootstrap: [AppComponent],
     providers: [FileService]
 })

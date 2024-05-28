@@ -18,5 +18,5 @@
 
 .sidebar {
     width: 70px;
-    height: calc(100% - 60px);
+    height: calc(100% - 32px);
 }
