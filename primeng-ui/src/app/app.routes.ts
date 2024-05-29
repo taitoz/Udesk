@@ -2,9 +2,9 @@ import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 import {AppRoutesGuard} from './app.routes.guard';
 import {SettingsComponent} from './settings.component';
-import {MenuComponent} from './menu.component';
-import {SidebarComponent} from './sidebar.component';
-import {TitlebarComponent} from './titlebar.component';
+import {SideMenuComponent} from './sideMenu.component';
+import {SideBarComponent} from './sideBar.component';
+import {TitleBarComponent} from './titleBar.component';
 
 const routes: Routes = [
 
@@ -15,9 +15,10 @@ const routes: Routes = [
     // { path: 'map/:id/:subId', component: AppMapComponent},
     // { path: 'map', component: AppMapComponent, canActivate: [AppRoutesGuard], data: { isAdmin: false}},
     // { path: 'edit', component: MapEditComponent, canActivate: [AppRoutesGuard]},
-    {path: 'titlebar', component: TitlebarComponent},
-    {path: 'sidebar', component: SidebarComponent},
-    {path: 'menu', component: MenuComponent},
+    {path: 'settings', component: SettingsComponent},
+    {path: 'titleBar', component: TitleBarComponent},
+    {path: 'sideBar', component: SideBarComponent},
+    {path: 'sideMenu', component: SideMenuComponent},
 
     // otherwise redirect to index
     {path: '**', pathMatch: 'full', redirectTo: ''}

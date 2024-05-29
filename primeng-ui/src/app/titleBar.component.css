@@ -1,7 +1,9 @@
 .h32 {
     height: 32px;
 }
-
+.surface-f {
+    background-color: var(--surface-f);
+}
 .draggable {
     -webkit-user-select: none;
     user-select: none;

@@ -4,10 +4,10 @@ import {DOCUMENT} from '@angular/common';
 
 @Component({
     selector: 'app-sidebar',
-    templateUrl: './sidebar.component.html',
-    styleUrl: './sidebar.component.css'
+    templateUrl: './sideBar.component.html',
+    styleUrl: './sideBar.component.css'
 })
-export class SidebarComponent implements OnInit {
+export class SideBarComponent implements OnInit {
 
     constructor(
         private electronService: ElectronService,

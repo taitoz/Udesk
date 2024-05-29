@@ -109,47 +109,23 @@ function createWindow() {
         }
     })
 
-    titleBar = new BrowserView({
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-            //preload: path.join(__dirname, 'panels', 'panelsPreload.js')
-        }
-    })
+    titleBar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.addBrowserView(titleBar)
     titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
     titleBar.setAutoResize({width: true, height: false})
-    //titleBar.webContents.loadFile(path.join(__dirname, 'panels', 'titlebar.html')).then()
-    titleBar.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
-        titleBar.webContents.send('loadComponent', 'titlebar');
-    })
+    loadPrimeComponent(titleBar, 'titleBar')
 
-    sidebar = new BrowserView({
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-            //preload: path.join(__dirname, 'panels', 'panelsPreload.js')
-        }
-    })
+    sidebar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.addBrowserView(sidebar)
     sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: mainWindow.getBounds().height})
     sidebar.setAutoResize({width: true, height: true})
-    // sidebar.webContents.loadFile(path.join(__dirname, 'panels', 'sidebar.html')).then()
-    sidebar.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
-        sidebar.webContents.send('loadComponent', 'sidebar');
-    })
+    loadPrimeComponent(sidebar, 'sideBar')
 
-    menubar = new BrowserView({
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-            //preload: path.join(__dirname, 'panels', 'panelsPreload.js')
-        }
-    })
+    menubar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.addBrowserView(menubar)
     menubar.setBounds({x: sidebarWidth, y: titleBarHeight, width: menubarWidth, height: mainWindow.getBounds().height})
     menubar.setAutoResize({width: true, height: true})
-    loadMenubar();
+    loadPrimeComponent(menubar, 'sideMenu');
 
     mainView = new BrowserView({
         webPreferences: {
@@ -170,16 +146,17 @@ function createWindow() {
     //mainWindow.loadFile('index.html')
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
-    mainView.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
-        mainView.webContents.send('loadComponent', '');
-    })
+    // mainView.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
+    //     mainView.webContents.send('loadComponent', 'sidebar');
+    // })
+    loadPrimeComponent(mainView, 'settings');
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
-    //mainView.webContents.openDevTools({ mode: 'detach' });
+    //mainView.webContents.openDevTools({mode: 'detach'});
     //sidebar.webContents.openDevTools({mode: 'detach'});
-    //menubar.webContents.openDevTools({mode: 'detach'});
+    menubar.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -237,10 +214,10 @@ function resizeMain() {
     })
 }
 
-function loadMenubar(){
+function loadPrimeComponent(browserView, component) {
     const url = `file://${__dirname}/primeng-ui/dist/index.html`;
-    menubar.webContents.loadURL(url).then(() => {
-        menubar.webContents.send('loadComponent', 'menu');
+    browserView.webContents.loadURL(url).then(() => {
+        browserView.webContents.send('loadComponent', component);
     })
 }
 
@@ -350,7 +327,7 @@ ipcMain.on('settings:toggleTheme', (event, theme) => {
 })
 ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
     settings.setSync('sideBarMenu', sideBarMenu);
-    loadMenubar();
+    loadPrimeComponent(menubar, 'menu');
 })
 ipcMain.on('sideBarMenu:get', (event) => {
     event.returnValue = settings.getSync('sideBarMenu');

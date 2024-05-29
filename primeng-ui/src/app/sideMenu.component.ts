@@ -6,13 +6,13 @@ import {DOCUMENT} from '@angular/common';
 
 @Component({
     selector: 'app-menu',
-    templateUrl: './menu.component.html',
-    styleUrls: ['./menu.component.scss'],
+    templateUrl: './sideMenu.component.html',
+    styleUrls: ['./sideMenu.component.scss'],
     encapsulation: ViewEncapsulation.Emulated,
     providers: [MessageService]
 })
 
-export class MenuComponent implements OnInit {
+export class SideMenuComponent implements OnInit {
 
     treeNodesData: TreeNode[];
     menuItems: MenuItem[] = [];

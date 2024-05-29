@@ -8,11 +8,11 @@ import {FileService} from './fileService';
 import {PrimeNgModule} from './primeng.module';
 import {SettingsComponent} from './settings.component';
 import {AppRouters} from './app.routes';
-import {MenuComponent} from './menu.component';
+import {SideMenuComponent} from './sideMenu.component';
 import {AppComponent} from './app.component';
-import {SidebarComponent} from './sidebar.component';
+import {SideBarComponent} from './sideBar.component';
 import {NgOptimizedImage} from '@angular/common';
-import {TitlebarComponent} from './titlebar.component';
+import {TitleBarComponent} from './titleBar.component';
 
 
 @NgModule({
@@ -25,7 +25,7 @@ import {TitlebarComponent} from './titlebar.component';
         AppRouters,
         NgOptimizedImage
     ],
-    declarations: [AppComponent, SettingsComponent, MenuComponent, SidebarComponent, TitlebarComponent],
+    declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
     bootstrap: [AppComponent],
     providers: [FileService]
 })
