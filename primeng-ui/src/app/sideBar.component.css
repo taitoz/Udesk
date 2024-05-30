@@ -13,10 +13,11 @@
     margin-left: .5rem;
     min-width: .5rem;
     height: .5rem;
-    background-color: #64b5f6;
+    background-color: var(--primary-color);
 }
 
-.sidebar {
+.card {
     width: 70px;
     height: calc(100vh - 30px);
+    background-color: var(--surface-f);
 }

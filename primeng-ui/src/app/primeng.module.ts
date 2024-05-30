@@ -24,6 +24,7 @@ import {AvatarModule} from 'primeng/avatar';
 import {PanelMenuModule} from 'primeng/panelmenu';
 import {MenuModule} from 'primeng/menu';
 import {RippleModule} from 'primeng/ripple';
+import { RadioButtonModule } from 'primeng/radiobutton';
 import {BadgeModule} from 'primeng/badge';
 
 @NgModule({
@@ -53,7 +54,8 @@ import {BadgeModule} from 'primeng/badge';
         AvatarModule,
         MenuModule,
         RippleModule,
-        BadgeModule
+        BadgeModule,
+        RadioButtonModule
     ],
     providers: [DialogService]
 })

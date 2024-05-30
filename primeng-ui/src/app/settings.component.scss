@@ -1,4 +1,12 @@
-:host ::ng-deep .p-tabview-nav {
+.card {
+  width: 100%;
+  //height: calc(100vh - 4px);
+  height: 100vh;
+  display: inline-block;
+  overflow: hidden;
+}
+
+::ng-deep .p-tabview-nav {
   i, span {
     vertical-align: middle;
   }

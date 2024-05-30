@@ -6,6 +6,7 @@ import { ElectronService } from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 import {nativeTheme} from 'electron';
 import {Router} from '@angular/router';
+import {FormBuilder, FormGroup} from "@angular/forms";
 
 @Component({
     selector: 'app-root',
@@ -31,6 +32,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ref: DynamicDialogRef;
     public isLightTheme = true;
+    theme: string ="dark";
+    questionForm: FormGroup;
 
     constructor(
         private electronService: ElectronService,
@@ -40,8 +43,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
         private messageService: MessageService,
         public dialogService: DialogService,
         private confirmationService: ConfirmationService,
-        @Inject(DOCUMENT) private document: Document
+        @Inject(DOCUMENT) private document: Document,
+        private fb: FormBuilder
     ) {
+        this.questionForm = this.fb.group({
+            theme: "dark"
+        });
+        this.questionForm.valueChanges.subscribe(e => {
+            this.questionForm.setValue(e, { emitEvent: false });
+        })
         // if (this.electronService.isElectronApp) {
         //     this.electronService.ipcRenderer.on('asynchronous-reply', (event, arg) => {
         //         this.ngZone.run(() => {

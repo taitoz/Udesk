@@ -1,6 +1,6 @@
 import {NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
-import {FormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
@@ -23,7 +23,8 @@ import {TitleBarComponent} from './titleBar.component';
         HttpClientModule,
         FormsModule,
         AppRouters,
-        NgOptimizedImage
+        NgOptimizedImage,
+        ReactiveFormsModule
     ],
     declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
     bootstrap: [AppComponent],

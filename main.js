@@ -144,7 +144,7 @@ function createWindow() {
 
     // and load the index.html of the app.
     //mainWindow.loadFile('index.html')
-    //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/month/'), 1000)
+    //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
     //mainView.webContents.loadFile(`index.html`).then()
     // mainView.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
     //     mainView.webContents.send('loadComponent', 'sidebar');
@@ -156,7 +156,7 @@ function createWindow() {
     //mainWindow.webContents.openDevTools({mode: 'detach'});
     //mainView.webContents.openDevTools({mode: 'detach'});
     //sidebar.webContents.openDevTools({mode: 'detach'});
-    menubar.webContents.openDevTools({mode: 'detach'});
+    //menubar.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -190,6 +190,7 @@ function createWindow() {
 }
 
 function resizeMain() {
+    //TODO fix sidemenu after resize
     // store window's new size in variable
     let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
@@ -296,11 +297,12 @@ ipcMain.handle('maximize', () => {
     (mainWindow.isMaximized()) ? mainWindow.unmaximize() : mainWindow.maximize()
     resizeMain()
 })
-ipcMain.handle('settings-open', () => {
-    mainView.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then()
+ipcMain.handle('open:settings', () => {
+    loadPrimeComponent(mainView, 'settings');
 })
 
 ipcMain.handle('load-url', (event, url) => {
+    //TODO fix error load promise which was not handled with .catch().
     //console.log(url)
     //dialog.showErrorBox('loadService', arg)
     //event.reply('asynchronous-reply', 'pong')
@@ -327,7 +329,7 @@ ipcMain.on('settings:toggleTheme', (event, theme) => {
 })
 ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
     settings.setSync('sideBarMenu', sideBarMenu);
-    loadPrimeComponent(menubar, 'menu');
+    loadPrimeComponent(menubar, 'sideMenu');
 })
 ipcMain.on('sideBarMenu:get', (event) => {
     event.returnValue = settings.getSync('sideBarMenu');

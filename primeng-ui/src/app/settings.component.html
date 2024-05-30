@@ -1,103 +1,127 @@
-<div class="card">
-<!--  <h5>Programmatic</h5>-->
-<!--  <div style="padding: .5em 0 1em 0">-->
-<!--    <p-button-->
-<!--      (click)="activeIndex = 0"-->
-<!--      styleClass="p-button-text"-->
-<!--      label="Activate 1rd"-->
-<!--    ></p-button>-->
-<!--    <p-button-->
-<!--      (click)="activeIndex = 1"-->
-<!--      styleClass="p-button-text"-->
-<!--      label="Activate 2rd"-->
-<!--      [style]="{ 'margin-left': '.5em' }"-->
-<!--    ></p-button>-->
-<!--    <p-button-->
-<!--      (click)="activeIndex = 2"-->
-<!--      styleClass="p-button-text"-->
-<!--      label="Activate 3rd"-->
-<!--      [style]="{ 'margin-left': '.5em' }"-->
-<!--    ></p-button>-->
-<!--  </div>-->
+<div class="card surface-50">
+    <!--  <h5>Programmatic</h5>-->
+    <!--  <div style="padding: .5em 0 1em 0">-->
+    <!--    <p-button-->
+    <!--      (click)="activeIndex = 0"-->
+    <!--      styleClass="p-button-text"-->
+    <!--      label="Activate 1rd"-->
+    <!--    ></p-button>-->
+    <!--    <p-button-->
+    <!--      (click)="activeIndex = 1"-->
+    <!--      styleClass="p-button-text"-->
+    <!--      label="Activate 2rd"-->
+    <!--      [style]="{ 'margin-left': '.5em' }"-->
+    <!--    ></p-button>-->
+    <!--    <p-button-->
+    <!--      (click)="activeIndex = 2"-->
+    <!--      styleClass="p-button-text"-->
+    <!--      label="Activate 3rd"-->
+    <!--      [style]="{ 'margin-left': '.5em' }"-->
+    <!--    ></p-button>-->
+    <!--  </div>-->
+    <h2 class="m-3">Настройки</h2>
+    <p-tabView [(activeIndex)]="activeIndex">
 
-  <p-tabView [(activeIndex)]="activeIndex">
-    <p-tabPanel>
-      <ng-template pTemplate="header">
-        <i class="pi pi-bars"></i>
-        <span>Menu</span>
-      </ng-template>
-      <p-treeTable [value]="treeNodesData" [columns]="cols" [scrollable]="true" scrollHeight="500px"
-                   selectionMode="single" sortField="id" [style]="{'margin-bottom':'20px'}"
-                   [(selection)]="selectedNodes" dataKey="key" (onNodeSelect)="onSelect($event)" >
-        <ng-template pTemplate="colgroup" let-columns>
-          <colgroup>
-            <col *ngFor="let col of columns" [ngStyle]="{'width': (col && col.width ? col.width + 'px' : 'auto')}">
-          </colgroup>
-        </ng-template>
-        <ng-template pTemplate="header" let-columns>
-          <tr>
-            <th *ngFor="let col of columns">
-              <p *ngIf="col.header !='id'">{{ col.header }}</p>
-            </th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowNode let-rowData="rowData" let-columns="columns">
-          <tr [ttSelectableRow]="rowNode" >
-            <td *ngFor="let col of columns; let i = index" ttEditableColumn [ngClass]="{'p-toggler-column': i === 0}">
-              <p-treeTableToggler [rowNode]="rowNode" *ngIf="i === 0"></p-treeTableToggler>
-<!--              <p-treeTableCheckbox [value]="rowNode" *ngIf="i == 3"></p-treeTableCheckbox>-->
-              <p-treeTableCellEditor>
-                <ng-template pTemplate="input">
-                  <div class="p-inputgroup">
-                    <input pInputText type="text" [(ngModel)]="rowData[col.field]"
-                           [ngStyle]="{'width': i == 0 ? '90%': '100%',
-                            'margin-top': i == 0 ? '-30px': '0', 'margin-left': i == 0 ? '40px': '0' }" *ngIf="col.editable">
-                    <!--<button type="button" pButton pRipple icon="pi pi-check" class="flex justify-content-center"-->
-                    <!--     click)="nodeSave()" *ngIf="edit"></button>-->
-<!--                    <p-dropdown appendTo="body" [options]="nodeTypes" [(ngModel)]="selectedNodeType"-->
-<!--                                (onChange)="onTypeSelect($event)" *ngIf="col.header == 'Тип'"></p-dropdown>-->
-                  </div>
+        <p-tabPanel>
+            <ng-template pTemplate="header">
+                <span>Общие</span>
+            </ng-template>
+            <h2>Параметры</h2>
+
+            <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
+            <h3>Тема</h3>
+            <form novalidate [formGroup]="questionForm">
+                <div class="flex flex-wrap gap-3">
+                    <p-radioButton formControlName="theme" name="theme" value="dark" label="Темная"
+                                   (onClick)="toggleTheme()"/>
+                    <p-radioButton formControlName="theme" name="theme" value="light" label="Светлая"
+                                   (onClick)="toggleTheme()"/>
+                </div>
+            </form>
+            <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
+
+        </p-tabPanel>
+
+        <p-tabPanel>
+            <ng-template pTemplate="header">
+                <span>Меню</span>
+            </ng-template>
+            <p-treeTable [value]="treeNodesData" [columns]="cols" [scrollable]="true" scrollHeight="500px"
+                         selectionMode="single" sortField="id" [style]="{'margin-bottom':'20px'}"
+                         [(selection)]="selectedNodes" dataKey="key" (onNodeSelect)="onSelect($event)">
+                <ng-template pTemplate="colgroup" let-columns>
+                    <colgroup>
+                        <col *ngFor="let col of columns"
+                             [ngStyle]="{'width': (col && col.width ? col.width + 'px' : 'auto')}">
+                    </colgroup>
                 </ng-template>
-                <ng-template pTemplate="output" *ngIf="col.header !='id'">{{ getNodeTypeLabel(rowData[col.field]) }}</ng-template>
+                <ng-template pTemplate="header" let-columns>
+                    <tr>
+                        <th *ngFor="let col of columns">
+                            <p *ngIf="col.header !='id'">{{ col.header }}</p>
+                        </th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-rowNode let-rowData="rowData" let-columns="columns">
+                    <tr [ttSelectableRow]="rowNode">
+                        <td *ngFor="let col of columns; let i = index" ttEditableColumn
+                            [ngClass]="{'p-toggler-column': i === 0}">
+                            <p-treeTableToggler [rowNode]="rowNode" *ngIf="i === 0"></p-treeTableToggler>
+                            <!--              <p-treeTableCheckbox [value]="rowNode" *ngIf="i == 3"></p-treeTableCheckbox>-->
+                            <p-treeTableCellEditor>
+                                <ng-template pTemplate="input">
+                                    <div class="p-inputgroup">
+                                        <input pInputText type="text" [(ngModel)]="rowData[col.field]"
+                                               [ngStyle]="{'width': i == 0 ? '90%': '100%',
+                            'margin-top': i == 0 ? '-30px': '0', 'margin-left': i == 0 ? '40px': '0' }"
+                                               *ngIf="col.editable">
+                                        <!--<button type="button" pButton pRipple icon="pi pi-check" class="flex justify-content-center"-->
+                                        <!--     click)="nodeSave()" *ngIf="edit"></button>-->
+                                        <!--                    <p-dropdown appendTo="body" [options]="nodeTypes" [(ngModel)]="selectedNodeType"-->
+                                        <!--                                (onChange)="onTypeSelect($event)" *ngIf="col.header == 'Тип'"></p-dropdown>-->
+                                    </div>
+                                </ng-template>
+                                <ng-template pTemplate="output"
+                                             *ngIf="col.header !='id'">{{ getNodeTypeLabel(rowData[col.field]) }}</ng-template>
 
-              </p-treeTableCellEditor>
-<!--              <p-toggleButton styleClass="" onIcon="pi pi-pencil" offIcon="pi pi-pencil" [(ngModel)]="edit"-->
-<!--                              (onChange)="onSelect($event)" *ngIf="col.header ==='id'"></p-toggleButton>-->
-              <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
-                      pTooltip="Add" tooltipPosition="top"
-                      (click)="addItem(rowData, false)" *ngIf="col.header ==='id'"></button>
-                <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
-                        pTooltip="Add child" tooltipPosition="top"
-                        (click)="addItem(rowData, true)" *ngIf="col.header ==='id'"></button>
-              <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger"
-                      pTooltip="Удалить" tooltipPosition="top"
-                      [disabled]="unSavedEdits" (click)="delete(rowData)" *ngIf="col.header ==='id'"></button>
-            </td>
-          </tr>
-        </ng-template>
-      </p-treeTable>
-      <!--<p-splitButton label="" icon="pi pi-pencil" [model]="items"></p-splitButton>-->
-      <!--<button pButton type="button" icon="pi pi-pencil" class="p-button-text" (click)="toggleEdit()"></button>-->
-        <button pButton type="button" icon="pi pi-save" class="p-button-text"
-                pTooltip="Сохранить" tooltipPosition="top"
-                (click)="nodeSave()"></button>
-      <button pButton type="button" label="toggleTheme" icon="pi pi-plus" class="p-button-outlined"
-               (click)="toggleTheme()"></button>
+                            </p-treeTableCellEditor>
+                            <!--              <p-toggleButton styleClass="" onIcon="pi pi-pencil" offIcon="pi pi-pencil" [(ngModel)]="edit"-->
+                            <!--                              (onChange)="onSelect($event)" *ngIf="col.header ==='id'"></p-toggleButton>-->
+                            <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
+                                    pTooltip="Add" tooltipPosition="top"
+                                    (click)="addItem(rowData, false)" *ngIf="col.header ==='id'"></button>
+                            <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
+                                    pTooltip="Add child" tooltipPosition="top"
+                                    (click)="addItem(rowData, true)" *ngIf="col.header ==='id'"></button>
+                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger"
+                                    pTooltip="Удалить" tooltipPosition="top"
+                                    [disabled]="unSavedEdits" (click)="delete(rowData)"
+                                    *ngIf="col.header ==='id'"></button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-treeTable>
+            <!--<p-splitButton label="" icon="pi pi-pencil" [model]="items"></p-splitButton>-->
+            <!--<button pButton type="button" icon="pi pi-pencil" class="p-button-text" (click)="toggleEdit()"></button>-->
+            <button pButton type="button" icon="pi pi-save" class="p-button-text"
+                    pTooltip="Сохранить" tooltipPosition="top"
+                    (click)="nodeSave()"></button>
 
-      <button type="button" (click)="showDialog()" pButton icon="pi pi-info-circle" label="Show"></button>
 
-    </p-tabPanel>
+            <button type="button" (click)="showDialog()" pButton icon="pi pi-info-circle" label="Show"></button>
 
-    <p-tabPanel [disabled]="true">
-      <ng-template pTemplate="header">
-        <i class="pi pi-user"></i>
-        <span>Users</span>
-      </ng-template>
-      <p>
-      </p>
-    </p-tabPanel>
+        </p-tabPanel>
 
-  </p-tabView>
+        <p-tabPanel [disabled]="true">
+            <ng-template pTemplate="header">
+                <i class="pi pi-user"></i>
+                <span>Users</span>
+            </ng-template>
+            <p>
+            </p>
+        </p-tabPanel>
+
+    </p-tabView>
 </div>
 <p-toast position="bottom-center"></p-toast>
 <p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="10000"></p-confirmDialog>

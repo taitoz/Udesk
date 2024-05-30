@@ -1,24 +1,6 @@
-///* Header text on hover */
-//
-//body {
-//  width: 230px;
-//  height: calc(100vh - 60px);
-//  top: 60px;
-//  padding: 0;
-//  margin: 0;
-//  background-color: var(--surface-a);
-//  border-left: 1px solid #383838;
-//  border-right: 1px solid #383838;
-//}
-
-::ng-deep .p-panelmenu {
+.card {
   width: 230px;
-}
-::ng-deep .p-menuitem-text {
-  //font-weight: 400;
-}
-::ng-deep .p-menuitem-icon {
-  //font-size: 1.4em;
+  height: calc(100vh - 30px);
 }
 
 .app-details {
@@ -31,21 +13,3 @@
   color: var(--text-color);
   font-weight: 400;
 }
-
-::ng-deep .app-details .p-avatar {
-  background-color: var(--surface-d);
-}
-//
-//
-///* icons in content next to text */
-//
-//::ng-deep .p-panelmenu .p-panelmenu-content .p-menuitem .p-menuitem-link .p-menuitem-text {
-//  color: green;
-//}
-//
-//
-///* Text */
-//
-//::ng-deep .p-panelmenu .p-panelmenu-content .p-menuitem .p-menuitem-link .p-menuitem-icon {
-//  color: blue;
-//}
