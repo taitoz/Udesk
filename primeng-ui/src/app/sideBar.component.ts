@@ -1,16 +1,21 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {ElectronService} from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
+import {UiService} from './ui.service';
+import {environment} from '../environments/environment';
 
 @Component({
-    selector: 'app-sidebar',
+    selector: 'sideBar',
     templateUrl: './sideBar.component.html',
     styleUrl: './sideBar.component.css'
 })
 export class SideBarComponent implements OnInit {
 
+    appLogoPath: string = environment.appLogoPath;
+
     constructor(
         private electronService: ElectronService,
+        private uiService: UiService,
         @Inject(DOCUMENT) private document: Document
     ) {
         if (this.electronService.isElectronApp) {
@@ -30,6 +35,9 @@ export class SideBarComponent implements OnInit {
         console.log(channel)
     }
 
+    loadLogo() {
+        // this.uiService
+    }
     toggleTheme(theme) {
         const head = this.document.getElementsByTagName('head')[0];
         let themeLink = this.document.getElementById('client-theme') as HTMLLinkElement;

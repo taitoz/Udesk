@@ -1,7 +1,7 @@
 import {Component, Inject, NgZone, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
 import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng/api';
 import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
-import {FileService} from './fileService';
+import {UiService} from './ui.service';
 import { ElectronService } from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 import {nativeTheme} from 'electron';
@@ -9,7 +9,7 @@ import {Router} from '@angular/router';
 import {FormBuilder, FormGroup} from "@angular/forms";
 
 @Component({
-    selector: 'app-root',
+    selector: 'settings',
     templateUrl: './settings.component.html',
     styleUrls: ['./settings.component.scss'],
     encapsulation: ViewEncapsulation.Emulated,
@@ -39,7 +39,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         private electronService: ElectronService,
         private router: Router,
         private ngZone: NgZone,
-        private fileService: FileService,
+        private uiService: UiService,
         private messageService: MessageService,
         public dialogService: DialogService,
         private confirmationService: ConfirmationService,
@@ -68,7 +68,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.treeNodesData = this.electronService.ipcRenderer.sendSync('sideBarMenu:get')
             console.log('menu loaded from electron');
         } else {
-            this.fileService.loadTestData().subscribe(result => {
+            this.uiService.loadSideMenuData().subscribe(result => {
                 this.treeNodesData = result;
                 console.log('menu loaded from file');
             });
@@ -126,7 +126,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     nodeSave() {
         this.treeNodesData.forEach(node => this.removeTreeParent(node));
-        this.fileService.saveTestData(this.treeNodesData);
+        this.uiService.saveTestData(this.treeNodesData);
 
         if (this.electronService.isElectronApp) {
             this.electronService.ipcRenderer.send('sideBarMenu:set', this.treeNodesData);
@@ -248,6 +248,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
                 this.messageService.add({severity: 'info', summary: 'Product Selected', detail: product});
               }
             });*/
+    }
+
+    onAppNameChange(newName: string){
+        this.uiService.appNameChange.emit(newName)
     }
 
     toggleTheme() {

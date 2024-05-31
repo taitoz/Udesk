@@ -4,7 +4,7 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
-import {FileService} from './fileService';
+import {UiService} from './ui.service';
 import {PrimeNgModule} from './primeng.module';
 import {SettingsComponent} from './settings.component';
 import {AppRouters} from './app.routes';
@@ -28,7 +28,7 @@ import {TitleBarComponent} from './titleBar.component';
     ],
     declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
     bootstrap: [AppComponent],
-    providers: [FileService]
+    providers: [UiService]
 })
 
 export class AppModule {

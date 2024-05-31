@@ -1,16 +1,22 @@
 import {HttpClient} from '@angular/common/http';
-import {Injectable} from '@angular/core';
+import {EventEmitter, Injectable, Output} from '@angular/core';
 import {Observable} from 'rxjs';
 import {TreeNode} from 'primeng/api';
 import {SessionStorageService} from 'angular-web-storage';
 
 @Injectable()
-export class FileService {
+export class UiService {
+
+    @Output() appNameChange: EventEmitter<string> = new EventEmitter();
 
     constructor(private http: HttpClient, private sessionStorage: SessionStorageService) {
     }
 
-    loadTestData(): Observable<TreeNode[]> {
+    toggleTheme(){
+        //TODO
+    }
+
+    loadSideMenuData(): Observable<TreeNode[]> {
         return new Observable<TreeNode[]>((observer) => {
             // const testData = this.sessionStorage.get('testData');
             // if (testData != null) {

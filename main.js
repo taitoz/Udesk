@@ -10,7 +10,7 @@ let path = require('path')
 // Module to create native browser window.
 const {
     BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
-    app, Tray, dialog
+    app, Tray, dialog, screen
 } = require('electron')
 
 const log = require('electron-log/main');
@@ -72,14 +72,14 @@ initSettings()
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
-let sidebar
-let menubar
+let sideBar
+let sideMenu
 let titleBar
 let mainView
 
 let i18n = new (require('./translations/i18n'))
-let sidebarWidth = 70
-let menubarWidth = 230
+let sideBarWidth = 70
+let sideMenuWidth = 230
 let titleBarHeight = 32
 
 app.disableHardwareAcceleration()
@@ -115,30 +115,30 @@ function createWindow() {
     titleBar.setAutoResize({width: true, height: false})
     loadPrimeComponent(titleBar, 'titleBar')
 
-    sidebar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.addBrowserView(sidebar)
-    sidebar.setBounds({x: 0, y: titleBarHeight, width: sidebarWidth, height: mainWindow.getBounds().height})
-    sidebar.setAutoResize({width: true, height: true})
-    loadPrimeComponent(sidebar, 'sideBar')
+    sideBar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainWindow.addBrowserView(sideBar)
+    sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: mainWindow.getBounds().height})
+    sideBar.setAutoResize({width: false, height: true})
+    loadPrimeComponent(sideBar, 'sideBar')
 
-    menubar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.addBrowserView(menubar)
-    menubar.setBounds({x: sidebarWidth, y: titleBarHeight, width: menubarWidth, height: mainWindow.getBounds().height})
-    menubar.setAutoResize({width: true, height: true})
-    loadPrimeComponent(menubar, 'sideMenu');
-
-    mainView = new BrowserView({
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
-        }
+    sideMenu = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainWindow.addBrowserView(sideMenu)
+    sideMenu.setBounds({
+        x: sideBarWidth,
+        y: titleBarHeight,
+        width: sideMenuWidth,
+        height: mainWindow.getBounds().height
     })
+    sideMenu.setAutoResize({width: false, height: true})
+    loadPrimeComponent(sideMenu, 'sideMenu');
+
+    mainView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.addBrowserView(mainView)
     mainView.setAutoResize({width: true, height: true})
     mainView.setBounds({
-        x: (sidebarWidth + menubarWidth),
+        x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
-        width: mainWindow.getBounds().width - (sidebarWidth + menubarWidth),
+        width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
         height: mainWindow.getBounds().height - titleBarHeight
     })
 
@@ -155,8 +155,8 @@ function createWindow() {
     // Open the DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
     //mainView.webContents.openDevTools({mode: 'detach'});
-    //sidebar.webContents.openDevTools({mode: 'detach'});
-    //menubar.webContents.openDevTools({mode: 'detach'});
+    //sideBar.webContents.openDevTools({mode: 'detach'});
+    //sideMenu.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -190,27 +190,27 @@ function createWindow() {
 }
 
 function resizeMain() {
-    //TODO fix sidemenu after resize
-    // store window's new size in variable
+    //TODO store window's new size in settings
     let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
-    sidebar.setBounds({
-        x: 0,
+    // sideBar.setBounds({
+    //     x: 0,
+    //     y: titleBarHeight,
+    //     width: sidebarWidth,
+    //     height: newBounds.height
+    // })
+
+    sideMenu.setBounds({
+        x: sideBarWidth,
         y: titleBarHeight,
-        width: sidebarWidth,
-        height: newBounds.height
-    })
-    menubar.setBounds({
-        x: sidebarWidth,
-        y: titleBarHeight,
-        width: menubarWidth,
+        width: sideMenuWidth,
         height: newBounds.height
     })
 
     mainView.setBounds({
-        x: (sidebarWidth + menubarWidth),
+        x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
-        width: newBounds.width - (sidebarWidth + menubarWidth),
+        width: newBounds.width - (sideBarWidth + sideMenuWidth),
         height: newBounds.height
     })
 }
@@ -231,18 +231,22 @@ module.exports = {get};
 
 app.whenReady().then(() => {
     //const icon = nativeImage.createFromPath()
-    const tray = new Tray(path.join(__dirname, "assets", "ico", "logo.ico"))
-    const trayMenu = Menu.buildFromTemplate([
-        {
-            label: i18n.__('Close'),
-            click: () => {
-                app.quit()
+    try {
+        const tray = new Tray(path.join(__dirname, "assets", "ico", "logo.ico"))
+        const trayMenu = Menu.buildFromTemplate([
+            {
+                label: i18n.__('Close'),
+                click: () => {
+                    app.quit()
+                }
             }
-        }
-    ])
-    tray.setContextMenu(trayMenu)
-    tray.setToolTip('UDesk')
-    tray.setTitle('UDesk')
+        ])
+        tray.setContextMenu(trayMenu)
+        tray.setToolTip('UDesk')
+        tray.setTitle('UDesk')
+    } catch (error) {
+        console.log(error)
+    }
 })
 
 // This method will be called when Electron has finished
@@ -270,8 +274,8 @@ app.on('activate', function () {
 // =====================================================================================
 nativeTheme.on("updated", () => {
     titleBar.webContents.send('theme-toggle', nativeTheme.themeSource);
-    sidebar.webContents.send('theme-toggle', nativeTheme.themeSource);
-    menubar.webContents.send('theme-toggle', nativeTheme.themeSource);
+    sideBar.webContents.send('theme-toggle', nativeTheme.themeSource);
+    sideMenu.webContents.send('theme-toggle', nativeTheme.themeSource);
     // if (nativeTheme.shouldUseDarkColors) {
     //     console.log("Dark Theme Chosen by User");
     // } else {
@@ -294,7 +298,17 @@ ipcMain.handle('minimize', () => {
     mainWindow.minimize()
 })
 ipcMain.handle('maximize', () => {
-    (mainWindow.isMaximized()) ? mainWindow.unmaximize() : mainWindow.maximize()
+    if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize()
+    } else {
+        mainWindow.maximize()
+        let cursor = screen.getCursorScreenPoint()
+        const currentScreen = screen.getDisplayNearestPoint({x: cursor.x, y: cursor.y})
+        mainWindow.setBounds({
+            width: currentScreen.workAreaSize.width,
+            height: currentScreen.workAreaSize.height
+        })
+    }
     resizeMain()
 })
 ipcMain.handle('open:settings', () => {
@@ -302,24 +316,27 @@ ipcMain.handle('open:settings', () => {
 })
 
 ipcMain.handle('load-url', (event, url) => {
-    //TODO fix error load promise which was not handled with .catch().
-    //console.log(url)
     //dialog.showErrorBox('loadService', arg)
-    //event.reply('asynchronous-reply', 'pong')
-    mainView.webContents.loadURL(url).then()
+    try {
+        new URL(url)
+    } catch (err) {
+        return
+    }
+    mainView.webContents.loadURL(url).catch(error => {
+        console.log(error.code)
+    })
 })
 
 ipcMain.handle('menubar-toggle', (event, arg) => {
-    menubarWidth = menubar.getBounds().width
-    switch (menubarWidth) {
+    sideMenuWidth = sideMenu.getBounds().width
+    switch (sideMenuWidth) {
         case 0:
-            menubarWidth = 230;
+            sideMenuWidth = 230;
             break;
         case 230:
-            menubarWidth = 0
+            sideMenuWidth = 0
             break;
     }
-    //sidebar.webContents.send('sidebar-toggle');
     resizeMain()
 })
 
@@ -329,7 +346,7 @@ ipcMain.on('settings:toggleTheme', (event, theme) => {
 })
 ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
     settings.setSync('sideBarMenu', sideBarMenu);
-    loadPrimeComponent(menubar, 'sideMenu');
+    loadPrimeComponent(sideMenu, 'sideMenu');
 })
 ipcMain.on('sideBarMenu:get', (event) => {
     event.returnValue = settings.getSync('sideBarMenu');

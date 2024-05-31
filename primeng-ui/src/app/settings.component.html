@@ -33,7 +33,7 @@
             <form novalidate [formGroup]="questionForm">
                 <div class="flex flex-wrap gap-3">
                     <p-radioButton formControlName="theme" name="theme" value="dark" label="Темная"
-                                   (onClick)="toggleTheme()"/>
+                                   (onClick)="toggleTheme('dark')"/>
                     <p-radioButton formControlName="theme" name="theme" value="light" label="Светлая"
                                    (onClick)="toggleTheme()"/>
                 </div>

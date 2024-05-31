@@ -1,11 +1,12 @@
 import {Component, Inject, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
 import {MenuItem, MessageService, TreeNode} from 'primeng/api';
-import {FileService} from './fileService';
+import {UiService} from './ui.service';
 import {ElectronService} from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
+import {environment} from '../environments/environment';
 
 @Component({
-    selector: 'app-menu',
+    selector: 'sideMenu',
     templateUrl: './sideMenu.component.html',
     styleUrls: ['./sideMenu.component.scss'],
     encapsulation: ViewEncapsulation.Emulated,
@@ -16,13 +17,14 @@ export class SideMenuComponent implements OnInit {
 
     treeNodesData: TreeNode[];
     menuItems: MenuItem[] = [];
+    appName: string = environment.appName;
 
     //public isLightTheme = true;
     @ViewChild('menubar') menuBar: any;
 
     constructor(
         private electronService: ElectronService,
-        private fileService: FileService,
+        private uiService: UiService,
         private messageService: MessageService,
         @Inject(DOCUMENT) private document: Document
     ) {
@@ -41,13 +43,16 @@ export class SideMenuComponent implements OnInit {
             this.loadMenuItemsFromTreeNodesData();
             console.log('treeNodesData loaded from electron');
         } else {
-            this.fileService.loadTestData().subscribe(result => {
+            this.uiService.loadSideMenuData().subscribe(result => {
                 this.treeNodesData = result;
                 this.loadMenuItemsFromTreeNodesData();
                 console.log('treeNodesData loaded from file');
             });
         }
 
+        this.uiService.appNameChange.subscribe(appName => {
+            this.appName = appName;
+        });
 
     }
     loadMenuItemsFromTreeNodesData() {
