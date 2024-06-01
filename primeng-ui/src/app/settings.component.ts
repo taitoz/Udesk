@@ -5,7 +5,7 @@ import {UiService} from './ui.service';
 import { ElectronService } from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 import {nativeTheme} from 'electron';
-import {FormBuilder, FormGroup} from "@angular/forms";
+import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
 
 @Component({
     selector: 'settings',
@@ -30,8 +30,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     selectedNodeType: string;
 
     ref: DynamicDialogRef;
-    theme: string ="dark";
-    questionForm: FormGroup;
+    theme = 'dark';
 
     constructor(
         private electronService: ElectronService,
@@ -39,19 +38,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
         private messageService: MessageService,
         public dialogService: DialogService,
         private confirmationService: ConfirmationService,
-        @Inject(DOCUMENT) private document: Document,
-        private fb: FormBuilder
+        @Inject(DOCUMENT) private document: Document
     ) {
-        this.questionForm = this.fb.group({
-            theme: "dark"
-        });
     }
 
     ngOnInit() {
-
-        this.questionForm.valueChanges.subscribe(e => {
-            this.questionForm.setValue(e, { emitEvent: false });
-        })
 
         this.treeNodesData = this.uiService.loadSideMenuData();
 
@@ -226,9 +217,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     }
 
-    toggleTheme(theme: string) {
-        this.uiService.toggleTheme(this.document, theme)
-        this.uiService.ipcSend('settings:toggleTheme', theme)
+    toggleTheme(event: string) {
+        this.theme = event
+        this.uiService.toggleTheme(this.document, this.theme)
+        this.uiService.ipcSend('settings:toggleTheme', this.theme)
         //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
     }
 }

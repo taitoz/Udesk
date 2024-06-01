@@ -26,7 +26,7 @@ import {MenuModule} from 'primeng/menu';
 import {RippleModule} from 'primeng/ripple';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import {BadgeModule} from 'primeng/badge';
-
+import { CheckboxModule } from 'primeng/checkbox';
 @NgModule({
     exports: [
         TabViewModule,
@@ -55,7 +55,8 @@ import {BadgeModule} from 'primeng/badge';
         MenuModule,
         RippleModule,
         BadgeModule,
-        RadioButtonModule
+        RadioButtonModule,
+        CheckboxModule
     ],
     providers: [DialogService]
 })

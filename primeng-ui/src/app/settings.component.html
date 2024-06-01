@@ -30,14 +30,13 @@
 
             <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
             <h3>Тема</h3>
-            <form novalidate [formGroup]="questionForm">
+
                 <div class="flex flex-wrap gap-3">
-                    <p-radioButton formControlName="theme" name="theme" value="dark" label="Темная"
-                                   (onClick)="toggleTheme('dark')"/>
-                    <p-radioButton formControlName="theme" name="theme" value="light" label="Светлая"
-                                   (onClick)="toggleTheme('light')"/>
+                    <p-radioButton [ngModel]="theme" value="dark" label="Темная"
+                                   (ngModelChange)="toggleTheme($event)"/>
+                    <p-radioButton [ngModel]="theme" value="light" label="Светлая"
+                                   (ngModelChange)="toggleTheme($event)"/>
                 </div>
-            </form>
             <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
 
         </p-tabPanel>
@@ -103,12 +102,12 @@
             </p-treeTable>
             <!--<p-splitButton label="" icon="pi pi-pencil" [model]="items"></p-splitButton>-->
             <!--<button pButton type="button" icon="pi pi-pencil" class="p-button-text" (click)="toggleEdit()"></button>-->
-            <button pButton type="button" icon="pi pi-save" class="p-button-text"
+            <button pButton type="button" icon="pi pi-save" label="Сохранить"
                     pTooltip="Сохранить" tooltipPosition="top"
                     (click)="nodeSave()"></button>
 
 
-            <button type="button" (click)="showDialog()" pButton icon="pi pi-info-circle" label="Show"></button>
+            <button pButton type="button" icon="pi pi-info-circle" label="Test" (click)="showDialog()"></button>
 
         </p-tabPanel>
 

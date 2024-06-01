@@ -5,11 +5,12 @@ import {SettingsComponent} from './settings.component';
 import {SideMenuComponent} from './sideMenu.component';
 import {SideBarComponent} from './sideBar.component';
 import {TitleBarComponent} from './titleBar.component';
+import {AppComponent} from "./app.component";
 
 const routes: Routes = [
 
     {
-        path: '', component: SettingsComponent,
+        path: '', component: AppComponent,
         // loadChildren: './app-map.component',
     },
     // { path: 'map/:id/:subId', component: AppMapComponent},

@@ -66,7 +66,7 @@ export class UiService {
             //this.electronService.shell.beep();
             return this.electronService.ipcRenderer.sendSync('sideBarMenu:get');
         } else {
-
+                //TODO fix
                 // const testData = this.sessionStorage.get('testData');
                 // if (testData != null) {
                 //     observer.next(testData);
