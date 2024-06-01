@@ -1,17 +1,16 @@
-import {Component, Inject, NgZone, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
+import {Component, Inject, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
 import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng/api';
 import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
 import { ElectronService } from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 import {nativeTheme} from 'electron';
-import {Router} from '@angular/router';
 import {FormBuilder, FormGroup} from "@angular/forms";
 
 @Component({
     selector: 'settings',
     templateUrl: './settings.component.html',
-    styleUrls: ['./settings.component.scss'],
+    styleUrl: './settings.component.scss',
     encapsulation: ViewEncapsulation.Emulated,
     providers: [MessageService, ConfirmationService]
 })
@@ -31,14 +30,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
     selectedNodeType: string;
 
     ref: DynamicDialogRef;
-    public isLightTheme = true;
     theme: string ="dark";
     questionForm: FormGroup;
 
     constructor(
         private electronService: ElectronService,
-        private router: Router,
-        private ngZone: NgZone,
         private uiService: UiService,
         private messageService: MessageService,
         public dialogService: DialogService,
@@ -49,30 +45,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.questionForm = this.fb.group({
             theme: "dark"
         });
-        this.questionForm.valueChanges.subscribe(e => {
-            this.questionForm.setValue(e, { emitEvent: false });
-        })
-        // if (this.electronService.isElectronApp) {
-        //     this.electronService.ipcRenderer.on('asynchronous-reply', (event, arg) => {
-        //         this.ngZone.run(() => {
-        //             console.log(`Asynchronous message reply: ${arg}`);
-        //         });
-        //     });
-        // }
     }
 
     ngOnInit() {
 
-        if (this.electronService.isElectronApp) {
-            //this.electronService.shell.beep();
-            this.treeNodesData = this.electronService.ipcRenderer.sendSync('sideBarMenu:get')
-            console.log('menu loaded from electron');
-        } else {
-            this.uiService.loadSideMenuData().subscribe(result => {
-                this.treeNodesData = result;
-                console.log('menu loaded from file');
-            });
-        }
+        this.questionForm.valueChanges.subscribe(e => {
+            this.questionForm.setValue(e, { emitEvent: false });
+        })
+
+        this.treeNodesData = this.uiService.loadSideMenuData();
 
         // this.nodeTypes = [
         //     {label: 'L1', value: 'L1'},
@@ -126,11 +107,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     nodeSave() {
         this.treeNodesData.forEach(node => this.removeTreeParent(node));
-        this.uiService.saveTestData(this.treeNodesData);
-
-        if (this.electronService.isElectronApp) {
-            this.electronService.ipcRenderer.send('sideBarMenu:set', this.treeNodesData);
-        }
+        //this.uiService.saveToSessionStorage(this.treeNodesData);
+        this.uiService.ipcSend('sideBarMenu:set', this.treeNodesData)
+        // if (this.electronService.isElectronApp) {
+        //     this.electronService.ipcRenderer.send('sideBarMenu:set', this.treeNodesData);
+        // }
 
         this.treeNodesData = [...this.treeNodesData];
         this.messageService.add({severity: 'success', summary: 'Сохранено'});
@@ -225,15 +206,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         // this.messageService.add({severity: 'success', summary: this.selectedNode.data[key]});
     }
 
-    onThemeSwitchChange() {
-        this.isLightTheme = !this.isLightTheme;
-
-        document.body.setAttribute(
-            'data-theme',
-            this.isLightTheme ? 'light' : 'dark'
-        );
-    }
-
     showDialog() {
         /*    this.ref = this.dialogService.open(AppIndexComponent, {
               header: 'header',
@@ -251,32 +223,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     onAppNameChange(newName: string){
-        this.uiService.appNameChange.emit(newName)
+
     }
 
-    toggleTheme() {
-        let theme = 'light';
-        const head = this.document.getElementsByTagName('head')[0];
-        let themeLink = this.document.getElementById(
-            'client-theme'
-        ) as HTMLLinkElement;
-        if (themeLink) {
-            if (themeLink.href.includes('Light')) {
-                themeLink.href = 'assets/primeThemeDark.css'
-                theme = 'dark'
-            } else {
-                themeLink.href = 'assets/primeThemeLight.css'
-                theme = 'light'
-            }
-        } else {
-            const style = this.document.createElement('link');
-            style.id = 'client-theme';
-            style.rel = 'stylesheet';
-            style.type = 'text/css';
-            style.href = 'assets/primeThemeLight.css';
-            head.appendChild(style);
-        }
-
-        this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
+    toggleTheme(theme: string) {
+        this.uiService.toggleTheme(this.document, theme)
+        this.uiService.ipcSend('settings:toggleTheme', theme)
+        //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
     }
 }

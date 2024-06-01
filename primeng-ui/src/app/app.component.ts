@@ -14,9 +14,8 @@ export class AppComponent {
       private router: Router
   ){
     if (this.electronService.isElectronApp) {
-
       this.electronService.ipcRenderer.on('loadComponent', (event, link) => {
-        console.log(link)
+        //console.log(link)
         this.router.navigate(['/' + link]).then();
       });
     }
