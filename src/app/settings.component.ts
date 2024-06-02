@@ -44,7 +44,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
 
-        this.treeNodesData = this.uiService.loadSideMenuData();
+        this.treeNodesData = this.uiService.loadSideMenuData('services');
 
         // this.nodeTypes = [
         //     {label: 'L1', value: 'L1'},
@@ -99,7 +99,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     nodeSave() {
         this.treeNodesData.forEach(node => this.removeTreeParent(node));
         //this.uiService.saveToSessionStorage(this.treeNodesData);
-        this.uiService.ipcSend('sideBarMenu:set', this.treeNodesData)
+        this.uiService.ipcSend('services:set', this.treeNodesData)
         // if (this.electronService.isElectronApp) {
         //     this.electronService.ipcRenderer.send('sideBarMenu:set', this.treeNodesData);
         // }

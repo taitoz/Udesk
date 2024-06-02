@@ -61,10 +61,10 @@ export class UiService {
         }
     }
 
-    loadSideMenuData(): TreeNode[] {
+    loadSideMenuData(menuId: string): TreeNode[] {
         if (this.electronService.isElectronApp) {
             //this.electronService.shell.beep();
-            return this.electronService.ipcRenderer.sendSync('sideBarMenu:get');
+            return this.electronService.ipcRenderer.sendSync(menuId+':get');
         } else {
                 //TODO fix
                 // const testData = this.sessionStorage.get('testData');
@@ -72,7 +72,7 @@ export class UiService {
                 //     observer.next(testData);
                 //     observer.complete();
                 // } else {
-                this.http.get<TreeNode[]>('assets/test.json').subscribe((response: TreeNode[]) => {
+                this.http.get<TreeNode[]>('assets/'+menuId+'.json').subscribe((response: TreeNode[]) => {
                         //this.saveToSessionStorage(response);
                     return response
                     }

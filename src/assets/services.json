@@ -1,0 +1,149 @@
+[
+  {
+    "data": {
+      "id": 1,
+      "key": "Подписка",
+      "value": "https://uchet.kz/lp/5prichin/",
+      "icon": "bx bx-home-alt"
+    },
+    "children": [],
+    "parent": null,
+    "expanded": true
+  },
+  {
+    "data": {
+      "id": 2,
+      "key": "Бухгалтерия",
+      "value": "https://buh.uchet.kz/",
+      "icon": "bx bx-film"
+    },
+    "children": [],
+    "parent": null,
+    "expanded": true
+  },
+  {
+    "data": {
+      "id": 3,
+      "key": "Онлайн касса",
+      "value": "https://ukassa.kz/",
+      "icon": "bx bx-server"
+    },
+    "children": [],
+    "parent": null,
+    "expanded": true
+  },
+  {
+    "data": {
+      "id": 4,
+      "key": "ЭДО",
+      "value": "https://edo.uchet.kz/",
+      "type": "type"
+    },
+    "children": [],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 5,
+      "key": "Обучение",
+      "value": "https://profitraining.kz/",
+      "type": "type"
+    },
+    "children": [
+      {
+        "data": {
+          "id": 1717342885020,
+          "key": "Вебинары",
+          "value": "https://uchet.kz/webinar/",
+          "type": "type"
+        },
+        "children": [
+          {
+            "data": {
+              "id": 1717343016317,
+              "key": "Архив",
+              "value": "https://uchet.kz/webinar/archive/",
+              "type": "type"
+            },
+            "children": [],
+            "parent": null
+          }
+        ],
+        "parent": null,
+        "expanded": true
+      },
+      {
+        "data": {
+          "id": 1717342935600,
+          "key": "Экзаменационные модули",
+          "value": "https://profitraining.kz/modules.php",
+          "type": "type"
+        },
+        "children": [],
+        "parent": null
+      }
+    ],
+    "parent": null,
+    "expanded": true
+  },
+  {
+    "data": {
+      "id": 6,
+      "key": "Проверка контрагента",
+      "value": "https://pk.uchet.kz/",
+      "type": "type"
+    },
+    "children": [],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 7,
+      "key": "ПОБ",
+      "value": "https://pob.uchet.kz/",
+      "type": "type"
+    },
+    "children": [],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 8,
+      "key": "Dashboard",
+      "value": "https://dashboard.uchet.kz/",
+      "type": "type"
+    },
+    "children": [],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 9,
+      "key": "Аудит",
+      "value": "https://audit.uchet.kz/",
+      "type": "type"
+    },
+    "children": [],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 10,
+      "key": "Аутсорсинг",
+      "value": "https://uchet.kz/fran/our-fran.html",
+      "type": "type"
+    },
+    "children": [],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 11,
+      "key": "Арсенал бухгалтера",
+      "value": "https://ab.uchet.kz/",
+      "type": "type"
+    },
+    "children": [],
+    "parent": null
+  }
+]

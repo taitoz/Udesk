@@ -2,6 +2,7 @@ import {Component, Inject, OnInit, ViewChild} from '@angular/core';
 import {MenuItem, TreeNode} from 'primeng/api';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
+import {ActivatedRoute, Router} from '@angular/router';
 
 @Component({
     selector: 'sideMenu',
@@ -13,14 +14,24 @@ export class SideMenuComponent implements OnInit {
 
     treeNodesData: TreeNode[];
     menuItems: MenuItem[] = [];
-    appName: string = 'desk';
+    menuName: string = '';
 
     @ViewChild('menubar') menuBar: any;
 
     constructor(
         private uiService: UiService,
+        private route: ActivatedRoute,
+        private router: Router,
         @Inject(DOCUMENT) private document: Document
     ) {
+        this.route.params.subscribe(params => {
+            this.menuName = this.getMenuName(params['menuId']);
+            this.treeNodesData = this.uiService.loadSideMenuData(params['menuId']);
+            this.loadMenuItemsFromTreeNodesData();
+        }, error => {
+            console.log(error)
+            //router.navigate(['']);
+        });
     }
 
     ngOnInit() {
@@ -29,12 +40,19 @@ export class SideMenuComponent implements OnInit {
             this.uiService.toggleTheme(this.document, theme)
         })
 
-        this.treeNodesData = this.uiService.loadSideMenuData();
-        this.loadMenuItemsFromTreeNodesData();
+        //this.treeNodesData = this.uiService.loadSideMenuData('services');
+        //this.loadMenuItemsFromTreeNodesData();
 
         // this.uiService.appNameChange.subscribe(appName => {
         //     this.appName = appName;
         // });
+    }
+
+    getMenuName(menuId:string){
+        switch (menuId){
+            case 'services': return 'Сервисы'
+            case 'web1c': return 'Облачная 1С'
+        }
     }
 
     loadMenuItemsFromTreeNodesData() {

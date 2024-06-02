@@ -79,7 +79,7 @@ let mainView
 
 //let i18n = new (require('./translations/i18n'))
 let sideBarWidth = 70
-let sideMenuWidth = 230
+let sideMenuWidth = 0
 let titleBarHeight = 32
 
 app.disableHardwareAcceleration()
@@ -130,7 +130,6 @@ function createWindow() {
         height: mainWindow.getBounds().height
     })
     sideMenu.setAutoResize({width: false, height: true})
-    loadPrimeComponent(sideMenu, 'sideMenu');
 
     mainView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.addBrowserView(mainView)
@@ -144,12 +143,10 @@ function createWindow() {
 
     // and load the index.html.bak of the app.
     //mainWindow.loadFile('index.html.bak')
-    //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
     //mainView.webContents.loadFile(`index.html.bak`).then()
-    // mainView.webContents.loadFile(path.join(__dirname, 'dist', 'index.html.bak')).then(() => {
-    //     mainView.webContents.send('loadComponent', 'sidebar');
-    // })
-    loadPrimeComponent(mainView, 'settings');
+    //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
+    mainView.webContents.loadURL('https://uchet.kz/')
+    //loadPrimeComponent(mainView, 'settings');
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Open the DevTools.
@@ -327,11 +324,12 @@ ipcMain.handle('load-url', (event, url) => {
     })
 })
 
-ipcMain.handle('menubar-toggle', (event, arg) => {
+ipcMain.on('sideMenu:toggle', (event, menuId) => {
     sideMenuWidth = sideMenu.getBounds().width
     switch (sideMenuWidth) {
         case 0:
             sideMenuWidth = 230;
+            loadPrimeComponent(sideMenu, 'sideMenu/' + menuId);
             break;
         case 230:
             sideMenuWidth = 0
@@ -343,21 +341,36 @@ ipcMain.handle('menubar-toggle', (event, arg) => {
 ipcMain.on('settings:toggleTheme', (event, theme) => {
     //console.log(theme)
     nativeTheme.themeSource = theme;
+    settings.setSync('theme', theme);
 })
-ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
-    settings.setSync('sideBarMenu', sideBarMenu);
-    loadPrimeComponent(sideMenu, 'sideMenu');
+ipcMain.on('services:set', (event, sideBarMenu) => {
+    settings.setSync('servicesMenu', sideBarMenu);
+    loadPrimeComponent(sideMenu, 'sideMenu/services');
 })
-ipcMain.on('sideBarMenu:get', (event) => {
-    event.returnValue = settings.getSync('sideBarMenu');
+ipcMain.on('services:get', (event) => {
+    event.returnValue = settings.getSync('servicesMenu');
 })
-
+ipcMain.on('web1c:set', (event, sideBarMenu) => {
+    settings.setSync('web1cMenu', sideBarMenu);
+    loadPrimeComponent(sideMenu, 'sideMenu/web1c');
+})
+ipcMain.on('web1c:get', (event) => {
+    event.returnValue = settings.getSync('web1cMenu');
+})
 function initSettings() {
-    //file path /home/developer/.config/Udesk/settings.json
-    if (!settings.hasSync('sideBarMenu')) {
-        fs.readFile(path.join(__dirname, 'primeng-ui', 'dist', 'assets', 'test.json'),
+    //file path
+    // /home/developer/.config/Udesk/settings.json
+    // C:\Users\user\AppData\Roaming\Udesk\settings.json
+    if (!settings.hasSync('servicesMenu')) {
+        fs.readFile(path.join(__dirname, 'dist', 'assets', 'services.json'),
             'utf8', (err, data) => {
-                settings.setSync('sideBarMenu', JSON.parse(data))
+                settings.setSync('servicesMenu', JSON.parse(data))
+            });
+    }
+    if (!settings.hasSync('web1cMenu')) {
+        fs.readFile(path.join(__dirname, 'dist', 'assets', 'web1c.json'),
+            'utf8', (err, data) => {
+                settings.setSync('web1cMenu', JSON.parse(data))
             });
     }
     if (!settings.hasSync('theme')) {

@@ -1,0 +1,20 @@
+[
+  {
+    "data": {
+      "id": 1,
+      "key": "База 1",
+      "value": "https://buh.uchet.kz/K4nynmaraquisir1117/ru_RU/"
+    },
+    "children": [],
+    "parent": null
+  },
+  {
+    "data": {
+      "id": 2,
+      "key": "База 2",
+      "value": "https://buh.uchet.kz/K4nynmaraquisir1117/ru_RU/"
+    },
+    "children": [],
+    "parent": null
+  }
+]

@@ -85,6 +85,7 @@
         "primeflex": "^3.3.1",
         "primeicons": "^7.0.0",
         "primeng": "^17.15.0",
+        "boxicons": "^2.1.4",
         "rxjs": "7.8.1",
         "tslib": "2.6.2",
         "zone.js": "0.14.4"

@@ -25,6 +25,13 @@ export class SideBarComponent implements OnInit {
         })
     }
 
+    openLink(url:string){
+        this.uiService.ipcInvoke('load-url', url)
+    }
+
+    ipcSend(channel:string, data:string){
+        this.uiService.ipcSend(channel, data)
+    }
     callRenderer(channel: string) {
         this.uiService.ipcInvoke(channel)
     }

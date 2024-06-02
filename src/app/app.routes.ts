@@ -19,7 +19,7 @@ const routes: Routes = [
     {path: 'settings', component: SettingsComponent},
     {path: 'titleBar', component: TitleBarComponent},
     {path: 'sideBar', component: SideBarComponent},
-    {path: 'sideMenu', component: SideMenuComponent},
+    {path: 'sideMenu/:menuId', component: SideMenuComponent},
 
     // otherwise redirect to index
     {path: '**', pathMatch: 'full', redirectTo: ''}

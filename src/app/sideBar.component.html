@@ -6,10 +6,18 @@
         <div class="mt-3 select-none">
             <ul class="list-none p-3 lg:py-3 lg:px-2 m-0">
                 <li>
-                    <p-button icon="pi pi-home" (click)="callRenderer('open-link:home')" [plain]="true" [text]="true"/>
+                    <p-button icon="pi pi-home" (click)="openLink('https://uchet.kz')" [plain]="true" [text]="true"/>
                 </li>
                 <li>
-                    <p-button icon="pi pi-bars" (click)="callRenderer('menubar-toggle')" [plain]="true" [text]="true"/>
+                    <p-button icon="bx bx-grid"
+                              (click)="ipcSend('sideMenu:toggle', 'services')" [plain]="true" [text]="true"/>
+                </li>
+                <li>
+                    <p-button icon="pi pi-server"
+                              (click)="ipcSend('sideMenu:toggle', 'web1c')" [plain]="true" [text]="true"/>
+                </li>
+                <li>
+                    <p-button icon="bx bx-film" (click)="openLink('https://www.youtube.com/user/uchetkz/videos')" [plain]="true" [text]="true"/>
                 </li>
                 <li>
                     <p-button icon="pi pi-envelope" (click)="callRenderer('open-link:messages')" [plain]="true" [text]="true"
@@ -28,7 +36,7 @@
                     <p-button icon="pi pi-cog" (click)="callRenderer('open:settings')" [plain]="true" [text]="true"/>
                 </li>
                 <li>
-                    <p-button icon="pi pi-user" (click)="callRenderer('open:user')" [plain]="true" [text]="true"/>
+                    <p-button icon="pi pi-user" (click)="openLink('https://id.uchet.kz/account/login/')" [plain]="true" [text]="true"/>
                 </li>
             </ul>
         </div>
