@@ -18,18 +18,18 @@ import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
 export class SettingsComponent implements OnInit, OnDestroy {
 
     activeIndex = 0;
-    treeNodesData: TreeNode[];
-    cols: any[];
+    treeNodesData: TreeNode[] | undefined;
+    cols: any[] | undefined;
     //selectedNode: TreeNode;
-    selectedNodes: TreeNode[];
+    selectedNodes: TreeNode[] | undefined;
 
     unSavedEdits = false;
     isNotHeaderNode = true;
 
-    nodeTypes: SelectItem[];
-    selectedNodeType: string;
+    nodeTypes: SelectItem[] | undefined;
+    selectedNodeType: string | undefined;
 
-    ref: DynamicDialogRef;
+    ref: DynamicDialogRef | undefined;
     theme = 'dark';
 
     constructor(
@@ -82,7 +82,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return value;
     }
 
-    onSelect(event) {
+    onSelect(event: { node: { data: { type: string | undefined; }; } | null; }) {
         if (event.node != null) {
             //this.selectedNode = event.node;
             this.selectedNodeType = event.node.data.type;

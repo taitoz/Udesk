@@ -2,7 +2,6 @@ import {Component, Inject, OnInit, ViewChild} from '@angular/core';
 import {MenuItem, TreeNode} from 'primeng/api';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
-import {environment} from '../environments/environment';
 
 @Component({
     selector: 'sideMenu',

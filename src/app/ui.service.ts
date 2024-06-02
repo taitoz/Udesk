@@ -87,7 +87,7 @@ export class UiService {
 
     getAppLogoPath(){
         if (this.electronService.isElectronApp) {
-             return '../../assets/png/logo.png'
+             return '../assets/logo48.png'
          } else {
             return '/assets/image.svg'
          }

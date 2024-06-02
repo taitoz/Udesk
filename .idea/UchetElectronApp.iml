@@ -11,6 +11,8 @@
       <excludeFolder url="file://$MODULE_DIR$/release/build" />
       <excludeFolder url="file://$MODULE_DIR$/primeng-settings/.idea/inspectionProfiles" />
       <excludeFolder url="file://$MODULE_DIR$/primeng-menu/.idea/inspectionProfiles" />
+      <excludeFolder url="file://$MODULE_DIR$/primeng-ui/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/codeStyles" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

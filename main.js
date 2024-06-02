@@ -77,7 +77,7 @@ let sideMenu
 let titleBar
 let mainView
 
-let i18n = new (require('./translations/i18n'))
+//let i18n = new (require('./translations/i18n'))
 let sideBarWidth = 70
 let sideMenuWidth = 230
 let titleBarHeight = 32
@@ -142,11 +142,11 @@ function createWindow() {
         height: mainWindow.getBounds().height - titleBarHeight
     })
 
-    // and load the index.html of the app.
-    //mainWindow.loadFile('index.html')
+    // and load the index.html.bak of the app.
+    //mainWindow.loadFile('index.html.bak')
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
-    //mainView.webContents.loadFile(`index.html`).then()
-    // mainView.webContents.loadFile(path.join(__dirname, 'primeng-ui', 'dist', 'index.html')).then(() => {
+    //mainView.webContents.loadFile(`index.html.bak`).then()
+    // mainView.webContents.loadFile(path.join(__dirname, 'dist', 'index.html.bak')).then(() => {
     //     mainView.webContents.send('loadComponent', 'sidebar');
     // })
     loadPrimeComponent(mainView, 'settings');
@@ -216,7 +216,7 @@ function resizeMain() {
 }
 
 function loadPrimeComponent(browserView, component) {
-    const url = `file://${__dirname}/primeng-ui/dist/index.html`;
+    const url = `file://${__dirname}/dist/index.html`;
     browserView.webContents.loadURL(url).then(() => {
         browserView.webContents.send('loadComponent', component);
     })

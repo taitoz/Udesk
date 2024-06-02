@@ -1,7 +1,6 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {DOCUMENT} from '@angular/common';
 import {UiService} from './ui.service';
-import {environment} from '../environments/environment';
 
 @Component({
     selector: 'sideBar',
