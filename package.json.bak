@@ -1,7 +1,7 @@
 {
     "name": "udesk",
     "productName": "Udesk",
-    "version": "1.0.1",
+    "version": "1.0.0",
     "description": "Udesk Application",
     "author": {
         "name": "uchet.kz",
@@ -14,7 +14,11 @@
         "pack": "electron-builder --dir",
         "dist": "electron-builder -- --publish never",
         "dist-win": "GENERATE_SOURCEMAP=false electron-builder -w",
-
+        "package-win": "electron-packager . udesk --overwrite --asar --platform=win32 --arch=ia32 --icon=assets/ico/logo.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Udesk\"",
+        "package-linux": "electron-packager . udesk --overwrite --asar --platform=linux --arch=x64 --icon=assets/png/logo.png --prune=true --out=release-builds",
+        "package-mac": "electron-packager . udesk --overwrite --platform=darwin --arch=x64 --icon=assets/mac/logo.icns --prune=true --out=release-builds",
+        "create-installer-mac": "node installers/mac/createinstaller.js",
+        "create-installer-win": "node installers/windows/createinstaller.js",
         "postinstall": "electron-builder install-app-deps",
         "ng": "ng",
         "start": "npm-run-all -p electron:serve ng:serve",
@@ -35,20 +39,38 @@
         "version": "conventional-changelog -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md",
         "lint": "ng lint"
     },
+    "build": {
+        "productName": "udesk",
+        "appId": "udesk",
+        "asar": true,
+        "asarUnpack": "**\\*.{node,dll}",
+        "dmg": {
+            "title": "${productName} ${version}"
+        },
+        "linux": {
+            "target": [
+                "AppImage"
+            ],
+            "category": "Utility",
+            "icon": "assets/png/logo.png"
+        },
+        "win": {
+            "target": [
+                "squirrel"
+            ],
+            "defaultArch": "ia32",
+            "verifyUpdateCodeSignature": false,
+            "icon": "assets/ico/logo.ico"
+        },
+        "electronLanguages": [
+            "ru"
+        ]
+    },
     "dependencies": {
+        "electron-builder-squirrel-windows": "^24.13.3",
         "electron-log": "^5.1.1",
         "electron-settings": "^4.0.4",
         "electron-simple-updater": "^2.0.10",
-        "primeflex": "^3.3.1",
-        "primeicons": "^7.0.0",
-        "primeng": "^17.15.0",
-        "boxicons": "^2.1.4"
-    },
-    "devDependencies": {
-        "rxjs": "7.8.1",
-        "tslib": "2.6.2",
-        "zone.js": "0.14.4",
-
         "@angular/animations": "17.3.6",
         "@angular/common": "17.3.6",
         "@angular/compiler": "17.3.6",
@@ -59,12 +81,22 @@
         "@angular/platform-browser-dynamic": "17.3.6",
         "@angular/router": "17.3.6",
         "angular-web-storage": "^17.0.0",
-        "asar": "^3.2.0",
         "ngx-electronyzer": "^1.0.2",
+        "primeflex": "^3.3.1",
+        "primeicons": "^7.0.0",
+        "primeng": "^17.15.0",
+        "boxicons": "^2.1.4",
+        "rxjs": "7.8.1",
+        "tslib": "2.6.2",
+        "zone.js": "0.14.4"
+    },
+    "devDependencies": {
+        "asar": "^3.2.0",
         "electron": "^28.1.3",
         "electron-builder": "^24.13.3",
-        "electron-builder-squirrel-windows": "^24.13.3",
+        "electron-packager": "^17.1.2",
         "electron-squirrel-startup": "^1.0.0",
+        "electron-winstaller": "^5.2.1",
         "electron-debug": "3.2.0",
         "electron-reloader": "1.2.3",
         "@angular-builders/custom-webpack": "17.0.2",

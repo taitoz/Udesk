@@ -1,38 +1,41 @@
 {
   "asar": true,
   "directories": {
-    "output": "release/"
+    "output": "release-builds/"
   },
   "files": [
-    "**/*",
-    "!**/*.ts",
-    "!*.map",
-    "!package.json",
-    "!package-lock.json",
-    {
-      "from": "../dist",
-      "filter": ["**/*"]
-    }
+    "!*",
+    "!**/*",
+    "main.js",
+    "assets/**/*",
+    "dist/**/*",
+    "node_modules/**/*",
+    "!node_modules/primeng/resources/themes/**/*",
+    "!node_modules/react*/**/*"
   ],
   "win": {
-    "icon": "dist/assets/icons",
+    "icon": "assets/ico/logo.ico",
     "target": [
-      "portable"
+      "portable",
+      "squirrel"
     ]
   },
   "portable": {
-    "splashImage": "dist/assets/icons/electron.bmp"
+    "splashImage": "assets/png/logo.png"
   },
   "mac": {
-    "icon": "dist/assets/icons",
+    "icon": "assets/mac/32.icns",
     "target": [
       "dmg"
     ]
   },
   "linux": {
-    "icon": "dist/assets/icons",
+    "icon": "assets/png/logo.png",
     "target": [
       "AppImage"
     ]
-  }
+  },
+  "electronLanguages": [
+    "ru"
+  ]
 }
