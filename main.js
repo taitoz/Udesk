@@ -69,6 +69,7 @@ updater
 const settings = require('electron-settings');
 initSettings()
 
+let i18n = new (require('./translations/i18n.js'))
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -76,6 +77,7 @@ let sideBar
 let sideMenu
 let titleBar
 let mainView
+let settingsView
 
 //let i18n = new (require('./translations/i18n'))
 let sideBarWidth = 70
@@ -131,10 +133,19 @@ function createWindow() {
     })
     sideMenu.setAutoResize({width: false, height: true})
 
-    mainView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainView = new BrowserView()
     mainWindow.addBrowserView(mainView)
     mainView.setAutoResize({width: true, height: true})
     mainView.setBounds({
+        x: (sideBarWidth + sideMenuWidth),
+        y: titleBarHeight,
+        width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
+        height: mainWindow.getBounds().height - titleBarHeight
+    })
+
+    settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false, allowRunningInsecureContent: true }})
+    settingsView.setAutoResize({width: true, height: true})
+    settingsView.setBounds({
         x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
         width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
@@ -205,6 +216,13 @@ function resizeMain() {
     })
 
     mainView.setBounds({
+        x: (sideBarWidth + sideMenuWidth),
+        y: titleBarHeight,
+        width: newBounds.width - (sideBarWidth + sideMenuWidth),
+        height: newBounds.height
+    })
+
+    settingsView.setBounds({
         x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
         width: newBounds.width - (sideBarWidth + sideMenuWidth),
@@ -309,7 +327,13 @@ ipcMain.handle('maximize', () => {
     resizeMain()
 })
 ipcMain.handle('open:settings', () => {
-    loadPrimeComponent(mainView, 'settings');
+    loadPrimeComponent(settingsView, 'settings');
+    let views = mainWindow.getBrowserViews()
+    if (views.indexOf(settingsView) === -1) {
+        mainWindow.addBrowserView(settingsView)
+    } else {
+        mainWindow.removeBrowserView(settingsView)
+    }
 })
 
 ipcMain.handle('load-url', (event, url) => {

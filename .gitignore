@@ -16,8 +16,8 @@ src/**/*.js
 node_modules
 
 # IDEs and editors
-.idea
-.project
+/.idea
+/.project
 .classpath
 .c9/
 *.launch
@@ -32,7 +32,8 @@ node_modules
 !.vscode/extensions.json
 
 # misc
-/.angular/cache
+/.nx/*
+/.angular/*
 /.sass-cache
 /connect.lock
 /coverage
