@@ -10,16 +10,22 @@ let path = require('path')
 // Module to create native browser window.
 const {
     BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
-    app, Tray, dialog, screen
+    app, Tray, dialog, screen, globalShortcut
 } = require('electron')
 
-const log = require('electron-log/main');
-log.initialize()
+const appLog = require('electron-log/main');
+//%USERPROFILE%\AppData\Roaming\electron-gzk-bot\logs\
+appLog.transports.file.fileName = new Date().toISOString().slice(0, 10) + ".log";
+Object.assign(console, appLog.functions);
+
+const settings = require('electron-settings');
+
+let i18n = new (require('./translations/i18n.js'))
 
 //const server = 'https://udesk-upd-srv.vercel.app'
 
 const updater = require('electron-simple-updater');
-log.info(updater.buildId)
+appLog.info(updater.buildId)
 updater
     .init({
         url: 'https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json',
@@ -28,13 +34,13 @@ updater
         disabled: false,
         logger: {
             info(...args) {
-                log.info('update-log', 'info', ...args)
+                appLog.info('update-log', 'info', ...args)
             },
             warn(...args) {
-                log.warn('update-log', 'warn', ...args)
+                appLog.warn('update-log', 'warn', ...args)
             },
             error(...args) {
-                log.error('update-log', 'error', ...args)
+                appLog.error('update-log', 'error', ...args)
             }
         }
     })
@@ -62,14 +68,10 @@ updater
         })
     })
     .on('error', (message) => {
-        log.error('There was a problem updating the application')
-        log.error(message)
+        appLog.error('There was a problem updating the application')
+        appLog.error(message)
     })
 
-const settings = require('electron-settings');
-initSettings()
-
-let i18n = new (require('./translations/i18n.js'))
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -86,7 +88,6 @@ let titleBarHeight = 32
 
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
-
 
 function createWindow() {
 
@@ -143,7 +144,7 @@ function createWindow() {
         height: mainWindow.getBounds().height - titleBarHeight
     })
 
-    settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false, allowRunningInsecureContent: true }})
+    settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     settingsView.setAutoResize({width: true, height: true})
     settingsView.setBounds({
         x: (sideBarWidth + sideMenuWidth),
@@ -156,7 +157,7 @@ function createWindow() {
     //mainWindow.loadFile('index.html.bak')
     //mainView.webContents.loadFile(`index.html.bak`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
-    mainView.webContents.loadURL('https://uchet.kz/')
+    mainView.webContents.loadURL('https://uchet.kz/').then()
     //loadPrimeComponent(mainView, 'settings');
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
@@ -246,7 +247,17 @@ module.exports = {get};
 
 app.whenReady().then(() => {
     //const icon = nativeImage.createFromPath()
+    initSettings()
     try {
+        const ret = globalShortcut.register('CommandOrControl+X', () => {
+            //console.log('F12')
+            app.relaunch();
+            app.exit();
+        })
+        if (!ret) {
+            console.log('registration failed')
+        }
+
         const tray = new Tray(path.join(__dirname, "assets", "ico", "logo.ico"))
         const trayMenu = Menu.buildFromTemplate([
             {
@@ -278,6 +289,7 @@ app.on('window-all-closed', function () {
         //mainWindow.removeBrowserView(sidebar)
         app.quit()
     }
+    globalShortcut.unregisterAll()
 })
 
 app.on('activate', function () {
@@ -382,9 +394,14 @@ ipcMain.on('web1c:get', (event) => {
     event.returnValue = settings.getSync('web1cMenu');
 })
 function initSettings() {
-    //file path
+
+    settings.configure({
+        fileName: 'settings.json',
+        prettify: true
+    });
     // /home/developer/.config/Udesk/settings.json
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
+
     if (!settings.hasSync('servicesMenu')) {
         fs.readFile(path.join(__dirname, 'dist', 'assets', 'services.json'),
             'utf8', (err, data) => {
