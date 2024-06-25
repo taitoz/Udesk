@@ -19,6 +19,8 @@ appLog.transports.file.fileName = new Date().toISOString().slice(0, 10) + ".log"
 Object.assign(console, appLog.functions);
 
 const settings = require('electron-settings');
+const profile = require('electron-settings');
+loadProfile()
 
 let i18n = new (require('./translations/i18n.js'))
 
@@ -81,7 +83,6 @@ let titleBar
 let mainView
 let settingsView
 
-//let i18n = new (require('./translations/i18n'))
 let sideBarWidth = 70
 let sideMenuWidth = 0
 let titleBarHeight = 32
@@ -245,9 +246,11 @@ function get() {
 // Export the publicly available functions.
 module.exports = {get};
 
-app.whenReady().then(() => {
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.on('ready', function () {
     //const icon = nativeImage.createFromPath()
-    initSettings()
     try {
         const ret = globalShortcut.register('CommandOrControl+X', () => {
             //console.log('F12')
@@ -273,12 +276,8 @@ app.whenReady().then(() => {
     } catch (error) {
         console.log(error)
     }
+    createWindow()
 })
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -393,15 +392,9 @@ ipcMain.on('web1c:set', (event, sideBarMenu) => {
 ipcMain.on('web1c:get', (event) => {
     event.returnValue = settings.getSync('web1cMenu');
 })
+
+// =====================================================================================
 function initSettings() {
-
-    settings.configure({
-        fileName: 'settings.json',
-        prettify: true
-    });
-    // /home/developer/.config/Udesk/settings.json
-    // C:\Users\user\AppData\Roaming\Udesk\settings.json
-
     if (!settings.hasSync('servicesMenu')) {
         fs.readFile(path.join(__dirname, 'dist', 'assets', 'services.json'),
             'utf8', (err, data) => {
@@ -417,6 +410,45 @@ function initSettings() {
     if (!settings.hasSync('theme')) {
         settings.setSync('theme', 'dark')
     }
+}
+
+function initProfile() {
+    profile.setSync('default.lang', 'ru')
+    profile.setSync('default.trayIcon', path.join(__dirname, "assets", "ico", "logo48b.ico"))
+    profile.setSync('default.sideBarIcon', path.join(__dirname, "assets", "ico", "logo48b.ico"))
+    profile.setSync('default.homeUrl', 'file://' + __dirname + '/dist/index.html')
+    profile.setSync('active', 'default')
+}
+
+function addProfile(profileName, json) {
+    profile.setSync(profileName, json)
+}
+function deleteProfile(profileName){
+    profile.unsetSync(profileName);
+}
+function loadProfile() {
+
+    profile.configure({
+        fileName: 'profile.json',
+        prettify: true
+    });
+    //profile.getSync('sideBarIcon') //ipcMain.on('profile:getIcon'
+    //ipcMain.on('profile:setActive' //restart
+    //ipcMain.on('profile:get' //parse json
+    // ipcMain.on('profile:add' ipcMain.on('profile:delete'
+    if (!profile.hasSync('active')) {
+        initProfile();
+    }
+
+    let appUserDataPath = app.getPath('userData'); // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
+    const profileName = profile.getSync('active');
+    settings.configure({
+        dir: appUserDataPath + '/profiles/',
+        fileName: 'settings-' + profileName + '.json',
+        prettify: true
+    });
+    initSettings();
+
     nativeTheme.themeSource = settings.getSync('theme') ?? 'dark';
     //console.log()
 }
