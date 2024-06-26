@@ -4,8 +4,7 @@ import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
 import { ElectronService } from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
-import {nativeTheme} from 'electron';
-import {FormBuilder, FormControl, FormGroup} from "@angular/forms";
+import {SelectButtonChangeEvent} from "primeng/selectbutton";
 
 @Component({
     selector: 'settings',
@@ -31,6 +30,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ref: DynamicDialogRef | undefined;
     theme = 'dark';
+    themeOptions: any[] = [{ label: 'Темная', value: 'dark' },{ label: 'Светлая', value: 'light' }];
+
+    profiles: any[] = [{name: 'default'},{name: '1'}, {name: '2'}];
+    selectedProfile!: any;
 
     constructor(
         private electronService: ElectronService,
@@ -72,6 +75,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             return confirm('You have unsaved changes. Are you sure you want to leave?');
         }
         return true;
+    }
+
+    selectProfile(profile: any) {
+        this.messageService.add({ severity: 'info', summary: 'Profile selected', detail: profile.name });
     }
 
     getNodeTypeLabel(value: string): string {
@@ -217,8 +224,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     }
 
-    toggleTheme(event: string) {
-        this.theme = event
+    toggleTheme(event: SelectButtonChangeEvent) {
+        //this.theme = event.value
         this.uiService.toggleTheme(this.document, this.theme)
         this.uiService.ipcSend('settings:toggleTheme', this.theme)
         //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);

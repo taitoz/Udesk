@@ -24,7 +24,7 @@ import {AvatarModule} from 'primeng/avatar';
 import {PanelMenuModule} from 'primeng/panelmenu';
 import {MenuModule} from 'primeng/menu';
 import {RippleModule} from 'primeng/ripple';
-import { RadioButtonModule } from 'primeng/radiobutton';
+import {SelectButtonModule} from "primeng/selectbutton";
 import {BadgeModule} from 'primeng/badge';
 import { CheckboxModule } from 'primeng/checkbox';
 @NgModule({
@@ -55,7 +55,7 @@ import { CheckboxModule } from 'primeng/checkbox';
         MenuModule,
         RippleModule,
         BadgeModule,
-        RadioButtonModule,
+        SelectButtonModule,
         CheckboxModule
     ],
     providers: [DialogService]

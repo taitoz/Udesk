@@ -428,10 +428,15 @@ function deleteProfile(profileName){
     profile.unsetSync(profileName);
 }
 function loadProfile() {
+    //https://github.com/de-luca/electron-json-config
+    //https://github.com/megahertz/electron-cfg
+    //https://github.com/sindresorhus/electron-store
 
 
-    let file = editJsonFile(`${__dirname}/foo.json`);
-
+    let appUserDataPath = app.getPath('userData'); // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
+    let file = editJsonFile(`${appUserDataPath}/profile.json`, {
+        autosave: true
+    });
 
     profile.configure({
         fileName: 'profile.json',
@@ -448,7 +453,7 @@ function loadProfile() {
     activeProfile = profile.getSync(profileName)
 
     //breaks profile
-    let appUserDataPath = app.getPath('userData'); // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
+
     settings.configure({
         dir: appUserDataPath + '/profiles/',
         fileName: 'settings-' + profileName + '.json',
