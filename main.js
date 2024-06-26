@@ -19,13 +19,14 @@ appLog.transports.file.fileName = new Date().toISOString().slice(0, 10) + ".log"
 Object.assign(console, appLog.functions);
 
 const settings = require('electron-settings');
-const profile = require('electron-settings');
+const editJsonFile = require("edit-json-file");
+let activeProfile
 loadProfile()
 
 let i18n = new (require('./translations/i18n.js'))
 
 //const server = 'https://udesk-upd-srv.vercel.app'
-
+/*
 const updater = require('electron-simple-updater');
 appLog.info(updater.buildId)
 updater
@@ -73,7 +74,7 @@ updater
         appLog.error('There was a problem updating the application')
         appLog.error(message)
     })
-
+*/
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -158,7 +159,7 @@ function createWindow() {
     //mainWindow.loadFile('index.html.bak')
     //mainView.webContents.loadFile(`index.html.bak`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
-    mainView.webContents.loadURL('https://uchet.kz/').then()
+    //mainView.webContents.loadURL('https://uchet.kz/').then()
     //loadPrimeComponent(mainView, 'settings');
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
@@ -261,7 +262,7 @@ app.on('ready', function () {
             console.log('registration failed')
         }
 
-        const tray = new Tray(path.join(__dirname, "assets", "ico", "logo.ico"))
+        const tray = new Tray(activeProfile['trayIcon'])
         const trayMenu = Menu.buildFromTemplate([
             {
                 label: i18n.__('Close'),
@@ -414,7 +415,7 @@ function initSettings() {
 
 function initProfile() {
     profile.setSync('default.lang', 'ru')
-    profile.setSync('default.trayIcon', path.join(__dirname, "assets", "ico", "logo48b.ico"))
+    profile.setSync('default.trayIcon', path.join(__dirname, "assets", "logo48b.png"))
     profile.setSync('default.sideBarIcon', path.join(__dirname, "assets", "ico", "logo48b.ico"))
     profile.setSync('default.homeUrl', 'file://' + __dirname + '/dist/index.html')
     profile.setSync('active', 'default')
@@ -428,20 +429,26 @@ function deleteProfile(profileName){
 }
 function loadProfile() {
 
+
+    let file = editJsonFile(`${__dirname}/foo.json`);
+
+
     profile.configure({
         fileName: 'profile.json',
         prettify: true
     });
-    //profile.getSync('sideBarIcon') //ipcMain.on('profile:getIcon'
+    //activeProfile['sideBarIcon'] //ipcMain.on('profile:getSideBarIcon'
     //ipcMain.on('profile:setActive' //restart
     //ipcMain.on('profile:get' //parse json
     // ipcMain.on('profile:add' ipcMain.on('profile:delete'
     if (!profile.hasSync('active')) {
         initProfile();
     }
+    const profileName = profile.getSync('active').toString();
+    activeProfile = profile.getSync(profileName)
 
+    //breaks profile
     let appUserDataPath = app.getPath('userData'); // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
-    const profileName = profile.getSync('active');
     settings.configure({
         dir: appUserDataPath + '/profiles/',
         fileName: 'settings-' + profileName + '.json',
@@ -449,6 +456,7 @@ function loadProfile() {
     });
     initSettings();
 
+    console.log();
     nativeTheme.themeSource = settings.getSync('theme') ?? 'dark';
     //console.log()
 }

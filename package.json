@@ -36,6 +36,7 @@
     },
     "dependencies": {
         "boxicons": "^2.1.4",
+        "edit-json-file": "^1.8.0",
         "electron-log": "^5.1.1",
         "electron-settings": "^4.0.4",
         "electron-simple-updater": "^2.0.10",
