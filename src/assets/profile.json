@@ -1,0 +1,6 @@
+{
+  "lang": "ru",
+  "trayIcon": "/home/developer/_Repos/uchet-desktop/assets/logo48b.png",
+  "sideBarIcon": "/home/developer/_Repos/uchet-desktop/assets/ico/logo48b.ico",
+  "homeUrl": "file:///home/developer/_Repos/uchet-desktop/dist/index.html"
+}

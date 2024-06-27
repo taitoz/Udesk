@@ -18,8 +18,9 @@ const appLog = require('electron-log/main');
 appLog.transports.file.fileName = new Date().toISOString().slice(0, 10) + ".log";
 Object.assign(console, appLog.functions);
 
-const settings = require('electron-settings');
-const editJsonFile = require("edit-json-file");
+const cfg = require('electron-cfg');
+let appConfig
+let profile = cfg.create('profile.json')
 let activeProfile
 loadProfile()
 
@@ -159,7 +160,7 @@ function createWindow() {
     //mainWindow.loadFile('index.html.bak')
     //mainView.webContents.loadFile(`index.html.bak`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
-    //mainView.webContents.loadURL('https://uchet.kz/').then()
+    mainView.webContents.loadURL(activeProfile['homeUrl']).then()
     //loadPrimeComponent(mainView, 'settings');
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
@@ -253,15 +254,13 @@ module.exports = {get};
 app.on('ready', function () {
     //const icon = nativeImage.createFromPath()
     try {
-        const ret = globalShortcut.register('CommandOrControl+X', () => {
-            //console.log('F12')
+        const ret = globalShortcut.register('CommandOrControl+R', () => {
             app.relaunch();
             app.exit();
         })
         if (!ret) {
             console.log('registration failed')
         }
-
         const tray = new Tray(activeProfile['trayIcon'])
         const trayMenu = Menu.buildFromTemplate([
             {
@@ -375,93 +374,78 @@ ipcMain.on('sideMenu:toggle', (event, menuId) => {
 })
 
 ipcMain.on('settings:toggleTheme', (event, theme) => {
-    //console.log(theme)
     nativeTheme.themeSource = theme;
-    settings.setSync('theme', theme);
+    appConfig.set('theme', theme);
 })
 ipcMain.on('services:set', (event, sideBarMenu) => {
-    settings.setSync('servicesMenu', sideBarMenu);
+    appConfig.set('servicesMenu', sideBarMenu);
     loadPrimeComponent(sideMenu, 'sideMenu/services');
 })
 ipcMain.on('services:get', (event) => {
-    event.returnValue = settings.getSync('servicesMenu');
+    event.returnValue = appConfig.get('servicesMenu');
 })
 ipcMain.on('web1c:set', (event, sideBarMenu) => {
-    settings.setSync('web1cMenu', sideBarMenu);
+    appConfig.set('web1cMenu', sideBarMenu);
     loadPrimeComponent(sideMenu, 'sideMenu/web1c');
 })
 ipcMain.on('web1c:get', (event) => {
-    event.returnValue = settings.getSync('web1cMenu');
+    event.returnValue = appConfig.get('web1cMenu');
 })
 
 // =====================================================================================
 function initSettings() {
-    if (!settings.hasSync('servicesMenu')) {
-        fs.readFile(path.join(__dirname, 'dist', 'assets', 'services.json'),
-            'utf8', (err, data) => {
-                settings.setSync('servicesMenu', JSON.parse(data))
-            });
+    if (!appConfig.has('servicesMenu')) {
+        appConfig.set('servicesMenu', loadDefaultFromFile('services.json'))
     }
-    if (!settings.hasSync('web1cMenu')) {
-        fs.readFile(path.join(__dirname, 'dist', 'assets', 'web1c.json'),
-            'utf8', (err, data) => {
-                settings.setSync('web1cMenu', JSON.parse(data))
-            });
+    if (!appConfig.has('web1cMenu')) {
+        appConfig.set('web1cMenu', loadDefaultFromFile('web1c.json'))
     }
-    if (!settings.hasSync('theme')) {
-        settings.setSync('theme', 'dark')
+    if (!appConfig.has('theme')) {
+        appConfig.set('theme', 'dark')
     }
 }
 
-function initProfile() {
-    profile.setSync('default.lang', 'ru')
-    profile.setSync('default.trayIcon', path.join(__dirname, "assets", "logo48b.png"))
-    profile.setSync('default.sideBarIcon', path.join(__dirname, "assets", "ico", "logo48b.ico"))
-    profile.setSync('default.homeUrl', 'file://' + __dirname + '/dist/index.html')
-    profile.setSync('active', 'default')
+function loadDefaultFromFile(fileName) {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, 'dist', 'assets', fileName), 'utf8'))
 }
 
-function addProfile(profileName, json) {
-    profile.setSync(profileName, json)
+function addProfile(profileName, profileJson) {
+    if (!profile.has(profileName)) {
+        if (profileJson) {
+            profile.set(profileName, profileJson)
+        } else {
+            profile.set(profileName, loadDefaultFromFile('profile.json'))
+        }
+    }
 }
-function deleteProfile(profileName){
-    profile.unsetSync(profileName);
+
+function deleteProfile(profileName) {
+    profile.delete(profileName);
 }
+
 function loadProfile() {
     //https://github.com/de-luca/electron-json-config
     //https://github.com/megahertz/electron-cfg
     //https://github.com/sindresorhus/electron-store
 
+    //ipcMain.on('profile:getSideBarIcon' => activeProfile['sideBarIcon']
+    //ipcMain.on('profile:add' ipcMain.on('profile:delete'
+    //ipcMain.on('profile:setActive' => restart
+    profile.observe('active', () => {
+    })
+    //ipcMain.on('profile:get' //TODO profile to array, primeicons
 
-    let appUserDataPath = app.getPath('userData'); // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
-    let file = editJsonFile(`${appUserDataPath}/profile.json`, {
-        autosave: true
-    });
-
-    profile.configure({
-        fileName: 'profile.json',
-        prettify: true
-    });
-    //activeProfile['sideBarIcon'] //ipcMain.on('profile:getSideBarIcon'
-    //ipcMain.on('profile:setActive' //restart
-    //ipcMain.on('profile:get' //parse json
-    // ipcMain.on('profile:add' ipcMain.on('profile:delete'
-    if (!profile.hasSync('active')) {
-        initProfile();
+    if (!profile.has('active')) {
+        addProfile('default');
+        profile.set('active', 'default')
     }
-    const profileName = profile.getSync('active').toString();
-    activeProfile = profile.getSync(profileName)
+    const profileName = profile.get('active');
+    activeProfile = profile.get(profileName)
 
-    //breaks profile
-
-    settings.configure({
-        dir: appUserDataPath + '/profiles/',
-        fileName: 'settings-' + profileName + '.json',
-        prettify: true
-    });
+    // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
+    let appUserDataPath = app.getPath('userData');
+    appConfig = cfg.create(appUserDataPath + '/profiles/settings-' + profileName + '.json')
     initSettings();
 
-    console.log();
-    nativeTheme.themeSource = settings.getSync('theme') ?? 'dark';
-    //console.log()
+    nativeTheme.themeSource = appConfig.get('theme', 'dark');
 }
