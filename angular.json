@@ -119,20 +119,20 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
-            "browserTarget": "udesk:build"
+            "buildTarget": "udesk:build"
           },
           "configurations": {
             "dev": {
-              "browserTarget": "udesk:build:dev"
+              "buildTarget": "udesk:build:dev"
             },
             "production": {
-              "browserTarget": "udesk:build:production"
+              "buildTarget": "udesk:build:production"
             },
             "web": {
-              "browserTarget": "udesk:build:web"
+              "buildTarget": "udesk:build:web"
             },
             "web-production": {
-              "browserTarget": "udesk:build:web-production"
+              "buildTarget": "udesk:build:web-production"
             }
           }
         },
