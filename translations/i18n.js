@@ -1,24 +1,20 @@
-const path = require("path")
-const electron = require('electron')
-const fs = require('fs');
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+import fs from 'fs';
+
 let loadedLanguage;
-let app = electron.app
 
-module.exports = i18n;
-
-function i18n() {
-    if(fs.existsSync(path.join(__dirname, app.getLocale() + '.js'))) {
-         loadedLanguage = JSON.parse(fs.readFileSync(path.join(__dirname, app.getLocale() + '.js'), 'utf8'))
-    }
-    else {
-         loadedLanguage = JSON.parse(fs.readFileSync(path.join(__dirname, 'en.js'), 'utf8'))
-    }
+export function loadTranslation(locale) {
+    const pathToTranslation = path.join(__dirname, locale + '.json')
+    const pathToDefaultTranslation = path.join(__dirname, 'en.json')
+    loadedLanguage = fs.existsSync(pathToTranslation) ? JSON.parse(fs.readFileSync(pathToTranslation), 'utf8') : JSON.parse(fs.readFileSync(pathToDefaultTranslation, 'utf8'));
 }
 
-i18n.prototype.__ = function(phrase) {
+export function translate(phrase) {
     let translation = loadedLanguage[phrase]
-    if(translation === undefined) {
-         translation = phrase
+    if (translation === undefined) {
+        translation = phrase
     }
     return translation
 }

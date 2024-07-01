@@ -11,7 +11,8 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es5",
+    "useDefineForClassFields": false,
+    "target": "ES2022",
     "typeRoots": [
       "node_modules/@types"
     ],
@@ -19,7 +20,7 @@
       "es2016",
       "dom"
     ],
-    "module": "es2020",
+    "module": "ES2022",
     "baseUrl": "./",
     "paths": {
       "primeng/*": ["node_modules/primeng/*"]

@@ -1,34 +1,32 @@
-//handle setup events as quickly as possible
-// const setupEvents = require('./installers/setupEvents')
-// if (setupEvents.handleSquirrelEvent()) {
-// squirrel event handled and app will exit in 1000ms, so don't do anything else
-//     return;
-// }
-const fs = require('fs')
-// Module to control application life.
-let path = require('path')
-// Module to create native browser window.
-const {
+import {
     BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
     app, Tray, dialog, screen, globalShortcut
-} = require('electron')
+}  from 'electron'
 
-const appLog = require('electron-log/main');
+
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+import fs from 'fs';
+
+import {loadTranslation, translate} from './translations/i18n.js'
+import {getMenu} from "./mainmenu.js";
+
+import appLog from 'electron-log'
 //%USERPROFILE%\AppData\Roaming\electron-gzk-bot\logs\
 appLog.transports.file.fileName = new Date().toISOString().slice(0, 10) + ".log";
 Object.assign(console, appLog.functions);
 
-const cfg = require('electron-cfg');
+import cfg from 'electron-cfg';
 let appConfig
 let profile = cfg.create('profile.json')
 let activeProfile
 loadProfile()
 
-let i18n = new (require('./translations/i18n.js'))
-
 //const server = 'https://udesk-upd-srv.vercel.app'
 /*
-const updater = require('electron-simple-updater');
+import updater from 'electron-simple-updater';
 appLog.info(updater.buildId)
 updater
     .init({
@@ -103,7 +101,7 @@ function createWindow() {
         frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,
-        icon: path.join(__dirname, 'assets/ico/logo.ico'),
+        icon: path.join(__dirname, 'assets', 'ico', 'logo.ico'),
         // webPreferences: {
         //   offscreen: true
         // }
@@ -183,9 +181,6 @@ function createWindow() {
         mainWindow = null
     })
 
-    //TODO
-    //require('./mainmenu')
-
     mainWindow.once('ready-to-show', () => {
         mainWindow.show()
     })
@@ -241,17 +236,11 @@ function loadPrimeComponent(browserView, component) {
     })
 }
 
-function get() {
-    return mainView;
-}
-
-// Export the publicly available functions.
-module.exports = {get};
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', function () {
+    loadTranslation(app.getLocale())
     //const icon = nativeImage.createFromPath()
     try {
         const ret = globalShortcut.register('CommandOrControl+R', () => {
@@ -264,7 +253,7 @@ app.on('ready', function () {
         const tray = new Tray(activeProfile['trayIcon'])
         const trayMenu = Menu.buildFromTemplate([
             {
-                label: i18n.__('Close'),
+                label: translate('Close'),
                 click: () => {
                     app.quit()
                 }
@@ -277,6 +266,7 @@ app.on('ready', function () {
         console.log(error)
     }
     createWindow()
+    //mainWindow.setMenu(Menu.buildFromTemplate(getMenu(mainWindow, app.getLocale())))
 })
 
 // Quit when all windows are closed.

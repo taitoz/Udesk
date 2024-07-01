@@ -9,6 +9,7 @@
         "url": "https://uchet.kz/"
     },
     "main": "main.js",
+    "type": "module",
     "private": true,
     "scripts": {
         "pack": "electron-builder --dir",
@@ -67,7 +68,7 @@
         "@ngx-translate/http-loader": "8.0.0",
         "@playwright/test": "1.43.1",
         "@types/jest": "29.5.12",
-        "@types/node": "20.12.7",
+        "@types/node": "^20.14.9",
         "@typescript-eslint/eslint-plugin": "7.7.1",
         "@typescript-eslint/parser": "7.7.1",
         "angular-web-storage": "^17.0.0",

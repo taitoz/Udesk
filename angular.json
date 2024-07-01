@@ -45,7 +45,7 @@
             ],
             "scripts": [],
             "customWebpackConfig": {
-              "path": "./angular.webpack.js",
+              "path": "./angular.webpack.cjs",
               "replaceDuplicatePlugins": true
             }
           },
