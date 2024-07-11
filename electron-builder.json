@@ -21,6 +21,7 @@
     ]
   },
   "portable": {
+    "unpackDirName": "udesk",
     "splashImage": "assets/png/logo.png"
   },
   "mac": {

@@ -15,14 +15,16 @@ import {getMenu} from "./mainmenu.js";
 
 import appLog from 'electron-log'
 //%USERPROFILE%\AppData\Roaming\electron-gzk-bot\logs\
-appLog.transports.file.fileName = new Date().toISOString().slice(0, 10) + ".log";
+appLog.transports.file.fileName = Date.now() + ".log"
 Object.assign(console, appLog.functions);
 
 import cfg from 'electron-cfg';
 let appConfig
-let profile = cfg.create('profile.json')
+let profiles = cfg.create('profiles.json')
 let activeProfile
 loadProfile()
+
+const singleInstanceLock = app.requestSingleInstanceLock()
 
 //const server = 'https://udesk-upd-srv.vercel.app'
 /*
@@ -239,35 +241,47 @@ function loadPrimeComponent(browserView, component) {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', function () {
-    loadTranslation(app.getLocale())
-    //const icon = nativeImage.createFromPath()
-    try {
-        const ret = globalShortcut.register('CommandOrControl+R', () => {
-            app.relaunch();
-            app.exit();
-        })
-        if (!ret) {
-            console.log('registration failed')
+if (!singleInstanceLock) {
+    app.quit()
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore()
+            mainWindow.focus()
         }
-        const tray = new Tray(activeProfile['trayIcon'])
-        const trayMenu = Menu.buildFromTemplate([
-            {
-                label: translate('Close'),
-                click: () => {
-                    app.quit()
-                }
+    })
+
+    app.on('ready', function () {
+        loadTranslation(app.getLocale())
+        //const icon = nativeImage.createFromPath()
+        try {
+            const ret = globalShortcut.register('CommandOrControl+R', () => {
+                app.relaunch();
+                app.exit();
+            })
+            if (!ret) {
+                console.log('registration failed')
             }
-        ])
-        tray.setContextMenu(trayMenu)
-        tray.setToolTip('UDesk')
-        tray.setTitle('UDesk')
-    } catch (error) {
-        console.log(error)
-    }
-    createWindow()
-    //mainWindow.setMenu(Menu.buildFromTemplate(getMenu(mainWindow, app.getLocale())))
-})
+            const tray = new Tray(activeProfile['trayIcon'])
+            const trayMenu = Menu.buildFromTemplate([
+                {
+                    label: translate('Close'),
+                    click: () => {
+                        app.quit()
+                    }
+                }
+            ])
+            tray.setContextMenu(trayMenu)
+            tray.setToolTip('UDesk')
+            tray.setTitle('UDesk')
+        } catch (error) {
+            console.log(error)
+        }
+        createWindow()
+        //mainWindow.setMenu(Menu.buildFromTemplate(getMenu(mainWindow, app.getLocale())))
+    })
+}
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -382,6 +396,9 @@ ipcMain.on('web1c:get', (event) => {
     event.returnValue = appConfig.get('web1cMenu');
 })
 
+ipcMain.on('profiles:get', (event) => {
+    event.returnValue = getProfiles();
+})
 // =====================================================================================
 function initSettings() {
     if (!appConfig.has('servicesMenu')) {
@@ -399,18 +416,25 @@ function loadDefaultFromFile(fileName) {
     return JSON.parse(fs.readFileSync(path.join(__dirname, 'dist', 'assets', fileName), 'utf8'))
 }
 
+function getProfiles(){
+    return profiles.get("profiles")
+}
+
 function addProfile(profileName, profileJson) {
-    if (!profile.has(profileName)) {
+    let profilesArr = getProfiles()
+    if (!profilesArr.find(p => p.name === profileName)) {
         if (profileJson) {
-            profile.set(profileName, profileJson)
+            profilesArr.push(profileJson)
         } else {
-            profile.set(profileName, loadDefaultFromFile('profile.json'))
+            profilesArr.push(loadDefaultFromFile('profile-default.json'))
         }
+        profiles.set("profiles", profilesArr)
     }
 }
 
 function deleteProfile(profileName) {
-    profile.delete(profileName);
+    let profilesArr = getProfiles().find(p => p.name !== profileName)
+    profiles.set("profiles", profilesArr)
 }
 
 function loadProfile() {
@@ -418,19 +442,24 @@ function loadProfile() {
     //https://github.com/megahertz/electron-cfg
     //https://github.com/sindresorhus/electron-store
 
-    //ipcMain.on('profile:getSideBarIcon' => activeProfile['sideBarIcon']
-    //ipcMain.on('profile:add' ipcMain.on('profile:delete'
-    //ipcMain.on('profile:setActive' => restart
-    profile.observe('active', () => {
+    //ipcMain.on('profiles:getSideBarIcon' => activeProfile['sideBarIcon']
+    //ipcMain.on('profiles:add' ipcMain.on('profiles:delete'
+    //ipcMain.on('profiles:setActive' => restart
+    profiles.observe('active', () => {
     })
-    //ipcMain.on('profile:get' //TODO profile to array, primeicons
+    //ipcMain.on('profiles:get' //TODO primeicons
 
-    if (!profile.has('active')) {
-        addProfile('default');
-        profile.set('active', 'default')
+    if (!profiles.has('profiles')) {
+        profiles.set('profiles', [])
     }
-    const profileName = profile.get('active');
-    activeProfile = profile.get(profileName)
+    const profileName = profiles.get('active', 'default');
+    activeProfile = getProfiles().find(p => p.name === profileName);
+
+    if (!profiles.has('active') || !activeProfile) {
+        addProfile('default')
+        profiles.set('active', 'default')
+        activeProfile = getProfiles().find(p => p.name === 'default');
+    }
 
     // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
     let appUserDataPath = app.getPath('userData');
