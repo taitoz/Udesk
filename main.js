@@ -160,7 +160,7 @@ function createWindow() {
     //mainWindow.loadFile('index.html.bak')
     //mainView.webContents.loadFile(`index.html.bak`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
-    mainView.webContents.loadURL(activeProfile['homeUrl']).then()
+    mainView.webContents.loadURL('file://' + __dirname + activeProfile['homeUrl']).then()
     //loadPrimeComponent(mainView, 'settings');
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
@@ -263,7 +263,7 @@ if (!singleInstanceLock) {
             if (!ret) {
                 console.log('registration failed')
             }
-            const tray = new Tray(activeProfile['trayIcon'])
+            const tray = new Tray(__dirname + activeProfile['trayIcon'])
             const trayMenu = Menu.buildFromTemplate([
                 {
                     label: translate('Close'),
@@ -447,7 +447,7 @@ function loadProfile() {
     //ipcMain.on('profiles:setActive' => restart
     profiles.observe('active', () => {
     })
-    //ipcMain.on('profiles:get' //TODO primeicons
+    //ipcMain.on('profiles:get' //TODO primeicons copy and load assets from appData by name
 
     if (!profiles.has('profiles')) {
         profiles.set('profiles', [])
