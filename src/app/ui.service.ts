@@ -61,6 +61,21 @@ export class UiService {
         }
     }
 
+    loadProfiles(){
+        if (this.electronService.isElectronApp) {
+            //this.electronService.shell.beep();
+            return this.electronService.ipcRenderer.sendSync('profiles:get');
+        }
+    }
+
+    addProfile(profileJson:any){
+        return this.electronService.ipcRenderer.sendSync('profiles:add', profileJson);
+    }
+
+    deleteProfile(profileName:any){
+        return this.electronService.ipcRenderer.sendSync('profiles:delete', profileName);
+    }
+
     loadSideMenuData(menuId: string): TreeNode[] {
         if (this.electronService.isElectronApp) {
             //this.electronService.shell.beep();

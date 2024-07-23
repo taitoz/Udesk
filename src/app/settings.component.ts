@@ -48,6 +48,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     ngOnInit() {
 
         this.treeNodesData = this.uiService.loadSideMenuData('services');
+        this.loadProfiles();
 
         // this.nodeTypes = [
         //     {label: 'L1', value: 'L1'},
@@ -79,6 +80,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     selectProfile(profile: any) {
         this.messageService.add({ severity: 'info', summary: 'Profile selected', detail: profile.name });
+    }
+
+    addProfile(profileJson:any) {
+        this.uiService.addProfile(profileJson)
+    }
+
+    deleteProfile(profileName:any) {
+        this.uiService.deleteProfile(profileName)
+    }
+
+    loadProfiles(){
+        this.profiles = this.uiService.loadProfiles();
     }
 
     getNodeTypeLabel(value: string): string {

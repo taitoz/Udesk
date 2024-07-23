@@ -24,22 +24,75 @@
 
         <p-tabPanel>
             <ng-template pTemplate="header">
-                <span>Общие</span>
+                <span>Профиль</span>
             </ng-template>
-            <h2>Параметры</h2>
+            <p-table [value]="profiles" editMode="row" [tableStyle]="{ 'min-width': '50rem' }">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width:20%">Name</th>
+                        <th style="width: 5rem"></th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-profile let-editing="editing" let-ri="rowIndex">
+                    <tr [pEditableRow]="profile">
+                        <td>
+                            <p-cellEditor>
+                                <ng-template pTemplate="input">
+                                    <input
+                                            pInputText type="text"
+                                            [(ngModel)]="profile.name"
+                                            required/>
+                                </ng-template>
+                                <ng-template pTemplate="output">
+                                    {{ profile.name }}
+                                </ng-template>
+                            </p-cellEditor>
+                        </td>
+                        <td>
+                            <div class="flex align-items-center justify-content-center gap-2">
+                                <button
+                                        *ngIf="!editing"
+                                        type="button"
+                                        pButton
+                                        pRipple
+                                        icon="pi pi-plus"
+                                        (click)="selectProfile(profile)">
+                                </button>
+                                <button
+                                        *ngIf="!editing"
+                                        pButton
+                                        pRipple
+                                        type="button"
+                                        pInitEditableRow
+                                        icon="pi pi-pencil"
+                                        class="p-button-rounded p-button-text">
+                                </button>
+                                <button
+                                        *ngIf="editing"
+                                        pButton
+                                        pRipple
+                                        type="button"
+                                        pSaveEditableRow
+                                        icon="pi pi-check"
+                                        class="p-button-rounded p-button-text p-button-success mr-2">
+                                </button>
+                                <button
+                                        *ngIf="editing"
+                                        pButton pRipple
+                                        type="button"
+                                        pCancelEditableRow
+                                        icon="pi pi-times"
+                                        class="p-button-rounded p-button-text p-button-danger">
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
 
-            <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
-            <h3>Тема</h3>
-
-            <p-selectButton
-                    [options]="themeOptions"
-                    [(ngModel)]="theme"
-                    (onChange)="toggleTheme($event)"
-                    optionLabel="label"
-                    optionValue="value"/>
-
-            <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
-
+            <button pButton type="button" icon="pi pi-save" label="Сохранить"
+                    pTooltip="Сохранить" tooltipPosition="top"
+                    (click)="loadProfiles()"></button>
         </p-tabPanel>
 
         <p-tabPanel>
@@ -115,71 +168,22 @@
 
         <p-tabPanel>
             <ng-template pTemplate="header">
-                <span>Профиль</span>
+                <span>Общие</span>
             </ng-template>
-            <p-table [value]="profiles" editMode="row" [tableStyle]="{ 'min-width': '50rem' }">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width:20%">Name</th>
-                        <th style="width: 5rem"></th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-product let-editing="editing" let-ri="rowIndex">
-                    <tr [pEditableRow]="product">
-                        <td>
-                            <p-cellEditor>
-                                <ng-template pTemplate="input">
-                                    <input
-                                            pInputText type="text"
-                                            [(ngModel)]="product.name"
-                                            required/>
-                                </ng-template>
-                                <ng-template pTemplate="output">
-                                    {{ product.name }}
-                                </ng-template>
-                            </p-cellEditor>
-                        </td>
-                        <td>
-                            <div class="flex align-items-center justify-content-center gap-2">
-                                <button
-                                        *ngIf="!editing"
-                                        type="button"
-                                        pButton
-                                        pRipple
-                                        icon="pi pi-plus"
-                                        (click)="selectProfile(product)">
-                                </button>
-                                <button
-                                        *ngIf="!editing"
-                                        pButton
-                                        pRipple
-                                        type="button"
-                                        pInitEditableRow
-                                        icon="pi pi-pencil"
-                                        class="p-button-rounded p-button-text">
-                                </button>
-                                <button
-                                        *ngIf="editing"
-                                        pButton
-                                        pRipple
-                                        type="button"
-                                        pSaveEditableRow
-                                        icon="pi pi-check"
-                                        class="p-button-rounded p-button-text p-button-success mr-2">
-                                </button>
-                                <button
-                                        *ngIf="editing"
-                                        pButton pRipple
-                                        type="button"
-                                        pCancelEditableRow
-                                        icon="pi pi-times"
-                                        class="p-button-rounded p-button-text p-button-danger">
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
+            <h2>Параметры</h2>
+
+            <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
+            <h3>Тема</h3>
+
+            <p-selectButton
+                    [options]="themeOptions"
+                    [(ngModel)]="theme"
+                    (onChange)="toggleTheme($event)"
+                    optionLabel="label"
+                    optionValue="value"/>
+
+            <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
+
         </p-tabPanel>
 
         <p-tabPanel [disabled]="true">

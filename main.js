@@ -399,6 +399,14 @@ ipcMain.on('web1c:get', (event) => {
 ipcMain.on('profiles:get', (event) => {
     event.returnValue = getProfiles();
 })
+
+ipcMain.on('profiles:add', (event, profileJson) => {
+    addProfile(profileJson.name, profileJson);
+})
+
+ipcMain.on('profiles:delete', (event,profileName) => {
+    deleteProfile(profileName);
+})
 // =====================================================================================
 function initSettings() {
     if (!appConfig.has('servicesMenu')) {
