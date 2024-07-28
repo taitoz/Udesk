@@ -455,10 +455,12 @@ function loadProfile() {
     //ipcMain.on('profiles:setActive' => restart
     profiles.observe('active', () => {
     })
-    //ipcMain.on('profiles:get' //TODO primeicons copy and load assets from appData by name
+    //ipcMain.on('profiles:get' //TODO primeicons
 
     if (!profiles.has('profiles')) {
         profiles.set('profiles', [])
+        //TODO copy logo to settings profileName-logo and load
+        //add profiles vertical table
     }
     const profileName = profiles.get('active', 'default');
     activeProfile = getProfiles().find(p => p.name === profileName);
