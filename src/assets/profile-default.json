@@ -1,7 +1,0 @@
-{
-  "name": "default",
-  "lang": "ru",
-  "trayIcon": "/assets/logo48b.png",
-  "sideBarIcon": "/assets/ico/logo48b.ico",
-  "homeUrl": "/dist/index.html"
-}

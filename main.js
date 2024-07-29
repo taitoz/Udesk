@@ -1,11 +1,12 @@
 import {
     BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
     app, Tray, dialog, screen, globalShortcut
-}  from 'electron'
+} from 'electron'
 
 
-import path, { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import path, {dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 import fs from 'fs';
@@ -19,6 +20,7 @@ appLog.transports.file.fileName = Date.now() + ".log"
 Object.assign(console, appLog.functions);
 
 import cfg from 'electron-cfg';
+
 let appConfig
 let profiles = cfg.create('profiles.json')
 let activeProfile
@@ -103,7 +105,7 @@ function createWindow() {
         frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,
-        icon: path.join(__dirname, 'assets', 'ico', 'logo.ico'),
+        icon: getLogoPath(),
         // webPreferences: {
         //   offscreen: true
         // }
@@ -160,9 +162,12 @@ function createWindow() {
     //mainWindow.loadFile('index.html.bak')
     //mainView.webContents.loadFile(`index.html.bak`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
-    mainView.webContents.loadURL('file://' + __dirname + activeProfile['homeUrl']).then()
-    //loadPrimeComponent(mainView, 'settings');
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
+    if (activeProfile['homeUrl']) {
+        mainView.webContents.loadURL(activeProfile['homeUrl']).then()
+    } else {
+        openSettings()
+    }
 
     // Open the DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
@@ -231,13 +236,6 @@ function resizeMain() {
     })
 }
 
-function loadPrimeComponent(browserView, component) {
-    const url = `file://${__dirname}/dist/index.html`;
-    browserView.webContents.loadURL(url).then(() => {
-        browserView.webContents.send('loadComponent', component);
-    })
-}
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -263,7 +261,7 @@ if (!singleInstanceLock) {
             if (!ret) {
                 console.log('registration failed')
             }
-            const tray = new Tray(__dirname + activeProfile['trayIcon'])
+            const tray = new Tray(getLogoPath())
             const trayMenu = Menu.buildFromTemplate([
                 {
                     label: translate('Close'),
@@ -342,13 +340,7 @@ ipcMain.handle('maximize', () => {
     resizeMain()
 })
 ipcMain.handle('open:settings', () => {
-    loadPrimeComponent(settingsView, 'settings');
-    let views = mainWindow.getBrowserViews()
-    if (views.indexOf(settingsView) === -1) {
-        mainWindow.addBrowserView(settingsView)
-    } else {
-        mainWindow.removeBrowserView(settingsView)
-    }
+    openSettings();
 })
 
 ipcMain.handle('load-url', (event, url) => {
@@ -361,6 +353,10 @@ ipcMain.handle('load-url', (event, url) => {
     mainView.webContents.loadURL(url).catch(error => {
         console.log(error.code)
     })
+})
+
+ipcMain.on('sideBar:logo:get', (event) => {
+    event.returnValue = getLogoPath();
 })
 
 ipcMain.on('sideMenu:toggle', (event, menuId) => {
@@ -404,10 +400,18 @@ ipcMain.on('profiles:add', (event, profileJson) => {
     addProfile(profileJson.name, profileJson);
 })
 
-ipcMain.on('profiles:delete', (event,profileName) => {
+ipcMain.on('profiles:delete', (event, profileName) => {
     deleteProfile(profileName);
 })
+
 // =====================================================================================
+function loadPrimeComponent(browserView, component) {
+    const url = `file://${__dirname}/dist/index.html`;
+    browserView.webContents.loadURL(url).then(() => {
+        browserView.webContents.send('loadComponent', component);
+    })
+}
+
 function initSettings() {
     if (!appConfig.has('servicesMenu')) {
         appConfig.set('servicesMenu', loadDefaultFromFile('services.json'))
@@ -420,11 +424,21 @@ function initSettings() {
     }
 }
 
-function loadDefaultFromFile(fileName) {
-    return JSON.parse(fs.readFileSync(path.join(__dirname, 'dist', 'assets', fileName), 'utf8'))
+function openSettings() {
+    loadPrimeComponent(settingsView, 'settings');
+    let views = mainWindow.getBrowserViews()
+    if (views.indexOf(settingsView) === -1) {
+        mainWindow.addBrowserView(settingsView)
+    } else {
+        mainWindow.removeBrowserView(settingsView)
+    }
 }
 
-function getProfiles(){
+function loadDefaultFromFile(fileName) {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, 'assets', fileName), 'utf8'))
+}
+
+function getProfiles() {
     return profiles.get("profiles")
 }
 
@@ -445,6 +459,20 @@ function deleteProfile(profileName) {
     profiles.set("profiles", profilesArr)
 }
 
+// https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
+function getLogoPath() {
+    const logoName = activeProfile['logo']
+    const profileName = activeProfile['name']
+    const logoPath = path.join(app.getPath('userData'), 'profiles', logoName + '-' + profileName + '.png')
+    if (!fs.existsSync(logoPath)) {
+        fs.cpSync(
+            path.join(__dirname, 'assets', `logo48b.png`),
+            logoPath
+        )
+    }
+    return logoPath
+}
+
 function loadProfile() {
     //https://github.com/de-luca/electron-json-config
     //https://github.com/megahertz/electron-cfg
@@ -459,7 +487,6 @@ function loadProfile() {
 
     if (!profiles.has('profiles')) {
         profiles.set('profiles', [])
-        //TODO copy logo to settings profileName-logo and load
         //add profiles vertical table
     }
     const profileName = profiles.get('active', 'default');

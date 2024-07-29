@@ -102,7 +102,7 @@ export class UiService {
 
     getAppLogoPath(){
         if (this.electronService.isElectronApp) {
-             return '../assets/logo48.png'
+             return this.electronService.ipcRenderer.sendSync('sideBar:logo:get');
          } else {
             return '/assets/image.svg'
          }

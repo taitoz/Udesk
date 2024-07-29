@@ -90,7 +90,7 @@
                 </ng-template>
             </p-table>
 
-            <button pButton type="button" icon="pi pi-save" label="Сохранить"
+            <button pButton type="button" icon="bx bx-save" label="Сохранить"
                     pTooltip="Сохранить" tooltipPosition="top"
                     (click)="loadProfiles()"></button>
         </p-tabPanel>
@@ -128,7 +128,7 @@
                                                [ngStyle]="{'width': i == 0 ? '90%': '100%',
                             'margin-top': i == 0 ? '-30px': '0', 'margin-left': i == 0 ? '40px': '0' }"
                                                *ngIf="col.editable">
-                                        <!--<button type="button" pButton pRipple icon="pi pi-check" class="flex justify-content-center"-->
+                                        <!--<button type="button" pButton pRipple icon="bx bx-check" class="flex justify-content-center"-->
                                         <!--     click)="nodeSave()" *ngIf="edit"></button>-->
                                         <!--                    <p-dropdown appendTo="body" [options]="nodeTypes" [(ngModel)]="selectedNodeType"-->
                                         <!--                                (onChange)="onTypeSelect($event)" *ngIf="col.header == 'Тип'"></p-dropdown>-->
@@ -139,7 +139,7 @@
                                 </ng-template>
 
                             </p-treeTableCellEditor>
-                            <!--              <p-toggleButton styleClass="" onIcon="pi pi-pencil" offIcon="pi pi-pencil" [(ngModel)]="edit"-->
+                            <!--              <p-toggleButton styleClass="" onIcon="bx bx-pencil" offIcon="bx bx-pencil" [(ngModel)]="edit"-->
                             <!--                              (onChange)="onSelect($event)" *ngIf="col.header ==='id'"></p-toggleButton>-->
                             <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
                                     pTooltip="Add" tooltipPosition="top"
@@ -147,7 +147,7 @@
                             <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
                                     pTooltip="Add child" tooltipPosition="top"
                                     (click)="addItem(rowData, true)" *ngIf="col.header ==='id'"></button>
-                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger"
+                            <button pButton type="button" icon="bx bx-trash-alt" class="p-button-text p-button-danger"
                                     pTooltip="Удалить" tooltipPosition="top"
                                     [disabled]="unSavedEdits" (click)="delete(rowData)"
                                     *ngIf="col.header ==='id'"></button>
@@ -155,14 +155,14 @@
                     </tr>
                 </ng-template>
             </p-treeTable>
-            <!--<p-splitButton label="" icon="pi pi-pencil" [model]="items"></p-splitButton>-->
-            <!--<button pButton type="button" icon="pi pi-pencil" class="p-button-text" (click)="toggleEdit()"></button>-->
-            <button pButton type="button" icon="pi pi-save" label="Сохранить"
+            <!--<p-splitButton label="" icon="bx bx-pencil" [model]="items"></p-splitButton>-->
+            <!--<button pButton type="button" icon="bx bx-pencil" class="p-button-text" (click)="toggleEdit()"></button>-->
+            <button pButton type="button" icon="bx bx-save" label="Сохранить"
                     pTooltip="Сохранить" tooltipPosition="top"
                     (click)="nodeSave()"></button>
 
 
-            <!--            <button pButton type="button" icon="pi pi-info-circle" label="Test" (click)="showDialog()"></button>-->
+            <!--            <button pButton type="button" icon="bx bx-info-circle" label="Test" (click)="showDialog()"></button>-->
 
         </p-tabPanel>
 
@@ -188,7 +188,7 @@
 
         <p-tabPanel [disabled]="true">
             <ng-template pTemplate="header">
-                <i class="pi pi-user"></i>
+                <i class="bx bx-user"></i>
                 <span>Users</span>
             </ng-template>
             <p>
