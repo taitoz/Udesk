@@ -6,25 +6,25 @@
         <div class="mt-3 select-none">
             <ul class="list-none p-3 lg:py-3 lg:px-2 m-0">
                 <li>
-                    <p-button icon="bx bx-home" (click)="openLink('https://uchet.kz')" [plain]="true" [text]="true"/>
+                    <p-button icon="bx bx-home bx-sm" (click)="openLink('https://uchet.kz')" [plain]="true" [text]="true"/>
                 </li>
                 <li>
-                    <p-button icon="bx bx-collection"
+                    <p-button icon="bx bx-collection bx-sm"
                               (click)="ipcSend('sideMenu:toggle', 'services')" [plain]="true" [text]="true"/>
                 </li>
                 <li>
-                    <p-button icon="bx bx-server"
+                    <p-button icon="bx bx-server bx-sm"
                               (click)="ipcSend('sideMenu:toggle', 'web1c')" [plain]="true" [text]="true"/>
                 </li>
                 <li>
-                    <p-button icon="bx bx-film" (click)="openLink('https://www.youtube.com/user/uchetkz/videos')" [plain]="true" [text]="true"/>
+                    <p-button icon="bx bx-film bx-sm" (click)="openLink('https://www.youtube.com/user/uchetkz/videos')" [plain]="true" [text]="true"/>
                 </li>
                 <li>
-                    <p-button icon="bx bx-envelope" (click)="callRenderer('open-link:messages')" [plain]="true" [text]="true"
+                    <p-button icon="bx bx-envelope bx-sm" (click)="callRenderer('open-link:messages')" [plain]="true" [text]="true"
                               pBadge [badgeDisabled]="false" class="p-badge-dot"/>
                 </li>
                 <li>
-                    <p-button icon="bx bx-calendar" (click)="callRenderer('open-link:calendar')" [plain]="true" [text]="true"/>
+                    <p-button icon="bx bx-calendar bx-sm" (click)="callRenderer('open-link:calendar')" [plain]="true" [text]="true"/>
                 </li>
             </ul>
         </div>
@@ -33,10 +33,10 @@
             <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
             <ul class="list-none p-3 lg:py-3 lg:px-2 m-0">
                 <li>
-                    <p-button icon="bx bx-cog" (click)="callRenderer('open:settings')" [plain]="true" [text]="true"/>
+                    <p-button icon="bx bx-cog bx-sm" (click)="callRenderer('open:settings')" [plain]="true" [text]="true"/>
                 </li>
                 <li>
-                    <p-button icon="bx bx-user" (click)="openLink('https://id.uchet.kz/account/login/')" [plain]="true" [text]="true"/>
+                    <p-button icon="bx bx-user bx-sm" (click)="openLink('https://id.uchet.kz/account/login/')" [plain]="true" [text]="true"/>
                 </li>
             </ul>
         </div>

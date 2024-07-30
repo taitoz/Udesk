@@ -26,73 +26,78 @@
             <ng-template pTemplate="header">
                 <span>Профиль</span>
             </ng-template>
-            <p-table [value]="profiles" editMode="row" [tableStyle]="{ 'min-width': '50rem' }">
-                <ng-template pTemplate="header">
+            <p-table [value]="profiles" sortField="name" sortMode="single" sortOrder = "0" dataKey="name"
+                    rowGroupMode="subheader" groupRowsBy="name" [tableStyle]="{'min-width': '70rem'}">
+                <ng-template pTemplate="groupheader" let-profile let-rowIndex="rowIndex" let-expanded="expanded">
                     <tr>
-                        <th style="width:20%">Name</th>
-                        <th style="width: 5rem"></th>
+                        <td colspan="5">
+                            <button
+                                    type="button"
+                                    pButton
+                                    pRipple
+                                    [pRowToggler]="profile"
+                                    class="p-button-text p-button-rounded p-button-plain mr-2"
+                                    [icon]="expanded ? 'bx bx-chevron-down bx-md' : 'bx bx-chevron-right bx-md'">
+                            </button>
+                            <img
+                                    [alt]="profile.logo"
+                                    src="{{getProfileLogo(profile)}}"
+                                    width="32"
+                                    style="vertical-align: middle" />
+                            <span class="font-bold ml-2">{{profile.name}}</span>
+                        </td>
                     </tr>
                 </ng-template>
-                <ng-template pTemplate="body" let-profile let-editing="editing" let-ri="rowIndex">
-                    <tr [pEditableRow]="profile">
-                        <td>
+                <ng-template pTemplate="groupfooter">
+                    <button pButton type="button" icon="bx bx-save" label="Сохранить"
+                            pTooltip="Сохранить" tooltipPosition="top"
+                            (click)="loadProfiles()"></button>
+                </ng-template>
+                <ng-template pTemplate="rowexpansion" let-profile>
+                    <tr>
+                        <td>{{ Object.keys(profile)[0] }}</td>
+                        <td [pEditableColumn]="profile.name" pEditableColumnField="name">
                             <p-cellEditor>
                                 <ng-template pTemplate="input">
                                     <input
-                                            pInputText type="text"
-                                            [(ngModel)]="profile.name"
-                                            required/>
+                                            pInputText
+                                            type="text"
+                                            [(ngModel)]="profile.name" />
                                 </ng-template>
                                 <ng-template pTemplate="output">
                                     {{ profile.name }}
                                 </ng-template>
                             </p-cellEditor>
                         </td>
-                        <td>
-                            <div class="flex align-items-center justify-content-center gap-2">
-                                <button
-                                        *ngIf="!editing"
-                                        type="button"
-                                        pButton
-                                        pRipple
-                                        icon="pi pi-plus"
-                                        (click)="selectProfile(profile)">
-                                </button>
-                                <button
-                                        *ngIf="!editing"
-                                        pButton
-                                        pRipple
-                                        type="button"
-                                        pInitEditableRow
-                                        icon="pi pi-pencil"
-                                        class="p-button-rounded p-button-text">
-                                </button>
-                                <button
-                                        *ngIf="editing"
-                                        pButton
-                                        pRipple
-                                        type="button"
-                                        pSaveEditableRow
-                                        icon="pi pi-check"
-                                        class="p-button-rounded p-button-text p-button-success mr-2">
-                                </button>
-                                <button
-                                        *ngIf="editing"
-                                        pButton pRipple
-                                        type="button"
-                                        pCancelEditableRow
-                                        icon="pi pi-times"
-                                        class="p-button-rounded p-button-text p-button-danger">
-                                </button>
-                            </div>
+                        <td [pEditableColumn]="profile.homeUrl" pEditableColumnField="homeUrl">
+                            <p-cellEditor>
+                                <ng-template pTemplate="input">
+                                    <input
+                                            pInputText
+                                            type="text"
+                                            [(ngModel)]="profile.homeUrl" />
+                                </ng-template>
+                                <ng-template pTemplate="output">
+                                    {{ profile.homeUrl }}
+                                </ng-template>
+                            </p-cellEditor>
+                        </td>
+                        <td [pEditableColumn]="profile.lang" pEditableColumnField="lang">
+                            <p-cellEditor>
+                                <ng-template pTemplate="input">
+                                    <input
+                                            pInputText
+                                            type="text"
+                                            [(ngModel)]="profile.lang" />
+                                </ng-template>
+                                <ng-template pTemplate="output">
+                                    {{ profile.lang }}
+                                </ng-template>
+                            </p-cellEditor>
                         </td>
                     </tr>
                 </ng-template>
             </p-table>
-
-            <button pButton type="button" icon="bx bx-save" label="Сохранить"
-                    pTooltip="Сохранить" tooltipPosition="top"
-                    (click)="loadProfiles()"></button>
         </p-tabPanel>
 
         <p-tabPanel>
@@ -188,7 +193,7 @@
 
         <p-tabPanel [disabled]="true">
             <ng-template pTemplate="header">
-                <i class="bx bx-user"></i>
+                <i class="bx bx-user bx-sm"></i>
                 <span>Users</span>
             </ng-template>
             <p>

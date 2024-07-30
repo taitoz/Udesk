@@ -483,7 +483,6 @@ function loadProfile() {
     //ipcMain.on('profiles:setActive' => restart
     profiles.observe('active', () => {
     })
-    //ipcMain.on('profiles:get' //TODO primeicons
 
     if (!profiles.has('profiles')) {
         profiles.set('profiles', [])

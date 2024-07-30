@@ -2,7 +2,7 @@ import {Component, Inject, OnDestroy, OnInit, ViewEncapsulation} from '@angular/
 import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng/api';
 import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
-import { ElectronService } from 'ngx-electronyzer';
+import {ElectronService} from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
 
@@ -30,9 +30,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ref: DynamicDialogRef | undefined;
     theme = 'dark';
-    themeOptions: any[] = [{ label: 'Темная', value: 'dark' },{ label: 'Светлая', value: 'light' }];
+    themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}];
 
-    profiles: any[] = [{name: 'default'},{name: '1'}, {name: '2'}];
+    profiles: any[]
     selectedProfile!: any;
 
     constructor(
@@ -78,19 +78,26 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return true;
     }
 
-    selectProfile(profile: any) {
-        this.messageService.add({ severity: 'info', summary: 'Profile selected', detail: profile.name });
+    getProfileLogo(profile: any){
+        return this.uiService.getAppLogoPath()
     }
 
-    addProfile(profileJson:any) {
+    selectProfile(profile: any) {
+        this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profile.name});
+    }
+
+    addProfile(profileJson: any) {
         this.uiService.addProfile(profileJson)
     }
 
-    deleteProfile(profileName:any) {
+    deleteProfile(profileName: any) {
         this.uiService.deleteProfile(profileName)
     }
 
-    loadProfiles(){
+    loadProfiles() {
+        //TODO to key value
+        //let keys = Object.keys(profile)[0]
+
         this.profiles = this.uiService.loadProfiles();
     }
 
@@ -164,7 +171,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             message: 'Удалить?',
             acceptLabel: 'Да',
             rejectLabel: 'Нет',
-            icon: 'pi pi-exclamation-triangle',
+            icon: 'bx bx-exclamation-triangle',
             accept: () => {
                 this.deleteNodeByData(selectedNodeData, this.treeNodesData);
                 this.treeNodesData = [...this.treeNodesData];
@@ -233,7 +240,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             });*/
     }
 
-    onAppNameChange(newName: string){
+    onAppNameChange(newName: string) {
 
     }
 
@@ -243,4 +250,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.uiService.ipcSend('settings:toggleTheme', this.theme)
         //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
     }
+
+    protected readonly Object = Object;
 }

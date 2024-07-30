@@ -35,7 +35,7 @@ export class UiService {
         //console.log(channel)
     }
 
-    toggleTheme(document: Document, theme: string){
+    toggleTheme(document: Document, theme: string) {
 
         const head = document.getElementsByTagName('head')[0];
         let themeLink = document.getElementById('client-theme') as HTMLLinkElement;
@@ -61,38 +61,65 @@ export class UiService {
         }
     }
 
-    loadProfiles(){
+    loadProfiles() {
         if (this.electronService.isElectronApp) {
             //this.electronService.shell.beep();
             return this.electronService.ipcRenderer.sendSync('profiles:get');
+        } else {
+            return [
+                {
+                    "name": "default",
+                    "logo": "logo48b",
+                    "lang": "ru",
+                    "homeUrl": "localhost"
+                },
+                {
+                    "name": "1",
+                    "logo": "logo48b",
+                    "lang": "ru",
+                    "homeUrl": "http://test"
+                }
+            ]
         }
     }
 
-    addProfile(profileJson:any){
+    addProfile(profileJson: any) {
         return this.electronService.ipcRenderer.sendSync('profiles:add', profileJson);
     }
 
-    deleteProfile(profileName:any){
+    deleteProfile(profileName: any) {
         return this.electronService.ipcRenderer.sendSync('profiles:delete', profileName);
     }
 
     loadSideMenuData(menuId: string): TreeNode[] {
         if (this.electronService.isElectronApp) {
             //this.electronService.shell.beep();
-            return this.electronService.ipcRenderer.sendSync(menuId+':get');
+            return this.electronService.ipcRenderer.sendSync(menuId + ':get');
         } else {
-                //TODO fix
-                // const testData = this.sessionStorage.get('testData');
-                // if (testData != null) {
-                //     observer.next(testData);
-                //     observer.complete();
-                // } else {
-                this.http.get<TreeNode[]>('assets/'+menuId+'.json').subscribe((response: TreeNode[]) => {
-                        //this.saveToSessionStorage(response);
-                    return response
-                    }
-                );
-                // }
+            return [
+                {
+                    "data": {
+                        "id": 1,
+                        "key": "Test1",
+                        "value": "https://test1/",
+                        "icon": "bx bx-home-alt"
+                    },
+                    "children": [],
+                    "parent": null,
+                    "expanded": true
+                },
+                {
+                    "data": {
+                        "id": 2,
+                        "key": "Test2",
+                        "value": "https://test2/",
+                        "icon": "bx bx-film"
+                    },
+                    "children": [],
+                    "parent": null,
+                    "expanded": true
+                }
+            ]
         }
     }
 
@@ -100,11 +127,11 @@ export class UiService {
         this.sessionStorage.set('testData', testData, 10, 'h');
     }
 
-    getAppLogoPath(){
+    getAppLogoPath() {
         if (this.electronService.isElectronApp) {
-             return this.electronService.ipcRenderer.sendSync('sideBar:logo:get');
-         } else {
+            return this.electronService.ipcRenderer.sendSync('sideBar:logo:get');
+        } else {
             return '/assets/image.svg'
-         }
+        }
     }
 }
