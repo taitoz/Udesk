@@ -95,9 +95,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     loadProfiles() {
-        //TODO to key value
-        //let keys = Object.keys(profile)[0]
-
         this.profiles = this.uiService.loadProfiles();
     }
 
