@@ -27,6 +27,7 @@
                 <span>Профиль</span>
             </ng-template>
             <p-table [value]="profiles" sortField="name" sortMode="single" sortOrder="0" dataKey="name"
+                     [scrollable]="true" scrollHeight="700px"
                      rowGroupMode="subheader" groupRowsBy="name" [tableStyle]="{'max-width': '40rem'}"
                      [expandedRowKeys]="{'default': true}">
                 <ng-template pTemplate="groupheader" let-profile let-rowIndex="rowIndex" let-expanded="expanded">
@@ -49,15 +50,9 @@
                         </td>
                     </tr>
                 </ng-template>
-                <ng-template pTemplate="groupfooter">
-                    <button pButton type="button" icon="bx bx-save" label="Сохранить"
-                            pTooltip="Сохранить" tooltipPosition="top" [style]="{'margin':'20px'}"
-                            (click)="loadProfiles()"></button>
-                </ng-template>
-                <ng-template pTemplate="rowexpansion" let-profile >
+                <ng-template pTemplate="rowexpansion" let-profile>
                     <tr>
-                        <td></td>
-                        <td>Name</td>
+                        <td class="profileKey">Name:</td>
                         <td [pEditableColumn]="profile.name" pEditableColumnField="name">
                             <p-cellEditor>
                                 <ng-template pTemplate="input">
@@ -73,7 +68,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>homeUrl</td>
+                        <td class="profileKey">homeUrl:</td>
                         <td [pEditableColumn]="profile.homeUrl" pEditableColumnField="homeUrl">
                             <p-cellEditor>
                                 <ng-template pTemplate="input">
@@ -89,7 +84,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>lang</td>
+                        <td class="profileKey">lang:</td>
                         <td [pEditableColumn]="profile.lang" pEditableColumnField="lang">
                             <p-cellEditor>
                                 <ng-template pTemplate="input">
@@ -104,6 +99,22 @@
                             </p-cellEditor>
                         </td>
                     </tr>
+                    <tr>
+                        <td>
+                            <button pButton type="button" icon="bx bx-save" label="Load" [outlined]="true"
+                                    pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                    (click)="loadProfiles()"></button>
+                        </td>
+                        <td>
+                            <button pButton type="button" icon="bx bx-save" label="Save" [outlined]="true"
+                                    pTooltip="Save" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                    (click)="loadProfiles()"></button>
+                            <button pButton type="button" icon="bx bx-save" class="p-button-danger" [outlined]="true"
+                                    label="Delete"
+                                    pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                    (click)="loadProfiles()"></button>
+                        </td>
+                    </tr>
                 </ng-template>
             </p-table>
         </p-tabPanel>
@@ -112,7 +123,7 @@
             <ng-template pTemplate="header">
                 <span>Сервисы</span>
             </ng-template>
-            <p-treeTable [value]="treeNodesData" [columns]="cols" [scrollable]="true" scrollHeight="500px"
+            <p-treeTable [value]="treeNodesData" [columns]="cols" [scrollable]="true" scrollHeight="600px"
                          selectionMode="single" sortField="id" [style]="{'margin-bottom':'20px'}"
                          [(selection)]="selectedNodes" dataKey="key" (onNodeSelect)="onSelect($event)">
                 <ng-template pTemplate="colgroup" let-columns>
