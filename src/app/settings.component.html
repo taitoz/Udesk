@@ -106,17 +106,20 @@
                                     (click)="loadProfiles()"></button>
                         </td>
                         <td>
-                            <button pButton type="button" icon="bx bx-save" label="Save" [outlined]="true"
-                                    pTooltip="Save" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="loadProfiles()"></button>
                             <button pButton type="button" icon="bx bx-save" class="p-button-danger" [outlined]="true"
                                     label="Delete"
                                     pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="loadProfiles()"></button>
+                                    (click)="deleteProfile(profile.name)"></button>
                         </td>
                     </tr>
                 </ng-template>
             </p-table>
+            <button pButton type="button" icon="bx bx-plus" label="Add" [outlined]="true"
+                    pTooltip="Add" tooltipPosition="top" [style]="{'margin':'20px'}"
+                    (click)="addProfile()"></button>
+            <button pButton type="button" icon="bx bx-save" label="Save" [outlined]="true"
+                    pTooltip="Save" tooltipPosition="top" [style]="{'margin':'20px'}"
+                    (click)="loadProfiles()"></button>
         </p-tabPanel>
 
         <p-tabPanel>

@@ -84,11 +84,15 @@ export class UiService {
     }
 
     addProfile(profileJson: any) {
-        return this.electronService.ipcRenderer.sendSync('profiles:add', profileJson);
+        if (this.electronService.isElectronApp) {
+            return this.electronService.ipcRenderer.sendSync('profiles:add', profileJson);
+        }
     }
 
     deleteProfile(profileName: any) {
-        return this.electronService.ipcRenderer.sendSync('profiles:delete', profileName);
+        if (this.electronService.isElectronApp) {
+            return this.electronService.ipcRenderer.sendSync('profiles:delete', profileName);
+        }
     }
 
     loadSideMenuData(menuId: string): TreeNode[] {

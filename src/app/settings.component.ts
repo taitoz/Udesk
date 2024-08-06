@@ -86,16 +86,30 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profile.name});
     }
 
-    addProfile(profileJson: any) {
-        this.uiService.addProfile(profileJson)
+    addProfile() {
+        //this.uiService.addProfile(profileJson)
+        const defaultProfile = {
+            "data": {
+                "id": 2,
+                "key": "Test2",
+                "value": "https://test2/",
+                "icon": "bx bx-home-alt"
+            },
+            "children": [],
+            "parent": null,
+            "expanded": true
+        }
+        this.profiles.push(defaultProfile)
+        this.profiles = [...this.profiles];
     }
 
     deleteProfile(profileName: any) {
         this.uiService.deleteProfile(profileName)
+        this.loadProfiles()
     }
 
     loadProfiles() {
-        this.profiles = this.uiService.loadProfiles();
+        this.profiles = this.uiService.loadProfiles()
     }
 
     getNodeTypeLabel(value: string): string {
