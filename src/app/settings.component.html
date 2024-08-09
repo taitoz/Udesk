@@ -29,7 +29,7 @@
             <p-table [value]="profiles" sortField="name" sortMode="single" sortOrder="0" dataKey="name"
                      [scrollable]="true" scrollHeight="700px"
                      rowGroupMode="subheader" groupRowsBy="name" [tableStyle]="{'max-width': '40rem'}"
-                     [expandedRowKeys]="{'default': true}">
+                     [expandedRowKeys]="expandedRowKeys">
                 <ng-template pTemplate="groupheader" let-profile let-rowIndex="rowIndex" let-expanded="expanded">
                     <tr>
                         <td colspan="5">
@@ -103,7 +103,7 @@
                         <td>
                             <button pButton type="button" icon="bx bx-save" label="Load" [outlined]="true"
                                     pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="loadProfiles()"></button>
+                                    (click)="setActiveProfile(profile.name)"></button>
                         </td>
                         <td>
                             <button pButton type="button" icon="bx bx-save" class="p-button-danger" [outlined]="true"
@@ -116,10 +116,10 @@
             </p-table>
             <button pButton type="button" icon="bx bx-plus" label="Add" [outlined]="true"
                     pTooltip="Add" tooltipPosition="top" [style]="{'margin':'20px'}"
-                    (click)="addProfile()"></button>
+                    (click)="newProfileFromDefault()"></button>
             <button pButton type="button" icon="bx bx-save" label="Save" [outlined]="true"
                     pTooltip="Save" tooltipPosition="top" [style]="{'margin':'20px'}"
-                    (click)="loadProfiles()"></button>
+                    (click)="saveProfiles()"></button>
         </p-tabPanel>
 
         <p-tabPanel>
@@ -184,7 +184,7 @@
             </p-treeTable>
             <!--<p-splitButton label="" icon="bx bx-pencil" [model]="items"></p-splitButton>-->
             <!--<button pButton type="button" icon="bx bx-pencil" class="p-button-text" (click)="toggleEdit()"></button>-->
-            <button pButton type="button" icon="bx bx-save" label="Сохранить"
+            <button pButton type="button" icon="bx bx-save" label="Сохранить" [outlined]="true"
                     pTooltip="Сохранить" tooltipPosition="top"
                     (click)="nodeSave()"></button>
 

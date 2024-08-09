@@ -372,7 +372,6 @@ ipcMain.on('sideMenu:toggle', (event, menuId) => {
     }
     resizeMain()
 })
-
 ipcMain.on('settings:toggleTheme', (event, theme) => {
     nativeTheme.themeSource = theme;
     appConfig.set('theme', theme);
@@ -391,17 +390,18 @@ ipcMain.on('web1c:set', (event, sideBarMenu) => {
 ipcMain.on('web1c:get', (event) => {
     event.returnValue = appConfig.get('web1cMenu');
 })
-
 ipcMain.on('profiles:get', (event) => {
     event.returnValue = getProfiles();
 })
-
-ipcMain.on('profiles:add', (event, profileJson) => {
-    addProfile(profileJson.name, profileJson);
+ipcMain.on('profiles:set', (event, profilesArr) => {
+    profiles.set("profiles", profilesArr)
 })
-
-ipcMain.on('profiles:delete', (event, profileName) => {
-    deleteProfile(profileName);
+ipcMain.on('profiles:getActive', (event) => {
+    event.returnValue = profiles.get('active', 'default')
+})
+ipcMain.on('profiles:setActive', (event, profileName) => {
+    profiles.set('active', profileName)
+    app.relaunch()
 })
 
 // =====================================================================================
@@ -442,23 +442,6 @@ function getProfiles() {
     return profiles.get("profiles")
 }
 
-function addProfile(profileName, profileJson) {
-    let profilesArr = getProfiles()
-    if (!profilesArr.find(p => p.name === profileName)) {
-        if (profileJson) {
-            profilesArr.push(profileJson)
-        } else {
-            profilesArr.push(loadDefaultFromFile('profile-default.json'))
-        }
-        profiles.set("profiles", profilesArr)
-    }
-}
-
-function deleteProfile(profileName) {
-    let profilesArr = getProfiles().find(p => p.name !== profileName)
-    profiles.set("profiles", profilesArr)
-}
-
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
 function getLogoPath() {
     const logoName = activeProfile['logo']
@@ -479,28 +462,25 @@ function loadProfile() {
     //https://github.com/sindresorhus/electron-store
 
     //ipcMain.on('profiles:getSideBarIcon' => activeProfile['sideBarIcon']
-    //ipcMain.on('profiles:add' ipcMain.on('profiles:delete'
-    //ipcMain.on('profiles:setActive' => restart
     profiles.observe('active', () => {
     })
 
     if (!profiles.has('profiles')) {
         profiles.set('profiles', [])
-        //add profiles vertical table
     }
-    const profileName = profiles.get('active', 'default');
-    activeProfile = getProfiles().find(p => p.name === profileName);
+    const profileName = profiles.get('active', 'default')
+    activeProfile = getProfiles().find(p => p.name === profileName)
 
     if (!profiles.has('active') || !activeProfile) {
-        addProfile('default')
+        getProfiles().push(loadDefaultFromFile('profile-default.json'))
         profiles.set('active', 'default')
-        activeProfile = getProfiles().find(p => p.name === 'default');
+        activeProfile = getProfiles().find(p => p.name === 'default')
     }
 
     // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
-    let appUserDataPath = app.getPath('userData');
+    let appUserDataPath = app.getPath('userData')
     appConfig = cfg.create(appUserDataPath + '/profiles/settings-' + profileName + '.json')
     initSettings();
 
-    nativeTheme.themeSource = appConfig.get('theme', 'dark');
+    nativeTheme.themeSource = appConfig.get('theme', 'dark')
 }

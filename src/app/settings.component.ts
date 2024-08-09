@@ -33,7 +33,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}];
 
     profiles: any[]
-    selectedProfile!: any;
+    expandedRowKeys: { [p: string]: boolean }
 
     constructor(
         private electronService: ElectronService,
@@ -49,7 +49,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
         this.treeNodesData = this.uiService.loadSideMenuData('services');
         this.loadProfiles();
-
+        this.expandedRowKeys = this.uiService.getActiveProfile()
         // this.nodeTypes = [
         //     {label: 'L1', value: 'L1'},
         //     {label: 'L2', value: 'L2'},
@@ -78,38 +78,43 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return true;
     }
 
-    getProfileLogo(profile: any){
+    getProfileLogo(profile: any) {
         return this.uiService.getAppLogoPath()
     }
 
-    selectProfile(profile: any) {
-        this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profile.name});
-    }
-
-    addProfile() {
-        //this.uiService.addProfile(profileJson)
-        const defaultProfile = {
-            "data": {
-                "id": 2,
-                "key": "Test2",
-                "value": "https://test2/",
-                "icon": "bx bx-home-alt"
-            },
-            "children": [],
-            "parent": null,
-            "expanded": true
+    newProfileFromDefault() {
+        const newProfile = {...this.profiles.find(p => p.name === "default")}
+        const ind = this.profiles.filter(p => p.name.startsWith("New Profile")).length
+        if (ind === 0) {
+            newProfile.name = "New Profile"
+        } else {
+            newProfile.name = "New Profile " + ind
         }
-        this.profiles.push(defaultProfile)
+        this.profiles.push(newProfile)
         this.profiles = [...this.profiles];
     }
 
-    deleteProfile(profileName: any) {
-        this.uiService.deleteProfile(profileName)
-        this.loadProfiles()
+    deleteProfile(profileName: string) {
+        if (profileName === "default") {
+            this.messageService.add({severity: 'info', summary: 'default profile cannot be deleted.'});
+            return
+        }
+        this.profiles = [...this.profiles.filter(p => p.name !== profileName)]
     }
 
     loadProfiles() {
         this.profiles = this.uiService.loadProfiles()
+    }
+
+    setActiveProfile(profileName: string) {
+        console.log("set activeProfile", profileName);
+        this.uiService.setActiveProfile(profileName)
+        this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName});
+    }
+
+    saveProfiles() {
+        console.log("saveProfiles", this.profiles);
+        this.uiService.saveProfiles(this.profiles)
     }
 
     getNodeTypeLabel(value: string): string {

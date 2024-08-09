@@ -74,24 +74,35 @@ export class UiService {
                     "homeUrl": "localhost"
                 },
                 {
-                    "name": "1",
+                    "name": "New Profile",
                     "logo": "logo48b",
                     "lang": "ru",
-                    "homeUrl": "http://test"
+                    "homeUrl": "http://new_url"
                 }
             ]
         }
     }
 
-    addProfile(profileJson: any) {
+    getActiveProfile() {
+        let activeProfile = {}
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('profiles:add', profileJson);
+            activeProfile[this.electronService.ipcRenderer.sendSync('profiles:getActive')] = true
+        } else {
+            activeProfile['default'] = true
+        }
+        //console.log(activeProfile);
+        return activeProfile
+    }
+
+    setActiveProfile(profileName: string) {
+        if (this.electronService.isElectronApp) {
+            return this.electronService.ipcRenderer.sendSync('profiles:setActive', profileName)
         }
     }
 
-    deleteProfile(profileName: any) {
+    saveProfiles(profilesArr: any[]) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('profiles:delete', profileName);
+            return this.electronService.ipcRenderer.sendSync('profiles:set', profilesArr);
         }
     }
 
