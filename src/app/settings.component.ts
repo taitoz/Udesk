@@ -117,6 +117,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
     setActiveProfile(profileName: string) {
         this.messageService.add({severity: 'info', summary: "set activeProfile " + profileName});
         this.uiService.setActiveProfile(profileName)
+
+        this.treeNodesData = this.uiService.loadSideMenuData('services');
+        this.showTable = false;
+        this.cdr.detectChanges();
+        this.showTable = true;
+        this.cdr.detectChanges();
+
         this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName});
     }
 
@@ -166,7 +173,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
             try {
                 this.removeTreeParent(item);
             } catch {
-
             }
         });
     }
@@ -178,7 +184,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
                 nodes.splice(i, 1);
                 return;
             }
-
             if (nodes[i].children) {
                 this.deleteNodeByData(data, nodes[i].children);
             }

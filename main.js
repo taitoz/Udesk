@@ -356,14 +356,14 @@ ipcMain.handle('load-url', (event, url) => {
 })
 
 ipcMain.on('sideBar:logo:get', (event) => {
-    event.returnValue = getLogoPath();
+    event.returnValue = getLogoPath()
 })
 
 ipcMain.on('sideMenu:toggle', (event, menuId) => {
     sideMenuWidth = sideMenu.getBounds().width
     switch (sideMenuWidth) {
         case 0:
-            sideMenuWidth = 230;
+            sideMenuWidth = 230
             loadPrimeComponent(sideMenu, 'sideMenu/' + menuId);
             break;
         case 230:
@@ -373,25 +373,26 @@ ipcMain.on('sideMenu:toggle', (event, menuId) => {
     resizeMain()
 })
 ipcMain.on('settings:toggleTheme', (event, theme) => {
-    nativeTheme.themeSource = theme;
-    appConfig.set('theme', theme);
+    nativeTheme.themeSource = theme
+    appConfig.set('theme', theme)
 })
 ipcMain.on('services:set', (event, sideBarMenu) => {
-    appConfig.set('servicesMenu', sideBarMenu);
-    loadPrimeComponent(sideMenu, 'sideMenu/services');
+    appConfig.set('servicesMenu', sideBarMenu)
+    loadPrimeComponent(sideMenu, 'sideMenu/services')
 })
 ipcMain.on('services:get', (event) => {
-    event.returnValue = appConfig.get('servicesMenu');
+    initSettings()
+    event.returnValue = appConfig.get('servicesMenu')
 })
 ipcMain.on('web1c:set', (event, sideBarMenu) => {
-    appConfig.set('web1cMenu', sideBarMenu);
-    loadPrimeComponent(sideMenu, 'sideMenu/web1c');
+    appConfig.set('web1cMenu', sideBarMenu)
+    loadPrimeComponent(sideMenu, 'sideMenu/web1c')
 })
 ipcMain.on('web1c:get', (event) => {
-    event.returnValue = appConfig.get('web1cMenu');
+    event.returnValue = appConfig.get('web1cMenu')
 })
 ipcMain.on('profiles:get', (event) => {
-    event.returnValue = getProfiles();
+    event.returnValue = getProfiles()
 })
 ipcMain.on('profiles:set', (event, profilesArr) => {
     profiles.set("profiles", profilesArr)
@@ -401,7 +402,7 @@ ipcMain.on('profiles:getActive', (event) => {
 })
 ipcMain.on('profiles:setActive', (event, profileName) => {
     profiles.set('active', profileName)
-    app.relaunch()
+    //app.relaunch()
 })
 
 // =====================================================================================

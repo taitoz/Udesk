@@ -101,12 +101,12 @@
                     </tr>
                     <tr>
                         <td>
-                            <button pButton type="button" icon="bx bx-save" label="Load" [outlined]="true"
+                            <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"
                                     pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
                                     (click)="setActiveProfile(profile.name)"></button>
                         </td>
                         <td>
-                            <button pButton type="button" icon="bx bx-save" class="p-button-danger" [outlined]="true"
+                            <button pButton type="button" icon="bx bx-trash" class="p-button-danger" [outlined]="true"
                                     label="Delete"
                                     pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
                                     (click)="deleteProfile(profile.name)"></button>
@@ -126,7 +126,7 @@
             <ng-template pTemplate="header">
                 <span>Сервисы</span>
             </ng-template>
-            <p-treeTable [value]="treeNodesData" [columns]="cols" [scrollable]="true" scrollHeight="600px"
+            <p-treeTable *ngIf="showTable" [value]="treeNodesData" [columns]="cols" [scrollable]="true" scrollHeight="600px"
                          selectionMode="single" sortField="id" [style]="{'margin-bottom':'20px'}"
                          [(selection)]="selectedNodes" dataKey="key" (onNodeSelect)="onSelect($event)">
                 <ng-template pTemplate="colgroup" let-columns>
