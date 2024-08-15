@@ -171,7 +171,7 @@ function createWindow() {
 
     // Open the DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
-    //mainView.webContents.openDevTools({mode: 'detach'});
+    settingsView.webContents.openDevTools({mode: 'detach'});
     //sideBar.webContents.openDevTools({mode: 'detach'});
     //sideMenu.webContents.openDevTools({mode: 'detach'});
 
@@ -468,13 +468,16 @@ function loadProfile() {
     if (!profiles.has('profiles')) {
         profiles.set('profiles', [])
     }
+    let profileList = getProfiles()
+
     const profileName = profiles.get('active', 'default')
-    activeProfile = getProfiles().find(p => p.name === profileName)
+    activeProfile = profileList.find(p => p.name === profileName)
 
     if (!profiles.has('active') || !activeProfile) {
-        getProfiles().push(loadDefaultFromFile('profile-default.json'))
+        profileList.push(loadDefaultFromFile('profile-default.json'))
+        profiles.set("profiles", profileList)
         profiles.set('active', 'default')
-        activeProfile = getProfiles().find(p => p.name === 'default')
+        activeProfile = profileList.find(p => p.name === 'default')
     }
 
     // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json

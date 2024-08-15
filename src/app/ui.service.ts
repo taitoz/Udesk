@@ -96,13 +96,13 @@ export class UiService {
 
     setActiveProfile(profileName: string) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('profiles:setActive', profileName)
+            return this.electronService.ipcRenderer.send('profiles:setActive', profileName)
         }
     }
 
     saveProfiles(profilesArr: any[]) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('profiles:set', profilesArr);
+            return this.electronService.ipcRenderer.send('profiles:set', profilesArr);
         }
     }
 

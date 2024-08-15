@@ -1,4 +1,4 @@
-import {Component, Inject, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
+import {ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
 import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng/api';
 import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
@@ -34,6 +34,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     profiles: any[]
     expandedRowKeys: { [p: string]: boolean }
+    showTable = true
 
     constructor(
         private electronService: ElectronService,
@@ -41,7 +42,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
         private messageService: MessageService,
         public dialogService: DialogService,
         private confirmationService: ConfirmationService,
-        @Inject(DOCUMENT) private document: Document
+        @Inject(DOCUMENT) private document: Document,
+        private cdr: ChangeDetectorRef
     ) {
     }
 
@@ -83,15 +85,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     newProfileFromDefault() {
+        const newProfileName = "New Profile"
         const newProfile = {...this.profiles.find(p => p.name === "default")}
-        const ind = this.profiles.filter(p => p.name.startsWith("New Profile")).length
+        const ind = this.profiles.filter(p => p.name.startsWith(newProfileName)).length
         if (ind === 0) {
-            newProfile.name = "New Profile"
+            newProfile.name = newProfileName
         } else {
-            newProfile.name = "New Profile " + ind
+            newProfile.name = newProfileName + " " + ind
         }
-        this.profiles.push(newProfile)
-        this.profiles = [...this.profiles];
+        this.profiles = [...this.profiles, newProfile]
+        
+        //angular change outside context fix
+        this.showTable = false;
+        this.cdr.detectChanges();
+        this.showTable = true;
+        this.cdr.detectChanges();
     }
 
     deleteProfile(profileName: string) {
@@ -107,14 +115,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     setActiveProfile(profileName: string) {
-        console.log("set activeProfile", profileName);
+        this.messageService.add({severity: 'info', summary: "set activeProfile " + profileName});
         this.uiService.setActiveProfile(profileName)
         this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName});
     }
 
     saveProfiles() {
-        console.log("saveProfiles", this.profiles);
-        this.uiService.saveProfiles(this.profiles)
+        this.messageService.add({severity: 'info', summary: 'profiles saved'});
+        this.uiService.saveProfiles(this.profiles);
     }
 
     getNodeTypeLabel(value: string): string {
