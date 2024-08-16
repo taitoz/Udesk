@@ -381,7 +381,6 @@ ipcMain.on('services:set', (event, sideBarMenu) => {
     loadPrimeComponent(sideMenu, 'sideMenu/services')
 })
 ipcMain.on('services:get', (event) => {
-    initSettings()
     event.returnValue = appConfig.get('servicesMenu')
 })
 ipcMain.on('web1c:set', (event, sideBarMenu) => {
@@ -401,7 +400,7 @@ ipcMain.on('profiles:getActive', (event) => {
     event.returnValue = profiles.get('active', 'default')
 })
 ipcMain.on('profiles:setActive', (event, profileName) => {
-    profiles.set('active', profileName)
+    loadProfile(profileName)
     //app.relaunch()
 })
 
@@ -411,18 +410,6 @@ function loadPrimeComponent(browserView, component) {
     browserView.webContents.loadURL(url).then(() => {
         browserView.webContents.send('loadComponent', component);
     })
-}
-
-function initSettings() {
-    if (!appConfig.has('servicesMenu')) {
-        appConfig.set('servicesMenu', loadDefaultFromFile('services.json'))
-    }
-    if (!appConfig.has('web1cMenu')) {
-        appConfig.set('web1cMenu', loadDefaultFromFile('web1c.json'))
-    }
-    if (!appConfig.has('theme')) {
-        appConfig.set('theme', 'dark')
-    }
 }
 
 function openSettings() {
@@ -457,7 +444,7 @@ function getLogoPath() {
     return logoPath
 }
 
-function loadProfile() {
+function loadProfile(profileName) {
     //https://github.com/de-luca/electron-json-config
     //https://github.com/megahertz/electron-cfg
     //https://github.com/sindresorhus/electron-store
@@ -471,7 +458,12 @@ function loadProfile() {
     }
     let profileList = getProfiles()
 
-    const profileName = profiles.get('active', 'default')
+
+    if (!profileName){
+        profileName = profiles.get('active', 'default')
+    } else {
+        profiles.set('active', profileName)
+    }
     activeProfile = profileList.find(p => p.name === profileName)
 
     if (!profiles.has('active') || !activeProfile) {
@@ -482,9 +474,21 @@ function loadProfile() {
     }
 
     // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
-    let appUserDataPath = app.getPath('userData')
-    appConfig = cfg.create(appUserDataPath + '/profiles/settings-' + profileName + '.json')
+    let appConfigPath = app.getPath('userData') + '/profiles/settings-' + profileName + '.json'
+    appConfig = cfg.create(appConfigPath)
     initSettings();
 
     nativeTheme.themeSource = appConfig.get('theme', 'dark')
+}
+
+function initSettings() {
+    if (!appConfig.has('servicesMenu')) {
+        appConfig.set('servicesMenu', loadDefaultFromFile('services.json'))
+    }
+    if (!appConfig.has('web1cMenu')) {
+        appConfig.set('web1cMenu', loadDefaultFromFile('web1c.json'))
+    }
+    if (!appConfig.has('theme')) {
+        appConfig.set('theme', 'dark')
+    }
 }

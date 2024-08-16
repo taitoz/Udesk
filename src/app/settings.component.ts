@@ -5,6 +5,7 @@ import {UiService} from './ui.service';
 import {ElectronService} from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
+import {TableRowExpandEvent} from "primeng/table";
 
 @Component({
     selector: 'settings',
@@ -84,6 +85,24 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return this.uiService.getAppLogoPath()
     }
 
+    refreshTable() {
+        //angular change outside context fix
+        this.showTable = false;
+        this.cdr.detectChanges();
+        this.showTable = true;
+        this.cdr.detectChanges();
+    }
+
+    onBlurDeselect(event: any) {
+        console.log(JSON.stringify(event));
+    }
+
+    onRowExpand(event: TableRowExpandEvent) {
+        console.log(JSON.stringify(event));
+        console.log(JSON.stringify(this.profiles))
+        console.log(JSON.stringify(this.expandedRowKeys))
+    }
+
     newProfileFromDefault() {
         const newProfileName = "New Profile"
         const newProfile = {...this.profiles.find(p => p.name === "default")}
@@ -93,13 +112,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
         } else {
             newProfile.name = newProfileName + " " + ind
         }
+
         this.profiles = [...this.profiles, newProfile]
-        
-        //angular change outside context fix
-        this.showTable = false;
-        this.cdr.detectChanges();
-        this.showTable = true;
-        this.cdr.detectChanges();
+
+        this.saveProfiles()
+        this.expandedRowKeys = this.uiService.getActiveProfile()
+        this.refreshTable()
     }
 
     deleteProfile(profileName: string) {
@@ -107,7 +125,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.messageService.add({severity: 'info', summary: 'default profile cannot be deleted.'});
             return
         }
+        const idx = this.profiles.findIndex(function(p, i){
+            return p.name === profileName
+        })
+        this.setActiveProfile(this.profiles[idx-1].name)
+
         this.profiles = [...this.profiles.filter(p => p.name !== profileName)]
+        this.saveProfiles()
     }
 
     loadProfiles() {
@@ -119,10 +143,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.uiService.setActiveProfile(profileName)
 
         this.treeNodesData = this.uiService.loadSideMenuData('services');
-        this.showTable = false;
-        this.cdr.detectChanges();
-        this.showTable = true;
-        this.cdr.detectChanges();
+        this.refreshTable()
 
         this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName});
     }
