@@ -8,17 +8,20 @@ import path, {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
 import fs from 'fs';
 
+// Localization
 import {loadTranslation, translate} from './translations/i18n.js'
 import {getMenu} from "./mainmenu.js";
 
+// App logs
 import appLog from 'electron-log'
 //%USERPROFILE%\AppData\Roaming\electron-gzk-bot\logs\
 appLog.transports.file.fileName = Date.now() + ".log"
 Object.assign(console, appLog.functions);
 
+// App config
+const singleInstanceLock = app.requestSingleInstanceLock()
 import cfg from 'electron-cfg';
 
 let appConfig
@@ -26,58 +29,13 @@ let profiles = cfg.create('profiles.json')
 let activeProfile
 loadProfile()
 
-const singleInstanceLock = app.requestSingleInstanceLock()
-
-//const server = 'https://udesk-upd-srv.vercel.app'
-/*
+// App updater
 import updater from 'electron-simple-updater';
+import {initUpdater} from "./src/updater.js";
+
 appLog.info(updater.buildId)
-updater
-    .init({
-        url: 'https://raw.githubusercontent.com/taitoz/UdeskUpdSrv/main/updates.json',
-        checkUpdateOnStart: true,
-        autoDownload: true,
-        disabled: false,
-        logger: {
-            info(...args) {
-                appLog.info('update-log', 'info', ...args)
-            },
-            warn(...args) {
-                appLog.warn('update-log', 'warn', ...args)
-            },
-            error(...args) {
-                appLog.error('update-log', 'error', ...args)
-            }
-        }
-    })
-    .on('update-available', (event, releaseNotes, releaseName) => {
-        const dialogOpts = {
-            type: 'info',
-            buttons: ['Ok'],
-            title: 'Обновление',
-            message: 'Доступно обновление, скачивание продолжится в фоновом режиме ' +
-                'не закрывайте приложение до окончания загрузки',
-            detail: process.platform === 'win32' ? releaseNotes : releaseName
-        }
-        dialog.showMessageBox(dialogOpts).then()
-    })
-    .on('update-downloaded', (event, releaseNotes, releaseName) => {
-        const dialogOpts = {
-            type: 'info',
-            buttons: ['Обновить сейчас', 'Позже'],
-            title: 'Обновление',
-            message: process.platform === 'win32' ? releaseNotes : releaseName,
-            detail: 'Новая версия готова к установке.'
-        }
-        dialog.showMessageBox(dialogOpts).then((returnValue) => {
-            if (returnValue.response === 0) updater.quitAndInstall()
-        })
-    })
-    .on('error', (message) => {
-        appLog.error('There was a problem updating the application')
-        appLog.error(message)
-    })
-*/
+initUpdater();
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -95,6 +53,8 @@ app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
 
 function createWindow() {
+
+    const winCfg = cfg.window();
 
     // Create the browser window.
     mainWindow = new BrowserWindow({
@@ -114,8 +74,10 @@ function createWindow() {
         webPreferences: {
             // sandbox: false,
             // preload: path.join(__dirname, 'preload.js')
-        }
+        },
+        ...winCfg.options(),
     })
+    winCfg.assign(mainWindow);
 
     titleBar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.addBrowserView(titleBar)
@@ -158,9 +120,8 @@ function createWindow() {
         height: mainWindow.getBounds().height - titleBarHeight
     })
 
-    // and load the index.html.bak of the app.
-    //mainWindow.loadFile('index.html.bak')
-    //mainView.webContents.loadFile(`index.html.bak`).then()
+    //mainWindow.loadFile('index.html')
+    //mainView.webContents.loadFile(`index.html`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
     if (activeProfile['homeUrl']) {
@@ -169,9 +130,9 @@ function createWindow() {
         openSettings()
     }
 
-    // Open the DevTools.
+    // DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
-    settingsView.webContents.openDevTools({mode: 'detach'});
+    //settingsView.webContents.openDevTools({mode: 'detach'});
     //sideBar.webContents.openDevTools({mode: 'detach'});
     //sideMenu.webContents.openDevTools({mode: 'detach'});
 
@@ -204,7 +165,6 @@ function createWindow() {
 }
 
 function resizeMain() {
-    //TODO store window's new size in settings
     let newBounds = mainWindow.getBounds()
     // set BrowserView's bounds explicitly
     // sideBar.setBounds({
@@ -254,13 +214,13 @@ if (!singleInstanceLock) {
         loadTranslation(app.getLocale())
         //const icon = nativeImage.createFromPath()
         try {
-            const ret = globalShortcut.register('CommandOrControl+R', () => {
-                app.relaunch();
-                app.exit();
-            })
-            if (!ret) {
-                console.log('registration failed')
-            }
+            // const ret = globalShortcut.register('CommandOrControl+R', () => {
+            //     app.relaunch();
+            //     app.exit();
+            // })
+            // if (!ret) {
+            //     console.log('registration failed')
+            // }
             const tray = new Tray(getLogoPath())
             const trayMenu = Menu.buildFromTemplate([
                 {
@@ -402,6 +362,7 @@ ipcMain.on('profiles:getActive', (event) => {
 ipcMain.on('profiles:setActive', (event, profileName) => {
     loadProfile(profileName)
     //app.relaunch()
+    //app.exit()
 })
 
 // =====================================================================================
@@ -437,7 +398,7 @@ function getLogoPath() {
     const logoPath = path.join(app.getPath('userData'), 'profiles', logoName + '-' + profileName + '.png')
     if (!fs.existsSync(logoPath)) {
         fs.cpSync(
-            path.join(__dirname, 'assets', `logo48b.png`),
+            path.join(__dirname, 'assets', `logo48.png`),
             logoPath
         )
     }
@@ -445,13 +406,9 @@ function getLogoPath() {
 }
 
 function loadProfile(profileName) {
-    //https://github.com/de-luca/electron-json-config
-    //https://github.com/megahertz/electron-cfg
-    //https://github.com/sindresorhus/electron-store
 
-    //ipcMain.on('profiles:getSideBarIcon' => activeProfile['sideBarIcon']
-    profiles.observe('active', () => {
-    })
+    // profiles.observe('active', () => {
+    // })
 
     if (!profiles.has('profiles')) {
         profiles.set('profiles', [])
@@ -459,7 +416,7 @@ function loadProfile(profileName) {
     let profileList = getProfiles()
 
 
-    if (!profileName){
+    if (!profileName) {
         profileName = profiles.get('active', 'default')
     } else {
         profiles.set('active', profileName)
@@ -473,7 +430,8 @@ function loadProfile(profileName) {
         activeProfile = profileList.find(p => p.name === 'default')
     }
 
-    // C:\Users\user\AppData\Roaming\Udesk\settings.json  // /home/developer/.config/Udesk/settings.json
+    // C:\Users\user\AppData\Roaming\Udesk\settings.json
+    // /home/developer/.config/Udesk/settings.json
     let appConfigPath = app.getPath('userData') + '/profiles/settings-' + profileName + '.json'
     appConfig = cfg.create(appConfigPath)
     initSettings();
