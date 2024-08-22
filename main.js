@@ -30,11 +30,11 @@ let activeProfile
 loadProfile()
 
 // App updater
-import updater from 'electron-simple-updater';
-import {initUpdater} from "./src/updater.js";
-
-appLog.info(updater.buildId)
-initUpdater();
+// import updater from 'electron-simple-updater';
+// import {initUpdater} from "./src/updater.js";
+//
+// appLog.info(updater.buildId)
+// initUpdater();
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -320,7 +320,6 @@ ipcMain.on('sideBar:logo:get', (event) => {
 })
 
 ipcMain.on('sideBar:logo:set', (event, profileName) => {
-    console.log(profileName)
     dialog.showOpenDialog(BrowserWindow.getFocusedWindow(),{
         title: "",
         properties: ['openFile'],
@@ -329,9 +328,7 @@ ipcMain.on('sideBar:logo:set', (event, profileName) => {
         ]
     }).then(function (response) {
         if (!response.canceled) {
-            // handle fully qualified file name
-            console.log(response.filePaths[0]);
-            console.log(response.filePaths[0].split("/").pop());
+            setProfileLogo(response.filePaths[0], profileName)
         } else {
             console.log("no file selected");
         }
@@ -415,7 +412,7 @@ function getProfiles() {
 function getProfileLogoPath() {
     const logoName = activeProfile['logo']
     const profileName = activeProfile['name']
-    const logoPath = path.join(app.getPath('userData'), 'profiles', logoName + '-' + profileName + '.png')
+    const logoPath = path.join(app.getPath('userData'), 'profiles', logoName)
     if (!fs.existsSync(logoPath)) {
         fs.cpSync(
             path.join(__dirname, 'assets', `logo48.png`),
@@ -428,7 +425,13 @@ function getProfileLogoPath() {
 function setProfileLogo(newLogoPath, profileName){
     let profileList = getProfiles()
     const profile = profileList.find(p => p.name === profileName)
-    profile['logo'] = newLogoPath
+    const logoName =  newLogoPath.split("/").split("\\").pop()
+    const logoPath = path.join(app.getPath('userData'), 'profiles', logoName)
+    //console.log(logoName)
+    //console.log(logoPath)
+    fs.cpSync(newLogoPath, logoPath)
+    profile['logo'] = logoName
+    profiles.set("profiles", profileList)
 }
 
 function loadProfile(profileName) {
@@ -440,7 +443,6 @@ function loadProfile(profileName) {
         profiles.set('profiles', [])
     }
     let profileList = getProfiles()
-
 
     if (!profileName) {
         profileName = profiles.get('active', 'default')
