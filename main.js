@@ -65,7 +65,7 @@ function createWindow() {
         frame: false, // Use to linux
         //backgroundColor: '#3f4254',
         //show: false,
-        icon: getLogoPath(),
+        icon: getProfileLogoPath(),
         // webPreferences: {
         //   offscreen: true
         // }
@@ -221,7 +221,7 @@ if (!singleInstanceLock) {
             // if (!ret) {
             //     console.log('registration failed')
             // }
-            const tray = new Tray(getLogoPath())
+            const tray = new Tray(getProfileLogoPath())
             const trayMenu = Menu.buildFromTemplate([
                 {
                     label: translate('Close'),
@@ -316,7 +316,27 @@ ipcMain.handle('load-url', (event, url) => {
 })
 
 ipcMain.on('sideBar:logo:get', (event) => {
-    event.returnValue = getLogoPath()
+    event.returnValue = getProfileLogoPath()
+})
+
+ipcMain.on('sideBar:logo:set', (event, profileName) => {
+    console.log(profileName)
+    dialog.showOpenDialog(BrowserWindow.getFocusedWindow(),{
+        title: "",
+        properties: ['openFile'],
+        filters: [
+            { name: 'Images', extensions: ['jpg', 'png', 'gif'] }
+        ]
+    }).then(function (response) {
+        if (!response.canceled) {
+            // handle fully qualified file name
+            console.log(response.filePaths[0]);
+            console.log(response.filePaths[0].split("/").pop());
+        } else {
+            console.log("no file selected");
+        }
+    });
+    //event.returnValue =
 })
 
 ipcMain.on('sideMenu:toggle', (event, menuId) => {
@@ -392,7 +412,7 @@ function getProfiles() {
 }
 
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
-function getLogoPath() {
+function getProfileLogoPath() {
     const logoName = activeProfile['logo']
     const profileName = activeProfile['name']
     const logoPath = path.join(app.getPath('userData'), 'profiles', logoName + '-' + profileName + '.png')
@@ -403,6 +423,12 @@ function getLogoPath() {
         )
     }
     return logoPath
+}
+
+function setProfileLogo(newLogoPath, profileName){
+    let profileList = getProfiles()
+    const profile = profileList.find(p => p.name === profileName)
+    profile['logo'] = newLogoPath
 }
 
 function loadProfile(profileName) {

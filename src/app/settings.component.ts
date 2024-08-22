@@ -81,6 +81,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return true;
     }
 
+    setProfileLogo(profile: any): void {
+        return this.uiService.setAppLogoPath(profile.name);
+    }
+
     getProfileLogo(profile: any) {
         return this.uiService.getAppLogoPath()
     }

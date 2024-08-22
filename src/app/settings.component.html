@@ -38,8 +38,8 @@
                                     class="p-button-text p-button-rounded p-button-plain mr-2"
                                     [icon]="expanded ? 'bx bx-chevron-down bx-md' : 'bx bx-chevron-right bx-md'">
                             </button>
-                            <img [alt]="profile.logo" src="{{getProfileLogo(profile)}}" width="32"
-                                 style="vertical-align: middle"/>
+                            <img [alt]="profile.logo" ngSrc="{{getProfileLogo(profile)}}" height="32" width="32"
+                                 style="vertical-align: middle" (click)="setProfileLogo(profile)"/>
                             <p-cellEditor [style]="{'margin-left':'10px'}">
                                 <ng-template pTemplate="input">
                                     <input pInputText

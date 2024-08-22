@@ -149,4 +149,12 @@ export class UiService {
             return '/assets/image.svg'
         }
     }
+
+    setAppLogoPath(profileName: any) {
+        if (this.electronService.isElectronApp) {
+            return this.electronService.ipcRenderer.sendSync('sideBar:logo:set', profileName);
+        } else {
+            return '/assets/image.svg'
+        }
+    }
 }
