@@ -27,134 +27,64 @@
                 <span>Профиль</span>
             </ng-template>
 
-            <p-table *ngIf="showTable" [value]="profiles"
+            <p-table *ngIf="showTable" [value]="profiles2"
                     rowGroupMode="rowspan"
                     groupRowsBy="name"
                     sortField="name"
                     sortMode="single"
                     [tableStyle]="{'min-width': '75rem'}">
                 <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width:3rem">#</th>
-                        <th>Name</th>
-                        <th>homeUrl</th>
-                        <th>lang</th>
-                    </tr>
+
                 </ng-template>
                 <ng-template
                         pTemplate="body"
-                        let-profile
-                        let-rowIndex="rowIndex"
+                        let-profile2
                         let-rowgroup="rowgroup"
                         let-rowspan="rowspan">
                     <tr>
-                        <td>{{rowIndex}}</td>
                         <td *ngIf="rowgroup" [attr.rowspan]="rowspan">
-                            <img [alt]="profile.logo" ngSrc="{{getProfileLogo(profile)}}" height="32" width="32"
-                                 style="vertical-align: middle" (click)="setProfileLogo(profile)"/>
-                            <span class="font-bold ml-2">{{profile.name}}</span>
+                            <img [alt]="profile2.logo" ngSrc="{{getProfileLogo(profile2)}}" height="32" width="32"
+                                 style="vertical-align: middle" (click)="setProfileLogo(profile2)"/>
+                            <span class="font-bold ml-2">{{profile2.name}}</span>
                         </td>
-                        <td>
-                            {{profile.name}}
-                        </td>
-                        <td>
-                            <span class="ml-1 vertical-align-middle">{{profile.homeUrl}}</span>
-                        </td>
-                        <td>
-                            {{profile.lang}}
+                        <td class="profileKey">{{profile2.key}}</td>
+                        <td [pEditableColumn]="profile2.value" pEditableColumnField="value">
+                            <p-cellEditor>
+                                <ng-template pTemplate="input">
+                                    <input
+                                            pInputText
+                                            type="text"
+                                            [(ngModel)]="profile2.value"/>
+                                </ng-template>
+                                <ng-template pTemplate="output">
+                                    {{ profile2.value }}
+                                </ng-template>
+                            </p-cellEditor>
+                            <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"
+                                    pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                    (click)="setActiveProfile(profile2.name)"></button>
+                            <button pButton type="button" icon="bx bx-trash" class="p-button-danger" [outlined]="true"
+                                    label="Delete"
+                                    pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                    (click)="deleteProfile(profile2.name)"></button>
                         </td>
 <!--                        <td>-->
 <!--                            <p-tag [value]="profile.status" [severity]="getSeverity(customer.status)" />-->
 <!--                        </td>-->
                     </tr>
                 </ng-template>
+                <ng-template pTemplate="summary">
+                    <div style="text-align:left">
+                        <button pButton type="button" icon="bx bx-plus" label="Add" [outlined]="true"
+                                pTooltip="Add" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                (click)="newProfileFromDefault()"></button>
+                        <button pButton type="button" icon="bx bx-save" label="Save" [outlined]="true"
+                                pTooltip="Save" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                (click)="saveProfiles()"></button>
+                    </div>
+                </ng-template>
             </p-table>
 
-            <p-table *ngIf="showTable" [value]="profiles" sortField="name" sortMode="single" sortOrder="0"
-                     dataKey="name"
-                     [scrollable]="true" scrollHeight="700px"
-                     rowGroupMode="subheader" groupRowsBy="name" [tableStyle]="{'max-width': '40rem'}"
-                     [expandedRowKeys]="expandedRowKeys" (onRowExpand)="onRowExpand($event)">
-                <ng-template pTemplate="groupheader" let-profile let-expanded="expanded" let-index="rowIndex">
-                    <tr [pReorderableRow]="index" >
-                        <td colspan="5" [pEditableColumn]="profile.name" pEditableColumnField="name">
-                            <span class="bx bx-menu" pReorderableRowHandle></span>
-                            <button type="button" pButton pRipple [pRowToggler]="profile"
-                                    class="p-button-text p-button-rounded p-button-plain mr-2"
-                                    [icon]="expanded ? 'bx bx-chevron-down bx-md' : 'bx bx-chevron-right bx-md'">
-                            </button>
-                            <img [alt]="profile.logo" ngSrc="{{getProfileLogo(profile)}}" height="32" width="32"
-                                 style="vertical-align: middle" (click)="setProfileLogo(profile)"/>
-                            <p-cellEditor [style]="{'margin-left':'10px'}">
-                                <ng-template pTemplate="input">
-                                    <input pInputText
-                                           type="text"
-                                           [(ngModel)]="profile.name"
-                                           (ngModelChange)="onBlurDeselect($event)"
-                                           (blur)="onBlurDeselect($event)"
-                                    />
-                                </ng-template>
-                                <ng-template pTemplate="output" class="font-bold ml-2">
-                                    {{ profile.name }}
-                                </ng-template>
-                            </p-cellEditor>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="rowexpansion" let-profile>
-                    <tr>
-                        <td class="profileKey">homeUrl:</td>
-                        <td [pEditableColumn]="profile.homeUrl" pEditableColumnField="homeUrl">
-                            <p-cellEditor>
-                                <ng-template pTemplate="input">
-                                    <input
-                                            pInputText
-                                            type="text"
-                                            [(ngModel)]="profile.homeUrl"/>
-                                </ng-template>
-                                <ng-template pTemplate="output">
-                                    {{ profile.homeUrl }}
-                                </ng-template>
-                            </p-cellEditor>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="profileKey">lang:</td>
-                        <td [pEditableColumn]="profile.lang" pEditableColumnField="lang">
-                            <p-cellEditor>
-                                <ng-template pTemplate="input">
-                                    <input
-                                            pInputText
-                                            type="text"
-                                            [(ngModel)]="profile.lang"/>
-                                </ng-template>
-                                <ng-template pTemplate="output">
-                                    {{ profile.lang }}
-                                </ng-template>
-                            </p-cellEditor>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"
-                                    pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="setActiveProfile(profile.name)"></button>
-                        </td>
-                        <td>
-                            <button pButton type="button" icon="bx bx-trash" class="p-button-danger" [outlined]="true"
-                                    label="Delete"
-                                    pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="deleteProfile(profile.name)"></button>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-            <button pButton type="button" icon="bx bx-plus" label="Add" [outlined]="true"
-                    pTooltip="Add" tooltipPosition="top" [style]="{'margin':'20px'}"
-                    (click)="newProfileFromDefault()"></button>
-            <button pButton type="button" icon="bx bx-save" label="Save" [outlined]="true"
-                    pTooltip="Save" tooltipPosition="top" [style]="{'margin':'20px'}"
-                    (click)="saveProfiles()"></button>
         </p-tabPanel>
 
         <p-tabPanel>

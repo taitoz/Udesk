@@ -33,7 +33,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     theme = 'dark';
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}];
 
-    profiles: any[]
+    profiles: { name: string; logo: string; lang: string; homeUrl: string; }[]
+    profiles2: { name: string; logo: string; key: string; value: string; }[] = []
     expandedRowKeys: { [p: string]: boolean }
     showTable = true
 
@@ -142,6 +143,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     loadProfiles() {
         this.profiles = this.uiService.loadProfiles()
+
+        this.profiles.forEach(((profile: { name: string; logo: string; lang: string; homeUrl: string; }) => {
+                this.profiles2.push({name: profile.name, logo: profile.logo, key: 'homeUrl', value: profile.homeUrl})
+                this.profiles2.push({name: profile.name, logo: profile.logo, key: 'lang', value: profile.lang})
+            })
+        )
     }
 
     setActiveProfile(profileName: string) {
