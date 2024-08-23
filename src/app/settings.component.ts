@@ -86,7 +86,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     getProfileLogo(profile: any) {
-        return this.uiService.getAppLogoPath()
+        return this.uiService.getAppLogoPath(profile.name)
     }
 
     refreshTable() {
@@ -102,6 +102,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     onRowExpand(event: TableRowExpandEvent) {
+        //this.expandedRowKeys = {}
+
         console.log(JSON.stringify(event));
         console.log(JSON.stringify(this.profiles))
         console.log(JSON.stringify(this.expandedRowKeys))
@@ -120,7 +122,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.profiles = [...this.profiles, newProfile]
 
         this.saveProfiles()
-        this.expandedRowKeys = this.uiService.getActiveProfile()
+        //this.expandedRowKeys = this.uiService.getActiveProfile()
         this.refreshTable()
     }
 
@@ -129,10 +131,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.messageService.add({severity: 'info', summary: 'default profile cannot be deleted.'});
             return
         }
-        const idx = this.profiles.findIndex(function(p, i){
+        const idx = this.profiles.findIndex(function (p, i) {
             return p.name === profileName
         })
-        this.setActiveProfile(this.profiles[idx-1].name)
+        this.setActiveProfile(this.profiles[idx - 1].name)
 
         this.profiles = [...this.profiles.filter(p => p.name !== profileName)]
         this.saveProfiles()

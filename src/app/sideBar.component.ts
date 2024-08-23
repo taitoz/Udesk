@@ -29,6 +29,10 @@ export class SideBarComponent implements OnInit {
         this.uiService.ipcInvoke('load-url', url)
     }
 
+    getActiveProfileHomeUrl() {
+        return this.uiService.getActiveProfileHomeUrl()
+    }
+
     ipcSend(channel:string, data:string){
         this.uiService.ipcSend(channel, data)
     }

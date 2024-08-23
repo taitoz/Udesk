@@ -83,6 +83,10 @@ export class UiService {
         }
     }
 
+    getActiveProfileHomeUrl() {
+        return this.getActiveProfile()['homeUrl']
+    }
+
     getActiveProfile() {
         let activeProfile = {}
         if (this.electronService.isElectronApp) {
@@ -142,15 +146,15 @@ export class UiService {
         this.sessionStorage.set('testData', testData, 10, 'h');
     }
 
-    getAppLogoPath() {
+    getAppLogoPath(profileName: any = null) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('sideBar:logo:get');
+            return this.electronService.ipcRenderer.sendSync('sideBar:logo:get', profileName);
         } else {
             return '/assets/image.svg'
         }
     }
 
-    setAppLogoPath(profileName: any) {
+    setAppLogoPath(profileName: string) {
         if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.sendSync('sideBar:logo:set', profileName);
         } else {

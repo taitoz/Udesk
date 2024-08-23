@@ -30,11 +30,11 @@ let activeProfile
 loadProfile()
 
 // App updater
-// import updater from 'electron-simple-updater';
-// import {initUpdater} from "./src/updater.js";
-//
-// appLog.info(updater.buildId)
-// initUpdater();
+import updater from 'electron-simple-updater';
+import {initUpdater} from "./src/updater.js";
+
+//appLog.info(updater.buildId)
+initUpdater();
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -132,7 +132,7 @@ function createWindow() {
 
     // DevTools.
     //mainWindow.webContents.openDevTools({mode: 'detach'});
-    //settingsView.webContents.openDevTools({mode: 'detach'});
+    settingsView.webContents.openDevTools({mode: 'detach'});
     //sideBar.webContents.openDevTools({mode: 'detach'});
     //sideMenu.webContents.openDevTools({mode: 'detach'});
 
@@ -300,37 +300,40 @@ ipcMain.handle('maximize', () => {
     resizeMain()
 })
 ipcMain.handle('open:settings', () => {
+    sideMenuWidth = 0
     openSettings();
 })
 
 ipcMain.handle('load-url', (event, url) => {
     //dialog.showErrorBox('loadService', arg)
+    sideMenuWidth = 0
     try {
         new URL(url)
     } catch (err) {
         return
     }
-    mainView.webContents.loadURL(url).catch(error => {
-        console.log(error.code)
-    })
+    mainView.webContents.loadURL(url)
+        .catch(error => {
+            console.log(error.code)
+        })
 })
 
-ipcMain.on('sideBar:logo:get', (event) => {
-    event.returnValue = getProfileLogoPath()
+ipcMain.on('sideBar:logo:get', (event, profileName) => {
+    event.returnValue = getProfileLogoPath(profileName)
 })
 
 ipcMain.on('sideBar:logo:set', (event, profileName) => {
-    dialog.showOpenDialog(BrowserWindow.getFocusedWindow(),{
+    dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
         title: "",
         properties: ['openFile'],
         filters: [
-            { name: 'Images', extensions: ['jpg', 'png', 'gif'] }
+            {name: 'Images', extensions: ['jpg', 'png', 'gif']}
         ]
     }).then(function (response) {
         if (!response.canceled) {
             setProfileLogo(response.filePaths[0], profileName)
         } else {
-            console.log("no file selected");
+            //console.log("no file selected");
         }
     });
     //event.returnValue =
@@ -409,9 +412,11 @@ function getProfiles() {
 }
 
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
-function getProfileLogoPath() {
-    const logoName = activeProfile['logo']
-    const profileName = activeProfile['name']
+function getProfileLogoPath(profileName) {
+    let profileList = getProfiles()
+    const profile = (profileName) ? profileList.find(p => p.name === profileName) : activeProfile
+
+    const logoName = profile['logo']
     const logoPath = path.join(app.getPath('userData'), 'profiles', logoName)
     if (!fs.existsSync(logoPath)) {
         fs.cpSync(
@@ -422,12 +427,18 @@ function getProfileLogoPath() {
     return logoPath
 }
 
-function setProfileLogo(newLogoPath, profileName){
+function setProfileLogo(newLogoPath, profileName) {
     let profileList = getProfiles()
     const profile = profileList.find(p => p.name === profileName)
-    const logoName =  newLogoPath.split("/").split("\\").pop()
-    const logoPath = path.join(app.getPath('userData'), 'profiles', logoName)
+
+    //console.log(newLogoPath)
+    console.log(newLogoPath.includes('/'))
+    const logoName = (newLogoPath.includes('/'))
+        ? newLogoPath.split("/").pop()
+        : newLogoPath.split("\\").pop()
     //console.log(logoName)
+
+    const logoPath = path.join(app.getPath('userData'), 'profiles', logoName)
     //console.log(logoPath)
     fs.cpSync(newLogoPath, logoPath)
     profile['logo'] = logoName
