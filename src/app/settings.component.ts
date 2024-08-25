@@ -33,8 +33,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     theme = 'dark';
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}];
 
-    profiles: { name: string; logo: string; lang: string; homeUrl: string; }[]
-    profiles2: { name: string; logo: string; key: string; value: string; }[] = []
+    profiles: { id: number; data: {key:string, value:string}[] }[]
+    profilesFlat: { name: string; id: number; key: string; value: string; }[] = []
     expandedRowKeys: { [p: string]: boolean }
     showTable = true
 
@@ -111,54 +111,58 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     newProfileFromDefault() {
-        const newProfileName = "New Profile"
-        const newProfile = {...this.profiles.find(p => p.name === "default")}
-        const ind = this.profiles.filter(p => p.name.startsWith(newProfileName)).length
-        if (ind === 0) {
-            newProfile.name = newProfileName
-        } else {
-            newProfile.name = newProfileName + " " + ind
-        }
+        // const newProfileName = "New Profile"
+        // const newProfile = {...this.profiles.find(p => p.name === "default")}
+        // const ind = this.profiles.filter(p => p.name.startsWith(newProfileName)).length
+        // if (ind === 0) {
+        //     newProfile.name = newProfileName
+        // } else {
+        //     newProfile.name = newProfileName + " " + ind
+        // }
 
-        this.profiles = [...this.profiles, newProfile]
+        // this.profiles = [...this.profiles, newProfile]
 
-        this.saveProfiles()
+        //this.saveProfiles()
         //this.expandedRowKeys = this.uiService.getActiveProfile()
         this.refreshTable()
     }
 
-    deleteProfile(profileName: string) {
-        if (profileName === "default") {
-            this.messageService.add({severity: 'info', summary: 'default profile cannot be deleted.'});
-            return
-        }
-        const idx = this.profiles.findIndex(function (p, i) {
-            return p.name === profileName
-        })
-        this.setActiveProfile(this.profiles[idx - 1].name)
-
-        this.profiles = [...this.profiles.filter(p => p.name !== profileName)]
+    deleteProfile(profileId: number) {
+        console.log(profileId)
+        // if (profileName === "default") {
+        //     this.messageService.add({severity: 'info', summary: 'default profile cannot be deleted.'});
+        //     return
+        // }
+        // const idx = this.profiles.findIndex(function (p, i) {
+        //     return p.name === profileName
+        // })
+        // this.setActiveProfile(this.profiles[idx - 1].name)
+        //
+        // this.profiles = [...this.profiles.filter(p => p.name !== profileName)]
         this.saveProfiles()
     }
 
     loadProfiles() {
         this.profiles = this.uiService.loadProfiles()
 
-        this.profiles.forEach(((profile: { name: string; logo: string; lang: string; homeUrl: string; }) => {
-                this.profiles2.push({name: profile.name, logo: profile.logo, key: 'homeUrl', value: profile.homeUrl})
-                this.profiles2.push({name: profile.name, logo: profile.logo, key: 'lang', value: profile.lang})
+        this.profiles.forEach(((profile: { id: number; data: {key:string, value:string}[] }) => {
+                let profileName = profile.data.find(p => p.key === 'name').value
+                profile.data.forEach(data => {
+                    this.profilesFlat.push({name: profileName, id: profile.id, key: data.key, value: data.value})
+                })
             })
         )
     }
 
-    setActiveProfile(profileName: string) {
-        this.messageService.add({severity: 'info', summary: "set activeProfile " + profileName});
-        this.uiService.setActiveProfile(profileName)
-
-        this.treeNodesData = this.uiService.loadSideMenuData('services');
-        this.refreshTable()
-
-        this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName});
+    setActiveProfile(profileId: number) {
+        console.log(profileId)
+        // this.messageService.add({severity: 'info', summary: "set activeProfile " + profileName});
+        // this.uiService.setActiveProfile(profileName)
+        //
+        // this.treeNodesData = this.uiService.loadSideMenuData('services');
+        // this.refreshTable()
+        //
+        // this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName});
     }
 
     saveProfiles() {

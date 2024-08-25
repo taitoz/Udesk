@@ -27,7 +27,7 @@
                 <span>Профиль</span>
             </ng-template>
 
-            <p-table *ngIf="showTable" [value]="profiles2"
+            <p-table *ngIf="showTable" [value]="profilesFlat"
                     rowGroupMode="rowspan"
                     groupRowsBy="name"
                     sortField="name"
@@ -46,6 +46,13 @@
                             <img [alt]="profile2.logo" ngSrc="{{getProfileLogo(profile2)}}" height="32" width="32"
                                  style="vertical-align: middle" (click)="setProfileLogo(profile2)"/>
                             <span class="font-bold ml-2">{{profile2.name}}</span>
+                            <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"
+                                    pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                    (click)="setActiveProfile(profile2.id)"></button>
+                            <button pButton type="button" icon="bx bx-trash" class="p-button-danger" [outlined]="true"
+                                    label="Delete"
+                                    pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
+                                    (click)="deleteProfile(profile2.id)"></button>
                         </td>
                         <td class="profileKey">{{profile2.key}}</td>
                         <td [pEditableColumn]="profile2.value" pEditableColumnField="value">
@@ -60,13 +67,6 @@
                                     {{ profile2.value }}
                                 </ng-template>
                             </p-cellEditor>
-                            <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"
-                                    pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="setActiveProfile(profile2.name)"></button>
-                            <button pButton type="button" icon="bx bx-trash" class="p-button-danger" [outlined]="true"
-                                    label="Delete"
-                                    pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="deleteProfile(profile2.name)"></button>
                         </td>
 <!--                        <td>-->
 <!--                            <p-tag [value]="profile.status" [severity]="getSeverity(customer.status)" />-->

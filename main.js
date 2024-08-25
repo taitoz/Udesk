@@ -25,14 +25,13 @@ const singleInstanceLock = app.requestSingleInstanceLock()
 import cfg from 'electron-cfg';
 
 let appConfig
-let profiles = cfg.create('profiles.json')
-let activeProfile
+let profileJson = cfg.create('profiles.json')
+let profileList = []
 loadProfile()
 
 // App updater
-import updater from 'electron-simple-updater';
 import {initUpdater} from "./src/updater.js";
-
+import updater from 'electron-simple-updater';
 //appLog.info(updater.buildId)
 initUpdater();
 
@@ -124,8 +123,9 @@ function createWindow() {
     //mainView.webContents.loadFile(`index.html`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
-    if (activeProfile['homeUrl']) {
-        mainView.webContents.loadURL(activeProfile['homeUrl']).then()
+    let url = getActiveProfileKey('homeUrl')
+    if (url) {
+        mainView.webContents.loadURL(url).then()
     } else {
         openSettings()
     }
@@ -374,13 +374,13 @@ ipcMain.on('profiles:get', (event) => {
     event.returnValue = getProfiles()
 })
 ipcMain.on('profiles:set', (event, profilesArr) => {
-    profiles.set("profiles", profilesArr)
+    profileJson.set("profiles", profilesArr)
 })
 ipcMain.on('profiles:getActive', (event) => {
-    event.returnValue = profiles.get('active', 'default')
+    event.returnValue = profileJson.get('active', 'default')
 })
 ipcMain.on('profiles:setActive', (event, profileName) => {
-    loadProfile(profileName)
+    //loadProfile(profileName)
     //app.relaunch()
     //app.exit()
 })
@@ -407,20 +407,24 @@ function loadDefaultFromFile(fileName) {
     return JSON.parse(fs.readFileSync(path.join(__dirname, 'assets', fileName), 'utf8'))
 }
 
-function getProfiles() {
-    return profiles.get("profiles")
-}
-
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
 function getProfileLogoPath(profileName) {
-    let profileList = getProfiles()
-    const profile = (profileName) ? profileList.find(p => p.name === profileName) : activeProfile
+    let logoName
+    if (!profileName){
+        logoName = getActiveProfileKey('logo')
+    } else {
+        profileList.forEach(profile => {
+            let name = profile.data.find(p => p.key === 'name').value
+            if(name === profileName){
+                logoName = profile.data.find(p => p.key === 'logo').value
+            }
+        })
+    }
 
-    const logoName = profile['logo']
-    const logoPath = path.join(app.getPath('userData'), 'profiles', logoName)
+    const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     if (!fs.existsSync(logoPath)) {
         fs.cpSync(
-            path.join(__dirname, 'assets', `logo48.png`),
+            path.join(__dirname, 'assets', `logo48b.png`),
             logoPath
         )
     }
@@ -438,40 +442,52 @@ function setProfileLogo(newLogoPath, profileName) {
         : newLogoPath.split("\\").pop()
     //console.log(logoName)
 
-    const logoPath = path.join(app.getPath('userData'), 'profiles', logoName)
+    const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     //console.log(logoPath)
     fs.cpSync(newLogoPath, logoPath)
     profile['logo'] = logoName
-    profiles.set("profiles", profileList)
+    profileJson.set("profiles", profileList)
 }
 
-function loadProfile(profileName) {
+function getActiveProfileKey(keyName){
+    return profileList[0].data.find(p => p.key === keyName).value
+}
+function getProfiles() {
+    return profileJson.get("profiles")
+}
+function setActiveProfile(profileId){
+    let profile = profileList.find(p => p.id === profileId)
+    //TODO js move array element to index 0
+    //profileList
+    profileJson.set("profiles", profileList)
+}
+function deleteProfile(profileId){
+    profileJson.set("profiles", profileList.filter(p => p.id === profileId))
+}
+
+function addProfile() {
+    
+}
+
+function loadProfile() {
 
     // profiles.observe('active', () => {
     // })
 
-    if (!profiles.has('profiles')) {
-        profiles.set('profiles', [])
+    if (!profileJson.has('profiles')) {
+        profileJson.set('profiles', [])
     }
-    let profileList = getProfiles()
+    profileList = getProfiles()
 
-    if (!profileName) {
-        profileName = profiles.get('active', 'default')
-    } else {
-        profiles.set('active', profileName)
-    }
-    activeProfile = profileList.find(p => p.name === profileName)
-
-    if (!profiles.has('active') || !activeProfile) {
+    if (profileList.length === 0) {
         profileList.push(loadDefaultFromFile('profile-default.json'))
-        profiles.set("profiles", profileList)
-        profiles.set('active', 'default')
-        activeProfile = profileList.find(p => p.name === 'default')
+        profileJson.set("profiles", profileList)
     }
 
+    const profileId = profileList[0].id
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
     // /home/developer/.config/Udesk/settings.json
-    let appConfigPath = app.getPath('userData') + '/profiles/settings-' + profileName + '.json'
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'
     appConfig = cfg.create(appConfigPath)
     initSettings();
 
@@ -480,7 +496,7 @@ function loadProfile(profileName) {
 
 function initSettings() {
     if (!appConfig.has('servicesMenu')) {
-        appConfig.set('servicesMenu', loadDefaultFromFile('services.json'))
+        appConfig.set('servicesMenu', loadDefaultFromFile('services-default.json'))
     }
     if (!appConfig.has('web1cMenu')) {
         appConfig.set('web1cMenu', loadDefaultFromFile('web1c.json'))

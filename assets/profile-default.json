@@ -1,6 +1,21 @@
 {
-  "name": "default",
-  "logo": "logo48b.png",
-  "lang": "ru",
-  "homeUrl": "https://uchet.kz"
+  "id": 0,
+  "data": [
+    {
+      "key": "name",
+      "value": "default"
+    },
+    {
+      "key": "logo",
+      "value": "logo48b.png"
+    },
+    {
+      "key": "homeUrl",
+      "value": "https://uchet.kz"
+    },
+    {
+      "key": "lang",
+      "value": "ru"
+    }
+  ]
 }
