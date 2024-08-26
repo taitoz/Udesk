@@ -30,35 +30,62 @@
             <p-table *ngIf="showTable" [value]="profilesFlat"
                      rowGroupMode="rowspan"
                      groupRowsBy="name"
-                     [tableStyle]="{'min-width': '75rem'}">
+                     [scrollable]="true"
+                     scrollHeight="600px"
+                     [tableStyle]="{'width': '800px'}">
+                <ng-template pTemplate="colgroup" let-columns>
+                    <colgroup>
+                        <col *ngFor="let col of columns"
+                             [ngStyle]="{'width': (col && col.width ? col.width + 'px' : 'auto')}">
+                    </colgroup>
+                </ng-template>
                 <ng-template pTemplate="header">
 
                 </ng-template>
-                <ng-template
-                        pTemplate="body"
+                <ng-template pTemplate="body"
                         let-profile2
                         let-rowgroup="rowgroup"
                         let-rowspan="rowspan">
                     <tr>
                         <td *ngIf="rowgroup" [attr.rowspan]="rowspan">
+                            <div class="flex align-items-center justify-content-center gap-2">
                             <img [alt]="profile2.logo" ngSrc="{{getProfileLogo(profile2)}}" height="32" width="32"
                                  style="vertical-align: middle" (click)="setProfileLogo(profile2)"/>
                             <span class="font-bold ml-2">{{ profile2.name }}</span>
-                            <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"
-                                    pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="setActiveProfile(profile2.id)"></button>
-                            <button pButton type="button" icon="bx bx-trash" class="p-button-danger" [outlined]="true"
-                                    label="Delete"
-                                    pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                    (click)="deleteProfile(profile2.id)"></button>
+<!--                            <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"-->
+<!--                                    pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"-->
+<!--                                    (click)="setActiveProfile(profile2.id)"></button>-->
+<!--                            <button pButton type="button" icon="bx bx-trash" class="p-button-danger" [outlined]="true"-->
+<!--                                    label="Delete"-->
+<!--                                    pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"-->
+<!--                                    (click)="deleteProfile(profile2.id)"></button>-->
+                                <button pButton
+                                        type="button"
+                                        icon="bx bx-check"
+                                        (click)="setActiveProfile(profile2.id)"
+                                        class="p-button-rounded p-button-text p-button-success mr-2"
+                                        [outlined]="true"
+                                >
+                                </button>
+                                <button pButton
+                                        type="button"
+                                        icon="bx bx-trash"
+                                        (click)="deleteProfile(profile2.id)"
+                                        class="p-button-rounded p-button-text p-button-danger"
+                                        [outlined]="true"
+                                >
+                                </button>
+                            </div>
                         </td>
+
                         <td class="profileKey">{{ profile2.key }}</td>
                         <td [pEditableColumn]="profile2.value" pEditableColumnField="value">
                             <p-cellEditor>
                                 <ng-template pTemplate="input">
                                     <input pInputText
                                            type="text"
-                                           (input)="onInput($event)"
+                                           (focusin)="testEvt(profile2.id)"
+                                           (focusout)="testEvt(profile2.value)"
                                            [(ngModel)]="profile2.value"/>
                                 </ng-template>
                                 <ng-template pTemplate="output">
@@ -69,6 +96,7 @@
                         <!--                        <td>-->
                         <!--                            <p-tag [value]="profile.status" [severity]="getSeverity(customer.status)" />-->
                         <!--                        </td>-->
+
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="summary">

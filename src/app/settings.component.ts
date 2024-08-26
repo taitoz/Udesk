@@ -96,9 +96,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
     }
 
-    onInput(event: any) {
-        console.log(JSON.stringify(event));
-        //this.uiService.setProfileKey()
+    testEvt(event: any){
+        console.log(event)
     }
 
     addProfile() {
