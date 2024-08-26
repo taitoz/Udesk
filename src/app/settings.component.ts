@@ -5,7 +5,6 @@ import {UiService} from './ui.service';
 import {ElectronService} from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
-import {TableRowExpandEvent} from "primeng/table";
 
 @Component({
     selector: 'settings',
@@ -33,9 +32,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     theme = 'dark';
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}];
 
-    profiles: { id: number; data: {key:string, value:string}[] }[]
+    profiles: { id: number; data: { key: string, value: string }[] }[]
     profilesFlat: { name: string; id: number; key: string; value: string; }[] = []
-    expandedRowKeys: { [p: string]: boolean }
     showTable = true
 
     constructor(
@@ -53,7 +51,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
         this.treeNodesData = this.uiService.loadSideMenuData('services');
         this.loadProfiles();
-        this.expandedRowKeys = this.uiService.getActiveProfile()
+
         // this.nodeTypes = [
         //     {label: 'L1', value: 'L1'},
         //     {label: 'L2', value: 'L2'},
@@ -98,76 +96,44 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
     }
 
-    onBlurDeselect(event: any) {
+    onInput(event: any) {
         console.log(JSON.stringify(event));
+        //this.uiService.setProfileKey()
     }
 
-    onRowExpand(event: TableRowExpandEvent) {
-        //this.expandedRowKeys = {}
-
-        console.log(JSON.stringify(event));
-        console.log(JSON.stringify(this.profiles))
-        console.log(JSON.stringify(this.expandedRowKeys))
-    }
-
-    newProfileFromDefault() {
-        // const newProfileName = "New Profile"
-        // const newProfile = {...this.profiles.find(p => p.name === "default")}
-        // const ind = this.profiles.filter(p => p.name.startsWith(newProfileName)).length
-        // if (ind === 0) {
-        //     newProfile.name = newProfileName
-        // } else {
-        //     newProfile.name = newProfileName + " " + ind
-        // }
-
-        // this.profiles = [...this.profiles, newProfile]
-
-        //this.saveProfiles()
-        //this.expandedRowKeys = this.uiService.getActiveProfile()
-        this.refreshTable()
+    addProfile() {
+        this.uiService.addProfile()
+        this.loadProfiles()
     }
 
     deleteProfile(profileId: number) {
-        console.log(profileId)
-        // if (profileName === "default") {
-        //     this.messageService.add({severity: 'info', summary: 'default profile cannot be deleted.'});
-        //     return
-        // }
-        // const idx = this.profiles.findIndex(function (p, i) {
-        //     return p.name === profileName
-        // })
-        // this.setActiveProfile(this.profiles[idx - 1].name)
-        //
-        // this.profiles = [...this.profiles.filter(p => p.name !== profileName)]
-        this.saveProfiles()
+        if (this.profiles.length === 1) {
+            this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'});
+            return
+        }
+        this.uiService.deleteProfile(profileId)
+        this.loadProfiles()
     }
 
     loadProfiles() {
         this.profiles = this.uiService.loadProfiles()
-
-        this.profiles.forEach(((profile: { id: number; data: {key:string, value:string}[] }) => {
+        this.profilesFlat = []
+        this.profiles.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
                 let profileName = profile.data.find(p => p.key === 'name').value
                 profile.data.forEach(data => {
                     this.profilesFlat.push({name: profileName, id: profile.id, key: data.key, value: data.value})
                 })
             })
         )
+        this.refreshTable()
     }
 
     setActiveProfile(profileId: number) {
-        console.log(profileId)
-        // this.messageService.add({severity: 'info', summary: "set activeProfile " + profileName});
-        // this.uiService.setActiveProfile(profileName)
-        //
-        // this.treeNodesData = this.uiService.loadSideMenuData('services');
-        // this.refreshTable()
-        //
-        // this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName});
-    }
+        this.uiService.setActiveProfile(profileId)
+        this.treeNodesData = this.uiService.loadSideMenuData('services');
+        this.loadProfiles()
 
-    saveProfiles() {
-        this.messageService.add({severity: 'info', summary: 'profiles saved'});
-        this.uiService.saveProfiles(this.profiles);
+        this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileId.toString()});
     }
 
     getNodeTypeLabel(value: string): string {

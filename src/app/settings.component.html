@@ -28,11 +28,9 @@
             </ng-template>
 
             <p-table *ngIf="showTable" [value]="profilesFlat"
-                    rowGroupMode="rowspan"
-                    groupRowsBy="name"
-                    sortField="name"
-                    sortMode="single"
-                    [tableStyle]="{'min-width': '75rem'}">
+                     rowGroupMode="rowspan"
+                     groupRowsBy="name"
+                     [tableStyle]="{'min-width': '75rem'}">
                 <ng-template pTemplate="header">
 
                 </ng-template>
@@ -45,7 +43,7 @@
                         <td *ngIf="rowgroup" [attr.rowspan]="rowspan">
                             <img [alt]="profile2.logo" ngSrc="{{getProfileLogo(profile2)}}" height="32" width="32"
                                  style="vertical-align: middle" (click)="setProfileLogo(profile2)"/>
-                            <span class="font-bold ml-2">{{profile2.name}}</span>
+                            <span class="font-bold ml-2">{{ profile2.name }}</span>
                             <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"
                                     pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"
                                     (click)="setActiveProfile(profile2.id)"></button>
@@ -54,33 +52,30 @@
                                     pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"
                                     (click)="deleteProfile(profile2.id)"></button>
                         </td>
-                        <td class="profileKey">{{profile2.key}}</td>
+                        <td class="profileKey">{{ profile2.key }}</td>
                         <td [pEditableColumn]="profile2.value" pEditableColumnField="value">
                             <p-cellEditor>
                                 <ng-template pTemplate="input">
-                                    <input
-                                            pInputText
-                                            type="text"
-                                            [(ngModel)]="profile2.value"/>
+                                    <input pInputText
+                                           type="text"
+                                           (input)="onInput($event)"
+                                           [(ngModel)]="profile2.value"/>
                                 </ng-template>
                                 <ng-template pTemplate="output">
                                     {{ profile2.value }}
                                 </ng-template>
                             </p-cellEditor>
                         </td>
-<!--                        <td>-->
-<!--                            <p-tag [value]="profile.status" [severity]="getSeverity(customer.status)" />-->
-<!--                        </td>-->
+                        <!--                        <td>-->
+                        <!--                            <p-tag [value]="profile.status" [severity]="getSeverity(customer.status)" />-->
+                        <!--                        </td>-->
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="summary">
                     <div style="text-align:left">
                         <button pButton type="button" icon="bx bx-plus" label="Add" [outlined]="true"
                                 pTooltip="Add" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                (click)="newProfileFromDefault()"></button>
-                        <button pButton type="button" icon="bx bx-save" label="Save" [outlined]="true"
-                                pTooltip="Save" tooltipPosition="top" [style]="{'margin':'20px'}"
-                                (click)="saveProfiles()"></button>
+                                (click)="addProfile()"></button>
                     </div>
                 </ng-template>
             </p-table>
@@ -91,7 +86,7 @@
             <ng-template pTemplate="header">
                 <span>Сервисы</span>
             </ng-template>
-            <p-treeTable #tt  *ngIf="showTable" [value]="treeNodesData"
+            <p-treeTable #tt *ngIf="showTable" [value]="treeNodesData"
                          [columns]="cols"
                          [scrollable]="true"
                          styleClass="p-treetable-gridlines p-treetable-sm"
@@ -114,7 +109,7 @@
                                         type="text"
                                         pInputText
                                         placeholder="Global Search"
-                                        (input)="tt.filterGlobal($event.target.value, 'contains')" />
+                                        (input)="tt.filterGlobal($event.target.value, 'contains')"/>
                             </div>
                         </ng-template>
 
@@ -134,7 +129,7 @@
                     <tr>
                         <th *ngFor="let col of columns" [ttSortableColumn]="col.field">
                             <p *ngIf="col.header !='id'">{{ col.header }}</p>
-                            <p-treeTableSortIcon [field]="col.field" />
+                            <p-treeTableSortIcon [field]="col.field"/>
                         </th>
                     </tr>
                 </ng-template>

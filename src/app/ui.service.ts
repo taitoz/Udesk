@@ -65,48 +65,36 @@ export class UiService {
         if (this.electronService.isElectronApp) {
             //this.electronService.shell.beep();
             return this.electronService.ipcRenderer.sendSync('profiles:get');
-        } else {
-            return [
-                {
-                    "name": "default",
-                    "logo": "logo48b",
-                    "lang": "ru",
-                    "homeUrl": "localhost"
-                },
-                {
-                    "name": "New Profile",
-                    "logo": "logo48b",
-                    "lang": "ru",
-                    "homeUrl": "http://new_url"
-                }
-            ]
         }
     }
 
-    getActiveProfileHomeUrl() {
-        return this.getActiveProfile()['homeUrl']
-    }
-
-    getActiveProfile() {
-        let activeProfile = {}
+    getActiveProfileKey(keyName: string) {
         if (this.electronService.isElectronApp) {
-            activeProfile[this.electronService.ipcRenderer.sendSync('profiles:getActive')] = true
-        } else {
-            activeProfile['default'] = true
-        }
-        //console.log(activeProfile);
-        return activeProfile
-    }
-
-    setActiveProfile(profileName: string) {
-        if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.send('profiles:setActive', profileName)
+            return this.electronService.ipcRenderer.sendSync('profiles:getActiveProfileKey', keyName)
         }
     }
 
-    saveProfiles(profilesArr: any[]) {
+    setProfileKey(profileId:number, keyName: string, value: string) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.send('profiles:set', profilesArr);
+            return this.electronService.ipcRenderer.send('profiles:setProfileKey', profileId, keyName, value)
+        }
+    }
+
+    setActiveProfile(profileId: number) {
+        if (this.electronService.isElectronApp) {
+            return this.electronService.ipcRenderer.send('profiles:setActive', profileId)
+        }
+    }
+
+    deleteProfile(profileId: number) {
+        if (this.electronService.isElectronApp) {
+            return this.electronService.ipcRenderer.send('profiles:delete', profileId)
+        }
+    }
+
+    addProfile() {
+        if (this.electronService.isElectronApp) {
+            return this.electronService.ipcRenderer.send('profiles:add')
         }
     }
 

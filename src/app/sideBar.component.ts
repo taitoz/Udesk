@@ -30,7 +30,7 @@ export class SideBarComponent implements OnInit {
     }
 
     getActiveProfileHomeUrl() {
-        return this.uiService.getActiveProfileHomeUrl()
+        return this.uiService.getActiveProfileKey('homeUrl')
     }
 
     ipcSend(channel:string, data:string){
