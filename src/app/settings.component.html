@@ -82,11 +82,19 @@
                         <td [pEditableColumn]="profile2.value" pEditableColumnField="value">
                             <p-cellEditor>
                                 <ng-template pTemplate="input">
-                                    <input pInputText
-                                           type="text"
-                                           (focusin)="testEvt(profile2.id)"
-                                           (focusout)="testEvt(profile2.value)"
-                                           [(ngModel)]="profile2.value"/>
+                                    <p-inputGroup>
+                                        <input pInputText
+                                               type="text"
+                                               (focusout)="setProfileKey(profile2.id, profile2.key, profile2.value)"
+                                               [(ngModel)]="profile2.value"/>
+                                        <button type="button" pButton
+                                                icon="bx bx-check"
+                                                class="p-button-success bx-xs"
+                                                [outlined]="true"
+                                                (click)="setProfileKey(profile2.id, profile2.key, profile2.value)"
+                                        ></button>
+                                    </p-inputGroup>
+
                                 </ng-template>
                                 <ng-template pTemplate="output">
                                     {{ profile2.value }}

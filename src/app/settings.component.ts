@@ -43,7 +43,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         public dialogService: DialogService,
         private confirmationService: ConfirmationService,
         @Inject(DOCUMENT) private document: Document,
-        private cdr: ChangeDetectorRef
+        //private cdr: ChangeDetectorRef
     ) {
     }
 
@@ -91,13 +91,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
     refreshTable() {
         //angular change outside context fix
         this.showTable = false;
-        this.cdr.detectChanges();
+        //this.cdr.detectChanges();
         this.showTable = true;
-        this.cdr.detectChanges();
+        //this.cdr.detectChanges();
     }
 
-    testEvt(event: any){
-        console.log(event)
+    setProfileKey(profileId:number, keyName: string, value: string) {
+        return this.uiService.setProfileKey(profileId, keyName, value)
     }
 
     addProfile() {
@@ -128,11 +128,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     setActiveProfile(profileId: number) {
-        this.uiService.setActiveProfile(profileId)
-        this.treeNodesData = this.uiService.loadSideMenuData('services');
-        this.loadProfiles()
-
-        this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileId.toString()});
+        this.uiService.setActiveProfile(profileId).then(() => {
+            this.treeNodesData = this.uiService.loadSideMenuData('services');
+            this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileId.toString()});
+        })
     }
 
     getNodeTypeLabel(value: string): string {

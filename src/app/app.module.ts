@@ -15,6 +15,7 @@ import {NgOptimizedImage} from '@angular/common';
 import {TitleBarComponent} from './titleBar.component';
 import {ToolbarModule} from "primeng/toolbar";
 import {FileUploadModule} from "primeng/fileupload";
+import {InputGroupModule} from "primeng/inputgroup";
 
 
 @NgModule({
@@ -28,7 +29,8 @@ import {FileUploadModule} from "primeng/fileupload";
         NgOptimizedImage,
         ReactiveFormsModule,
         ToolbarModule,
-        FileUploadModule
+        FileUploadModule,
+        InputGroupModule
     ],
     declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
     bootstrap: [AppComponent],

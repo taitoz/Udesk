@@ -82,7 +82,7 @@ export class UiService {
 
     setActiveProfile(profileId: number) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.send('profiles:setActive', profileId)
+            return this.electronService.ipcRenderer.invoke('profiles:setActive', profileId)
         }
     }
 

@@ -373,8 +373,8 @@ ipcMain.on('web1c:get', (event) => {
 ipcMain.on('profiles:get', (event) => {
     event.returnValue = getProfiles()
 })
-ipcMain.on('profiles:setActive', (event, profileId) => {
-    setActiveProfile(profileId)
+ipcMain.handle('profiles:setActive', async (event, profileId) => {
+    await setActiveProfile(profileId)
     //app.relaunch()
     //app.exit()
 })
@@ -382,10 +382,14 @@ ipcMain.on('profiles:getActiveProfileKey', (event, keyName) => {
     event.returnValue = getActiveProfileKey(keyName)
 })
 ipcMain.on('profiles:delete', (event, profileId) => {
-    deleteProfile(profileId)
+    let index = profileList.findIndex(p => p.id === profileId)
+    if (index !== -1) profileList.splice(index, 1)
+    profileJson.set("profiles", profileList)
 })
 ipcMain.on('profiles:setProfileKey', (event, profileId, keyName, value) => {
-    setProfileKey(profileId, keyName, value)
+    const profile = profileList.find(p => p.id === profileId)
+    profile.data.find(p => p.key === keyName).value = value
+    profileJson.set("profiles", profileList)
 })
 ipcMain.on('profiles:add', () => {
     addProfile()
@@ -467,18 +471,7 @@ function setActiveProfile(profileId) {
     let index = profileList.findIndex(p => p.id === profileId)
     if (index !== -1) profileList.unshift(...profileList.splice(index, 1))
     profileJson.set("profiles", profileList)
-}
-
-function deleteProfile(profileId) {
-    let index = profileList.findIndex(p => p.id === profileId)
-    if (index !== -1) profileList.splice(index, 1)
-    profileJson.set("profiles", profileList)
-}
-
-function setProfileKey(profileId, keyName, value) {
-    const profile = profileList.find(p => p.id === profileId)
-    profile.data.find(p => p.key === keyName).value = value
-    profileJson.set("profiles", profileList)
+    loadProfile()
 }
 
 function addProfile() {
@@ -514,12 +507,6 @@ function loadProfile() {
     // /home/developer/.config/Udesk/settings.json
     let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'
     appConfig = cfg.create(appConfigPath)
-    initSettings();
-
-    nativeTheme.themeSource = appConfig.get('theme', 'dark')
-}
-
-function initSettings() {
     if (!appConfig.has('servicesMenu')) {
         appConfig.set('servicesMenu', loadDefaultFromFile('services-default.json'))
     }
@@ -529,4 +516,6 @@ function initSettings() {
     if (!appConfig.has('theme')) {
         appConfig.set('theme', 'dark')
     }
+
+    nativeTheme.themeSource = appConfig.get('theme', 'dark')
 }
