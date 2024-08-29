@@ -49,6 +49,7 @@
                     <tr>
                         <td *ngIf="rowgroup" [attr.rowspan]="rowspan">
                             <div class="flex align-items-center justify-content-center gap-2">
+
                             <img [alt]="profile2.logo" ngSrc="{{getProfileLogo(profile2)}}" height="32" width="32"
                                  style="vertical-align: middle" (click)="setProfileLogo(profile2)"/>
                             <span class="font-bold ml-2">{{ profile2.name }}</span>
@@ -94,7 +95,6 @@
                                                 (click)="setProfileKey(profile2.id, profile2.key, profile2.value)"
                                         ></button>
                                     </p-inputGroup>
-
                                 </ng-template>
                                 <ng-template pTemplate="output">
                                     {{ profile2.value }}

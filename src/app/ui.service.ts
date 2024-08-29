@@ -76,7 +76,7 @@ export class UiService {
 
     setProfileKey(profileId:number, keyName: string, value: string) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.send('profiles:setProfileKey', profileId, keyName, value)
+            return this.electronService.ipcRenderer.invoke('profiles:setProfileKey', profileId, keyName, value)
         }
     }
 

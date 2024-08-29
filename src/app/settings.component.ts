@@ -96,8 +96,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
         //this.cdr.detectChanges();
     }
 
-    setProfileKey(profileId:number, keyName: string, value: string) {
-        return this.uiService.setProfileKey(profileId, keyName, value)
+    async setProfileKey(profileId: number, keyName: string, value: string) {
+        await this.uiService.setProfileKey(profileId, keyName, value).then(res => {
+            this.loadProfilesFlat(res)
+        })
     }
 
     addProfile() {
@@ -115,9 +117,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     loadProfiles() {
-        this.profiles = this.uiService.loadProfiles()
+        this.loadProfilesFlat(this.uiService.loadProfiles());
+    }
+
+    private loadProfilesFlat(profiles: { id: number; data: { key: string; value: string; }[]; }[]) {
         this.profilesFlat = []
-        this.profiles.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
+        let profilesCopy = structuredClone(profiles)
+        profilesCopy.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
                 let profileName = profile.data.find(p => p.key === 'name').value
                 profile.data.forEach(data => {
                     this.profilesFlat.push({name: profileName, id: profile.id, key: data.key, value: data.value})

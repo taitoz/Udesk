@@ -379,6 +379,7 @@ ipcMain.handle('profiles:setActive', async (event, profileId) => {
     //app.exit()
 })
 ipcMain.on('profiles:getActiveProfileKey', (event, keyName) => {
+    //TODO get by id
     event.returnValue = getActiveProfileKey(keyName)
 })
 ipcMain.on('profiles:delete', (event, profileId) => {
@@ -386,10 +387,16 @@ ipcMain.on('profiles:delete', (event, profileId) => {
     if (index !== -1) profileList.splice(index, 1)
     profileJson.set("profiles", profileList)
 })
-ipcMain.on('profiles:setProfileKey', (event, profileId, keyName, value) => {
-    const profile = profileList.find(p => p.id === profileId)
-    profile.data.find(p => p.key === keyName).value = value
-    profileJson.set("profiles", profileList)
+ipcMain.handle('profiles:setProfileKey', async (event, profileId, keyName, value) => {
+    const profileListCopy = structuredClone(profileList)
+    const profile = profileListCopy.find(p => p.id === profileId)
+    profile.data.forEach(data => {
+        if (data.key === keyName) {
+            data.value = value
+        }
+    })
+    profileJson.set("profiles", profileListCopy)
+    return profileListCopy
 })
 ipcMain.on('profiles:add', () => {
     addProfile()
