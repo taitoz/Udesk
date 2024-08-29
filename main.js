@@ -123,7 +123,7 @@ function createWindow() {
     //mainView.webContents.loadFile(`index.html`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
-    let url = getActiveProfileKey('homeUrl')
+    let url = getProfileKey(0,'homeUrl')
     if (url) {
         mainView.webContents.loadURL(url).then()
     } else {
@@ -378,14 +378,13 @@ ipcMain.handle('profiles:setActive', async (event, profileId) => {
     //app.relaunch()
     //app.exit()
 })
-ipcMain.on('profiles:getActiveProfileKey', (event, keyName) => {
-    //TODO get by id
-    event.returnValue = getActiveProfileKey(keyName)
-})
 ipcMain.on('profiles:delete', (event, profileId) => {
     let index = profileList.findIndex(p => p.id === profileId)
     if (index !== -1) profileList.splice(index, 1)
     profileJson.set("profiles", profileList)
+})
+ipcMain.on('profiles:getProfileKey', (event, profileId, keyName) => {
+    event.returnValue = getProfileKey(profileId, keyName)
 })
 ipcMain.handle('profiles:setProfileKey', async (event, profileId, keyName, value) => {
     const profileListCopy = structuredClone(profileList)
@@ -428,12 +427,12 @@ function loadDefaultFromFile(fileName) {
 function getProfileLogoPath(profileName) {
     let logoName
     if (!profileName) {
-        logoName = getActiveProfileKey('logo')
+        logoName = getProfileKey(0,'logo')
     } else {
         profileList.forEach(profile => {
-            let name = profile.data.find(p => p.key === 'name').value
+            let name = getProfileKey(profile.id, 'name')
             if (name === profileName) {
-                logoName = profile.data.find(p => p.key === 'logo').value
+                logoName = getProfileKey(profile.id, 'logo')
             }
         })
     }
@@ -466,8 +465,14 @@ function setProfileLogo(newLogoPath, profileName) {
     profileJson.set("profiles", profileList)
 }
 
-function getActiveProfileKey(keyName) {
-    return profileList[0].data.find(p => p.key === keyName).value
+function getProfileKey(profileId, keyName) {
+    if (profileId === 0){
+        return profileList[profileId].data.find(p => p.key === keyName).value
+    } else {
+        let index = profileList.findIndex(p => p.id === profileId)
+        return profileList[index].data.find(p => p.key === keyName).value
+    }
+
 }
 
 function getProfiles() {
@@ -488,7 +493,7 @@ function addProfile() {
         newFromFile.id = profileList.length + 1
         let newName = "New Profile " + newFromFile.id
         profileList.forEach(profile => {
-            if (profile.data.find(p => p.key === 'name').value === newName) {
+            if (getProfileKey(profile.id, 'name') === newName) {
                 newName += '_'
             }
         })

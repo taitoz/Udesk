@@ -32,7 +32,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     theme = 'dark';
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}];
 
-    profiles: { id: number; data: { key: string, value: string }[] }[]
+    //profiles: { id: number; data: { key: string, value: string }[] }[]
     profilesFlat: { name: string; id: number; key: string; value: string; }[] = []
     showTable = true
 
@@ -43,7 +43,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         public dialogService: DialogService,
         private confirmationService: ConfirmationService,
         @Inject(DOCUMENT) private document: Document,
-        //private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef
     ) {
     }
 
@@ -91,9 +91,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     refreshTable() {
         //angular change outside context fix
         this.showTable = false;
-        //this.cdr.detectChanges();
+        this.cdr.detectChanges();
         this.showTable = true;
-        //this.cdr.detectChanges();
+        this.cdr.detectChanges();
     }
 
     async setProfileKey(profileId: number, keyName: string, value: string) {
@@ -108,7 +108,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteProfile(profileId: number) {
-        if (this.profiles.length === 1) {
+        if (this.uiService.loadProfiles().length === 1) {
             this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'});
             return
         }
@@ -122,9 +122,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     private loadProfilesFlat(profiles: { id: number; data: { key: string; value: string; }[]; }[]) {
         this.profilesFlat = []
-        let profilesCopy = structuredClone(profiles)
-        profilesCopy.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
-                let profileName = profile.data.find(p => p.key === 'name').value
+        profiles.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
+                let profileName = this.uiService.getProfileKey(profile.id, 'name')
                 profile.data.forEach(data => {
                     this.profilesFlat.push({name: profileName, id: profile.id, key: data.key, value: data.value})
                 })

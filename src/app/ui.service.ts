@@ -68,13 +68,13 @@ export class UiService {
         }
     }
 
-    getActiveProfileKey(keyName: string) {
+    getProfileKey(profileId: number, keyName: string) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('profiles:getActiveProfileKey', keyName)
+            return this.electronService.ipcRenderer.sendSync('profiles:getProfileKey', profileId, keyName)
         }
     }
 
-    setProfileKey(profileId:number, keyName: string, value: string) {
+    setProfileKey(profileId: number, keyName: string, value: string) {
         if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.invoke('profiles:setProfileKey', profileId, keyName, value)
         }
