@@ -26,7 +26,6 @@ import cfg from 'electron-cfg';
 
 let appConfig
 let profileJson = cfg.create('profiles.json')
-let profileList = []
 loadProfile()
 
 // App updater
@@ -318,12 +317,12 @@ ipcMain.handle('load-url', (event, url) => {
         })
 })
 
-ipcMain.on('sideBar:logo:get', (event, profileName) => {
-    event.returnValue = getProfileLogoPath(profileName)
+ipcMain.on('sideBar:logo:get', (event, profileId) => {
+    event.returnValue = getProfileLogoPath(profileId)
 })
 
-ipcMain.on('sideBar:logo:set', (event, profileName) => {
-    dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+ipcMain.handle('sideBar:logo:set', async (event, profileId) => {
+    await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
         title: "",
         properties: ['openFile'],
         filters: [
@@ -331,7 +330,7 @@ ipcMain.on('sideBar:logo:set', (event, profileName) => {
         ]
     }).then(function (response) {
         if (!response.canceled) {
-            setProfileLogo(response.filePaths[0], profileName)
+            setProfileLogo(response.filePaths[0], profileId)
         } else {
             //console.log("no file selected");
         }
@@ -379,6 +378,7 @@ ipcMain.handle('profiles:setActive', async (event, profileId) => {
     //app.exit()
 })
 ipcMain.on('profiles:delete', (event, profileId) => {
+    let profileList = getProfiles()
     let index = profileList.findIndex(p => p.id === profileId)
     if (index !== -1) profileList.splice(index, 1)
     profileJson.set("profiles", profileList)
@@ -387,15 +387,16 @@ ipcMain.on('profiles:getProfileKey', (event, profileId, keyName) => {
     event.returnValue = getProfileKey(profileId, keyName)
 })
 ipcMain.handle('profiles:setProfileKey', async (event, profileId, keyName, value) => {
-    const profileListCopy = structuredClone(profileList)
-    const profile = profileListCopy.find(p => p.id === profileId)
+    let profileList = getProfiles()
+    //const profileListCopy = structuredClone(profileList)
+    const profile = profileList.find(p => p.id === profileId)
     profile.data.forEach(data => {
         if (data.key === keyName) {
             data.value = value
         }
     })
-    profileJson.set("profiles", profileListCopy)
-    return profileListCopy
+    profileJson.set("profiles", profileList)
+    return profileList
 })
 ipcMain.on('profiles:add', () => {
     addProfile()
@@ -424,17 +425,12 @@ function loadDefaultFromFile(fileName) {
 }
 
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
-function getProfileLogoPath(profileName) {
+function getProfileLogoPath(profileId) {
     let logoName
-    if (!profileName) {
+    if (!profileId) {
         logoName = getProfileKey(0,'logo')
     } else {
-        profileList.forEach(profile => {
-            let name = getProfileKey(profile.id, 'name')
-            if (name === profileName) {
-                logoName = getProfileKey(profile.id, 'logo')
-            }
-        })
+        logoName = getProfileKey(profileId,'logo')
     }
 
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
@@ -447,32 +443,31 @@ function getProfileLogoPath(profileName) {
     return logoPath
 }
 
-function setProfileLogo(newLogoPath, profileName) {
+function setProfileLogo(newLogoPath, profileId) {
     let profileList = getProfiles()
-    const profile = profileList.find(p => p.name === profileName)
-
-    //console.log(newLogoPath)
-    console.log(newLogoPath.includes('/'))
+    const profile = profileList.find(p => p.id === profileId)
     const logoName = (newLogoPath.includes('/'))
         ? newLogoPath.split("/").pop()
         : newLogoPath.split("\\").pop()
-    //console.log(logoName)
-
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
-    //console.log(logoPath)
     fs.cpSync(newLogoPath, logoPath)
-    profile['logo'] = logoName
+    profile.data.forEach(data => {
+        if (data.key === 'logo') {
+            data.value = logoName
+        }
+    })
     profileJson.set("profiles", profileList)
+    //TODO if profile is active - update appLogoPath on sidebar
 }
 
 function getProfileKey(profileId, keyName) {
+    let profileList = getProfiles()
     if (profileId === 0){
         return profileList[profileId].data.find(p => p.key === keyName).value
     } else {
         let index = profileList.findIndex(p => p.id === profileId)
         return profileList[index].data.find(p => p.key === keyName).value
     }
-
 }
 
 function getProfiles() {
@@ -480,6 +475,7 @@ function getProfiles() {
 }
 
 function setActiveProfile(profileId) {
+    let profileList = getProfiles()
     let index = profileList.findIndex(p => p.id === profileId)
     if (index !== -1) profileList.unshift(...profileList.splice(index, 1))
     profileJson.set("profiles", profileList)
@@ -488,6 +484,7 @@ function setActiveProfile(profileId) {
 
 function addProfile() {
 
+    let profileList = getProfiles()
     const newFromFile = loadDefaultFromFile('profile-default.json')
     if (profileList.length >= 1) {
         newFromFile.id = profileList.length + 1
@@ -511,10 +508,10 @@ function loadProfile() {
     if (!profileJson.has('profiles')) {
         profileJson.set('profiles', [])
     }
-    profileList = getProfiles()
+    let profileList = getProfiles()
     if (profileList.length === 0) addProfile()
 
-    const profileId = profileList[0].id
+    const profileId = profileList[0].id  //TODO error at first start
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
     // /home/developer/.config/Udesk/settings.json
     let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'

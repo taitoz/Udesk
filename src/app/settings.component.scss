@@ -1,7 +1,7 @@
 .card {
   width: 100%;
-  //height: calc(100vh - 4px);
-  height: 100vh;
+  height: calc(100vh - 4px);
+  //height: 100vh;
   display: inline-block;
   overflow: hidden;
 }
@@ -10,7 +10,7 @@
   font-weight: bold;
   padding-left: 60px;
   width: 20px;
-  background-color: var(--surface-d);
+  //background-color: var(--surface-d);
 }
 
 ::ng-deep .p-tabview-nav {

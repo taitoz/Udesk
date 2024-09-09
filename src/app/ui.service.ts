@@ -21,13 +21,27 @@ export class UiService {
         }
     }
 
+    loadProfiles() {
+        if (this.electronService.isElectronApp) {
+            //this.electronService.shell.beep();
+            return this.electronService.ipcRenderer.sendSync('profiles:get');
+        }
+    }
+    //awaits return value
+    ipcSendSync(channel: string, data?: any) {
+        if (this.electronService.isElectronApp) {
+            return this.electronService.ipcRenderer.sendSync(channel, data);
+        }
+        //console.log(channel)
+    }
+    //async void
     ipcSend(channel: string, data?: any) {
         if (this.electronService.isElectronApp) {
             this.electronService.ipcRenderer.send(channel, data);
         }
         //console.log(channel)
     }
-
+    //return Promise
     ipcInvoke(channel: string, data?: any) {
         if (this.electronService.isElectronApp) {
             this.electronService.ipcRenderer.invoke(channel, data).then();
@@ -61,12 +75,7 @@ export class UiService {
         }
     }
 
-    loadProfiles() {
-        if (this.electronService.isElectronApp) {
-            //this.electronService.shell.beep();
-            return this.electronService.ipcRenderer.sendSync('profiles:get');
-        }
-    }
+
 
     getProfileKey(profileId: number, keyName: string) {
         if (this.electronService.isElectronApp) {
@@ -134,19 +143,19 @@ export class UiService {
         this.sessionStorage.set('testData', testData, 10, 'h');
     }
 
-    getAppLogoPath(profileName: any = null) {
+    getAppLogoPath(profileId: any = null) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('sideBar:logo:get', profileName);
+            return this.electronService.ipcRenderer.sendSync('sideBar:logo:get', profileId);
         } else {
             return '/assets/image.svg'
         }
     }
 
-    setAppLogoPath(profileName: string) {
+    setAppLogoPath(profileId: string) {
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('sideBar:logo:set', profileName);
+            return this.electronService.ipcRenderer.invoke('sideBar:logo:set', profileId);
         } else {
-            return '/assets/image.svg'
+            return new Promise(resolve => '/assets/image.svg')
         }
     }
 }

@@ -80,25 +80,27 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return true;
     }
 
-    setProfileLogo(profile: any): void {
-        return this.uiService.setAppLogoPath(profile.name);
+    async setProfileLogo(profile: any) {
+        await this.uiService.setAppLogoPath(profile.id).then(() => {
+            this.refreshTable()
+        })
     }
 
     getProfileLogo(profile: any) {
-        return this.uiService.getAppLogoPath(profile.name)
+        return this.uiService.getAppLogoPath(profile.id)
     }
 
     refreshTable() {
         //angular change outside context fix
-        this.showTable = false;
-        this.cdr.detectChanges();
-        this.showTable = true;
-        this.cdr.detectChanges();
+        this.showTable = false
+        this.cdr.detectChanges()
+        this.showTable = true
+        this.cdr.detectChanges()
     }
 
     async setProfileKey(profileId: number, keyName: string, value: string) {
         await this.uiService.setProfileKey(profileId, keyName, value).then(res => {
-            this.loadProfilesFlat(res)
+            this.loadProfiles()
         })
     }
 
@@ -108,7 +110,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteProfile(profileId: number) {
-        if (this.uiService.loadProfiles().length === 1) {
+        if (this.uiService.ipcSendSync('profiles:get').length === 1) {
             this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'});
             return
         }
@@ -117,7 +119,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     loadProfiles() {
-        this.loadProfilesFlat(this.uiService.loadProfiles());
+        this.loadProfilesFlat(this.uiService.ipcSendSync('profiles:get'))
     }
 
     private loadProfilesFlat(profiles: { id: number; data: { key: string; value: string; }[]; }[]) {
