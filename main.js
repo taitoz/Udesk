@@ -37,6 +37,7 @@ initUpdater();
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
+let appTray
 let sideBar
 let sideMenu
 let titleBar
@@ -122,7 +123,7 @@ function createWindow() {
     //mainView.webContents.loadFile(`index.html`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
-    let url = getProfileKey(0,'homeUrl')
+    let url = getProfileKey(0, 'homeUrl')
     if (url) {
         mainView.webContents.loadURL(url).then()
     } else {
@@ -130,10 +131,10 @@ function createWindow() {
     }
 
     // DevTools.
-    //mainWindow.webContents.openDevTools({mode: 'detach'});
-    settingsView.webContents.openDevTools({mode: 'detach'});
-    //sideBar.webContents.openDevTools({mode: 'detach'});
-    //sideMenu.webContents.openDevTools({mode: 'detach'});
+    // mainWindow.webContents.openDevTools({mode: 'detach'});
+    // settingsView.webContents.openDevTools({mode: 'detach'});
+    // sideBar.webContents.openDevTools({mode: 'detach'});
+     sideMenu.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -220,7 +221,7 @@ if (!singleInstanceLock) {
             // if (!ret) {
             //     console.log('registration failed')
             // }
-            const tray = new Tray(getProfileLogoPath())
+            appTray = new Tray(getProfileLogoPath())
             const trayMenu = Menu.buildFromTemplate([
                 {
                     label: translate('Close'),
@@ -229,9 +230,9 @@ if (!singleInstanceLock) {
                     }
                 }
             ])
-            tray.setContextMenu(trayMenu)
-            tray.setToolTip('UDesk')
-            tray.setTitle('UDesk')
+            appTray.setContextMenu(trayMenu)
+            appTray.setToolTip('UDesk')
+            appTray.setTitle('UDesk')
         } catch (error) {
             console.log(error)
         }
@@ -303,25 +304,25 @@ ipcMain.handle('open:settings', () => {
     openSettings();
 })
 
-ipcMain.handle('load-url', (event, url) => {
+ipcMain.handle('load-url', (event, args) => {
     //dialog.showErrorBox('loadService', arg)
     sideMenuWidth = 0
     try {
-        new URL(url)
+        new URL(args[0])
     } catch (err) {
         return
     }
-    mainView.webContents.loadURL(url)
+    mainView.webContents.loadURL(args[0])
         .catch(error => {
             console.log(error.code)
         })
 })
 
-ipcMain.on('sideBar:logo:get', (event, profileId) => {
-    event.returnValue = getProfileLogoPath(profileId)
+ipcMain.on('sideBar:logo:get', (event, args) => {
+    event.returnValue = getProfileLogoPath(args[0])
 })
 
-ipcMain.handle('sideBar:logo:set', async (event, profileId) => {
+ipcMain.handle('sideBar:logo:set', async (event, args) => {
     await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
         title: "",
         properties: ['openFile'],
@@ -330,7 +331,7 @@ ipcMain.handle('sideBar:logo:set', async (event, profileId) => {
         ]
     }).then(function (response) {
         if (!response.canceled) {
-            setProfileLogo(response.filePaths[0], profileId)
+            setProfileLogo(response.filePaths[0], args[0])
         } else {
             //console.log("no file selected");
         }
@@ -355,25 +356,27 @@ ipcMain.on('settings:toggleTheme', (event, theme) => {
     nativeTheme.themeSource = theme
     appConfig.set('theme', theme)
 })
-ipcMain.on('services:set', (event, sideBarMenu) => {
+
+ipcMain.on('sideBarMenu:get', (event, args) => {
+    event.returnValue = appConfig.get(args[0])
+})
+ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
     appConfig.set('servicesMenu', sideBarMenu)
     loadPrimeComponent(sideMenu, 'sideMenu/services')
 })
-ipcMain.on('services:get', (event) => {
-    event.returnValue = appConfig.get('servicesMenu')
-})
-ipcMain.on('web1c:set', (event, sideBarMenu) => {
-    appConfig.set('web1cMenu', sideBarMenu)
-    loadPrimeComponent(sideMenu, 'sideMenu/web1c')
-})
-ipcMain.on('web1c:get', (event) => {
-    event.returnValue = appConfig.get('web1cMenu')
-})
+// ipcMain.on('web1c:set', (event, sideBarMenu) => {
+//     appConfig.set('web1cMenu', sideBarMenu)
+//     loadPrimeComponent(sideMenu, 'sideMenu/web1c')
+// })
+// ipcMain.on('web1c:get', (event) => {
+//     event.returnValue = appConfig.get('web1cMenu')
+// })
+
 ipcMain.on('profiles:get', (event) => {
     event.returnValue = getProfiles()
 })
-ipcMain.handle('profiles:setActive', async (event, profileId) => {
-    await setActiveProfile(profileId)
+ipcMain.handle('profiles:setActive', async (event, args) => {
+    await setActiveProfile(args[0])
     //app.relaunch()
     //app.exit()
 })
@@ -383,23 +386,23 @@ ipcMain.on('profiles:delete', (event, profileId) => {
     if (index !== -1) profileList.splice(index, 1)
     profileJson.set("profiles", profileList)
 })
-ipcMain.on('profiles:getProfileKey', (event, profileId, keyName) => {
-    event.returnValue = getProfileKey(profileId, keyName)
+ipcMain.on('profiles:getProfileKey', (event, args) => {
+    event.returnValue = getProfileKey(args[0], args[1])
 })
-ipcMain.handle('profiles:setProfileKey', async (event, profileId, keyName, value) => {
+ipcMain.handle('profiles:setProfileKey', async (event, args) => {
     let profileList = getProfiles()
     //const profileListCopy = structuredClone(profileList)
-    const profile = profileList.find(p => p.id === profileId)
+    const profile = profileList.find(p => p.id === args[0])
     profile.data.forEach(data => {
-        if (data.key === keyName) {
-            data.value = value
+        if (data.key === args[1]) {
+            data.value = args[2]
         }
     })
     profileJson.set("profiles", profileList)
     return profileList
 })
 ipcMain.on('profiles:add', () => {
-    addProfile()
+    addProfile().then()
 })
 
 // =====================================================================================
@@ -428,9 +431,9 @@ function loadDefaultFromFile(fileName) {
 function getProfileLogoPath(profileId) {
     let logoName
     if (!profileId) {
-        logoName = getProfileKey(0,'logo')
+        logoName = getProfileKey(0, 'logo')
     } else {
-        logoName = getProfileKey(profileId,'logo')
+        logoName = getProfileKey(profileId, 'logo')
     }
 
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
@@ -443,26 +446,34 @@ function getProfileLogoPath(profileId) {
     return logoPath
 }
 
+function updateAppLogo(logoPath) {
+    sideBar.webContents.send('logo-update', logoPath)
+    mainWindow.setIcon(logoPath)
+    appTray.setImage(logoPath)
+}
+
 function setProfileLogo(newLogoPath, profileId) {
     let profileList = getProfiles()
-    const profile = profileList.find(p => p.id === profileId)
+    let index = profileList.findIndex(p => p.id === profileId)
     const logoName = (newLogoPath.includes('/'))
         ? newLogoPath.split("/").pop()
         : newLogoPath.split("\\").pop()
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     fs.cpSync(newLogoPath, logoPath)
-    profile.data.forEach(data => {
+    profileList[index].data.forEach(data => {
         if (data.key === 'logo') {
             data.value = logoName
         }
     })
     profileJson.set("profiles", profileList)
-    //TODO if profile is active - update appLogoPath on sidebar
+    if (index === 0) {
+        updateAppLogo(logoPath);
+    }
 }
 
 function getProfileKey(profileId, keyName) {
     let profileList = getProfiles()
-    if (profileId === 0){
+    if (profileId === 0) {
         return profileList[profileId].data.find(p => p.key === keyName).value
     } else {
         let index = profileList.findIndex(p => p.id === profileId)
@@ -480,9 +491,10 @@ function setActiveProfile(profileId) {
     if (index !== -1) profileList.unshift(...profileList.splice(index, 1))
     profileJson.set("profiles", profileList)
     loadProfile()
+    updateAppLogo(getProfileLogoPath(profileId));
 }
 
-function addProfile() {
+async function addProfile() {
 
     let profileList = getProfiles()
     const newFromFile = loadDefaultFromFile('profile-default.json')
@@ -509,9 +521,11 @@ function loadProfile() {
         profileJson.set('profiles', [])
     }
     let profileList = getProfiles()
-    if (profileList.length === 0) addProfile()
+    let profileId
+    if (profileList.length === 0) addProfile().then(() => {
+        profileId = profileList[0].id  //TODO error at first start
+    })
 
-    const profileId = profileList[0].id  //TODO error at first start
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
     // /home/developer/.config/Udesk/settings.json
     let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'

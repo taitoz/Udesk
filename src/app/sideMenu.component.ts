@@ -3,6 +3,7 @@ import {MenuItem, TreeNode} from 'primeng/api';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
 import {ActivatedRoute, Router} from '@angular/router';
+import {switchMap} from "rxjs";
 
 @Component({
     selector: 'sideMenu',
@@ -24,14 +25,28 @@ export class SideMenuComponent implements OnInit {
         private router: Router,
         @Inject(DOCUMENT) private document: Document
     ) {
-        this.route.params.subscribe(params => {
-            this.menuName = this.getMenuName(params['menuId']);
-            this.treeNodesData = this.uiService.loadSideMenuData(params['menuId']);
-            this.loadMenuItemsFromTreeNodesData();
-        }, error => {
-            console.log(error)
-            //router.navigate(['']);
+        this.route.params.subscribe({
+            next: params => {
+                this.menuName = this.getMenuName(params['menuId']);
+                this.treeNodesData = this.uiService.ipcSendSync('sideBarMenu:get', params['menuId'])
+                this.loadMenuItemsFromTreeNodesData();
+            },
+            error: error => {
+                console.log(error)
+            },
+            complete: () => {
+                console.log('Request complete');
+            }
         });
+
+        // this.route.params.subscribe(params => {
+        //     this.menuName = this.getMenuName(params['menuId']);
+        //     this.treeNodesData = this.uiService.loadSideMenuData(params['menuId']);
+        //     this.loadMenuItemsFromTreeNodesData();
+        // }, error => {
+        //     console.log(error)
+        //     //router.navigate(['']);
+        // });
     }
 
     ngOnInit() {
@@ -50,8 +65,8 @@ export class SideMenuComponent implements OnInit {
 
     getMenuName(menuId:string){
         switch (menuId){
-            case 'services': return 'Сервисы'
-            case 'web1c': return 'Облачная 1С'
+            case 'servicesMenu': return 'Сервисы'
+            case 'web1cMenu': return 'Облачная 1С'
         }
     }
 
@@ -68,7 +83,7 @@ export class SideMenuComponent implements OnInit {
             value: treeNode.data.value,
             command: () => {
                 // console.log(treeNode.data.value);
-                this.uiService.ipcInvoke('load-url', treeNode.data.value)
+                this.uiService.ipcInvoke('load-url', treeNode.data.value).then()
             },
             // icon: (treeNode.data.icon) ? treeNode.data.icon : 'bx bx-circle-off',
             // badge: treeNode.data.id +' ',

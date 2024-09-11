@@ -13,6 +13,6 @@ export class TitleBarComponent {
     }
 
     callRenderer(channel: string) {
-        this.uiService.ipcInvoke(channel)
+        this.uiService.ipcInvoke(channel).then()
     }
 }

@@ -8,6 +8,7 @@ import {ElectronService} from "ngx-electronyzer";
 export class UiService {
 
     @Output() themeChange: EventEmitter<string> = new EventEmitter();
+    @Output() logoChange: EventEmitter<string> = new EventEmitter();
 
     constructor(
         private http: HttpClient,
@@ -17,20 +18,18 @@ export class UiService {
         if (this.electronService.isElectronApp) {
             this.electronService.ipcRenderer.on('theme-toggle', (event, theme) => {
                 this.themeChange.emit(theme)
-            });
+            })
+            this.electronService.ipcRenderer.on('logo-update', (event, logoPath) => {
+                this.logoChange.emit(logoPath)
+            })
         }
     }
 
-    loadProfiles() {
-        if (this.electronService.isElectronApp) {
-            //this.electronService.shell.beep();
-            return this.electronService.ipcRenderer.sendSync('profiles:get');
-        }
-    }
     //awaits return value
-    ipcSendSync(channel: string, data?: any) {
+    ipcSendSync(channel: string, ...args: any[]) {
+        console.log(args)
         if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync(channel, data);
+            return this.electronService.ipcRenderer.sendSync(channel, args);
         }
         //console.log(channel)
     }
@@ -42,9 +41,9 @@ export class UiService {
         //console.log(channel)
     }
     //return Promise
-    ipcInvoke(channel: string, data?: any) {
+    async ipcInvoke(channel: string, ...args: any[]) {
         if (this.electronService.isElectronApp) {
-            this.electronService.ipcRenderer.invoke(channel, data).then();
+            return this.electronService.ipcRenderer.invoke(channel, args);
         }
         //console.log(channel)
     }
@@ -75,87 +74,8 @@ export class UiService {
         }
     }
 
-
-
-    getProfileKey(profileId: number, keyName: string) {
-        if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('profiles:getProfileKey', profileId, keyName)
-        }
-    }
-
-    setProfileKey(profileId: number, keyName: string, value: string) {
-        if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.invoke('profiles:setProfileKey', profileId, keyName, value)
-        }
-    }
-
-    setActiveProfile(profileId: number) {
-        if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.invoke('profiles:setActive', profileId)
-        }
-    }
-
-    deleteProfile(profileId: number) {
-        if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.send('profiles:delete', profileId)
-        }
-    }
-
-    addProfile() {
-        if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.send('profiles:add')
-        }
-    }
-
-    loadSideMenuData(menuId: string): TreeNode[] {
-        if (this.electronService.isElectronApp) {
-            //this.electronService.shell.beep();
-            return this.electronService.ipcRenderer.sendSync(menuId + ':get');
-        } else {
-            return [
-                {
-                    "data": {
-                        "id": 1,
-                        "key": "Test1",
-                        "value": "https://test1/",
-                        "icon": "bx bx-home-alt"
-                    },
-                    "children": [],
-                    "parent": null,
-                    "expanded": true
-                },
-                {
-                    "data": {
-                        "id": 2,
-                        "key": "Test2",
-                        "value": "https://test2/",
-                        "icon": "bx bx-film"
-                    },
-                    "children": [],
-                    "parent": null,
-                    "expanded": true
-                }
-            ]
-        }
-    }
-
     saveToSessionStorage(testData: TreeNode[]) {
         this.sessionStorage.set('testData', testData, 10, 'h');
     }
 
-    getAppLogoPath(profileId: any = null) {
-        if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.sendSync('sideBar:logo:get', profileId);
-        } else {
-            return '/assets/image.svg'
-        }
-    }
-
-    setAppLogoPath(profileId: string) {
-        if (this.electronService.isElectronApp) {
-            return this.electronService.ipcRenderer.invoke('sideBar:logo:set', profileId);
-        } else {
-            return new Promise(resolve => '/assets/image.svg')
-        }
-    }
 }
