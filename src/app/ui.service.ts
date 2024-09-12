@@ -27,25 +27,23 @@ export class UiService {
 
     //awaits return value
     ipcSendSync(channel: string, ...args: any[]) {
-        console.log(args)
         if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.sendSync(channel, args);
         }
-        //console.log(channel)
     }
+
     //async void
-    ipcSend(channel: string, data?: any) {
+    ipcSend(channel: string, ...args: any[]) {
         if (this.electronService.isElectronApp) {
-            this.electronService.ipcRenderer.send(channel, data);
+            this.electronService.ipcRenderer.send(channel, args);
         }
-        //console.log(channel)
     }
+
     //return Promise
     async ipcInvoke(channel: string, ...args: any[]) {
         if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.invoke(channel, args);
         }
-        //console.log(channel)
     }
 
     toggleTheme(document: Document, theme: string) {

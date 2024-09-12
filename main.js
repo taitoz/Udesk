@@ -3,7 +3,6 @@ import {
     app, Tray, dialog, screen, globalShortcut
 } from 'electron'
 
-
 import path, {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -21,12 +20,17 @@ appLog.transports.file.fileName = Date.now() + ".log"
 Object.assign(console, appLog.functions);
 
 // App config
+app.disableHardwareAcceleration()
+app.commandLine.appendSwitch('ignore-certificate-errors')
+app.commandLine.appendSwitch('--disable-background-timer-throttling')
+app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows')
+app.commandLine.appendSwitch('--disable-renderer-backgrounding')
 const singleInstanceLock = app.requestSingleInstanceLock()
 import cfg from 'electron-cfg';
 
 let appConfig
 let profileJson = cfg.create('profiles.json')
-loadProfile()
+loadAppCfgFromProfile()
 
 // App updater
 import {initUpdater} from "./src/updater.js";
@@ -132,9 +136,9 @@ function createWindow() {
 
     // DevTools.
     // mainWindow.webContents.openDevTools({mode: 'detach'});
-    // settingsView.webContents.openDevTools({mode: 'detach'});
+    settingsView.webContents.openDevTools({mode: 'detach'});
     // sideBar.webContents.openDevTools({mode: 'detach'});
-     sideMenu.webContents.openDevTools({mode: 'detach'});
+    // sideMenu.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -299,10 +303,6 @@ ipcMain.handle('maximize', () => {
     }
     resizeMain()
 })
-ipcMain.handle('open:settings', () => {
-    sideMenuWidth = 0
-    openSettings();
-})
 
 ipcMain.handle('load-url', (event, args) => {
     //dialog.showErrorBox('loadService', arg)
@@ -318,10 +318,31 @@ ipcMain.handle('load-url', (event, args) => {
         })
 })
 
+ipcMain.handle('open:settings', () => {
+    sideMenuWidth = 0
+    openSettings();
+})
+ipcMain.on('sideMenu:toggle', (event, args) => {
+    sideMenuWidth = sideMenu.getBounds().width
+    switch (sideMenuWidth) {
+        case 0:
+            sideMenuWidth = 230
+            loadPrimeComponent(sideMenu, 'sideMenu/' + args[0]);
+            break;
+        case 230:
+            sideMenuWidth = 0
+            break;
+    }
+    resizeMain()
+})
+ipcMain.on('settings:toggleTheme', (event, args) => {
+    nativeTheme.themeSource = args[0]
+    appConfig.set('theme', args[0])
+})
+
 ipcMain.on('sideBar:logo:get', (event, args) => {
     event.returnValue = getProfileLogoPath(args[0])
 })
-
 ipcMain.handle('sideBar:logo:set', async (event, args) => {
     await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
         title: "",
@@ -335,42 +356,16 @@ ipcMain.handle('sideBar:logo:set', async (event, args) => {
         } else {
             //console.log("no file selected");
         }
-    });
-    //event.returnValue =
-})
-
-ipcMain.on('sideMenu:toggle', (event, menuId) => {
-    sideMenuWidth = sideMenu.getBounds().width
-    switch (sideMenuWidth) {
-        case 0:
-            sideMenuWidth = 230
-            loadPrimeComponent(sideMenu, 'sideMenu/' + menuId);
-            break;
-        case 230:
-            sideMenuWidth = 0
-            break;
-    }
-    resizeMain()
-})
-ipcMain.on('settings:toggleTheme', (event, theme) => {
-    nativeTheme.themeSource = theme
-    appConfig.set('theme', theme)
+    })
 })
 
 ipcMain.on('sideBarMenu:get', (event, args) => {
     event.returnValue = appConfig.get(args[0])
 })
-ipcMain.on('sideBarMenu:set', (event, sideBarMenu) => {
-    appConfig.set('servicesMenu', sideBarMenu)
+ipcMain.on('sideBarMenu:set', (event, args) => {
+    appConfig.set('servicesMenu', args[0])
     loadPrimeComponent(sideMenu, 'sideMenu/services')
 })
-// ipcMain.on('web1c:set', (event, sideBarMenu) => {
-//     appConfig.set('web1cMenu', sideBarMenu)
-//     loadPrimeComponent(sideMenu, 'sideMenu/web1c')
-// })
-// ipcMain.on('web1c:get', (event) => {
-//     event.returnValue = appConfig.get('web1cMenu')
-// })
 
 ipcMain.on('profiles:get', (event) => {
     event.returnValue = getProfiles()
@@ -380,9 +375,12 @@ ipcMain.handle('profiles:setActive', async (event, args) => {
     //app.relaunch()
     //app.exit()
 })
-ipcMain.on('profiles:delete', (event, profileId) => {
+ipcMain.on('profiles:add', () => {
+    addProfile().then()
+})
+ipcMain.on('profiles:delete', (event, args) => {
     let profileList = getProfiles()
-    let index = profileList.findIndex(p => p.id === profileId)
+    let index = profileList.findIndex(p => p.id === args[0])
     if (index !== -1) profileList.splice(index, 1)
     profileJson.set("profiles", profileList)
 })
@@ -401,8 +399,42 @@ ipcMain.handle('profiles:setProfileKey', async (event, args) => {
     profileJson.set("profiles", profileList)
     return profileList
 })
-ipcMain.on('profiles:add', () => {
-    addProfile().then()
+
+ipcMain.on('file:export', (event, args) => {
+    dialog.showSaveDialog({
+        defaultPath: args[1],
+        filters: [
+            {name: 'JSON', extensions: ['json']}
+        ]
+    }).then(result => {
+        if (!result.canceled) {
+            const filePath = result.filePath;
+            fs.writeFileSync(filePath, args[0], 'utf-8');
+        }
+    });
+})
+ipcMain.handle('file:import', async (event, args) => {
+    dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [
+            {name: 'JSON Files', extensions: ['json']}
+        ]
+    }).then(result => {
+        if (!result.canceled) {
+            const filePath = result.filePaths[0]; // Get the selected file path
+
+            try {
+                const fileContent = fs.readFileSync(filePath, 'utf-8');
+                const jsonData = JSON.parse(fileContent);
+
+                console.log(jsonData);
+                return jsonData
+
+            } catch (error) {
+                console.error('Error reading or parsing JSON file:', error);
+            }
+        }
+    });
 })
 
 // =====================================================================================
@@ -488,10 +520,12 @@ function getProfiles() {
 function setActiveProfile(profileId) {
     let profileList = getProfiles()
     let index = profileList.findIndex(p => p.id === profileId)
-    if (index !== -1) profileList.unshift(...profileList.splice(index, 1))
-    profileJson.set("profiles", profileList)
-    loadProfile()
-    updateAppLogo(getProfileLogoPath(profileId));
+    if (index !== -1) {
+        profileList.unshift(...profileList.splice(index, 1))
+        profileJson.set("profiles", profileList)
+        loadAppCfgFromProfile(profileId)
+        updateAppLogo(getProfileLogoPath(profileId))
+    }
 }
 
 async function addProfile() {
@@ -510,25 +544,10 @@ async function addProfile() {
     }
     profileList.push(newFromFile)
     profileJson.set("profiles", profileList)
-}
-
-function loadProfile() {
-
-    // profiles.observe('active', () => {
-    // })
-
-    if (!profileJson.has('profiles')) {
-        profileJson.set('profiles', [])
-    }
-    let profileList = getProfiles()
-    let profileId
-    if (profileList.length === 0) addProfile().then(() => {
-        profileId = profileList[0].id  //TODO error at first start
-    })
 
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
     // /home/developer/.config/Udesk/settings.json
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newFromFile.id + '.json'
     appConfig = cfg.create(appConfigPath)
     if (!appConfig.has('servicesMenu')) {
         appConfig.set('servicesMenu', loadDefaultFromFile('services-default.json'))
@@ -539,6 +558,19 @@ function loadProfile() {
     if (!appConfig.has('theme')) {
         appConfig.set('theme', 'dark')
     }
+}
+
+function loadAppCfgFromProfile() {
+
+    // profiles.observe('active', () => {
+    // })
+    if (!profileJson.has('profiles')) {
+        profileJson.set('profiles', [])
+        addProfile().then()
+    }
+    let profileList = getProfiles()
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileList[0].id + '.json'
+    appConfig = cfg.create(appConfigPath)
 
     nativeTheme.themeSource = appConfig.get('theme', 'dark')
 }

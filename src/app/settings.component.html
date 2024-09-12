@@ -85,7 +85,7 @@
                             <p-dropdown
                                     [options]="['ru', 'en']"
                                     [(ngModel)]="profile.value"
-                                    placeholder="Select" />
+                                    placeholder="Select"/>
                         </td>
                         <td *ngIf="(profile.key === 'logo')">
                             <img [alt]="profile.logo" ngSrc="{{getProfileLogo(profile)}}" height="32" width="32"
@@ -137,8 +137,9 @@
                          [columns]="cols"
                          [scrollable]="true"
                          styleClass="p-treetable-gridlines p-treetable-sm"
-                         scrollHeight="600px"
-                         selectionMode="single" sortField="id" [style]="{'margin-bottom':'20px'}"
+                         scrollHeight="500px"
+                         [tableStyle]="{'margin-bottom':'20px'}"
+                         selectionMode="single" sortField="id"
                          [(selection)]="selectedNodes" dataKey="key" (onNodeSelect)="onSelect($event)">
                 <ng-template pTemplate="colgroup" let-columns>
                     <colgroup>
@@ -163,11 +164,13 @@
                         <ng-template pTemplate="right">
                             <p-button
                                     label="Import"
-                                    class="mr-2 inline-block" [outlined]="true"/>
+                                    class="mr-2 inline-block" [outlined]="true"
+                                    (click)="importServicesTableData()"/>
                             <p-button
                                     severity="help"
                                     label="Export"
-                                    icon="pi pi-upload" [outlined]="true"/>
+                                    icon="pi pi-upload" [outlined]="true"
+                                    (click)="exportServicesTableData()"/>
                         </ng-template>
                     </p-toolbar>
 
@@ -266,9 +269,10 @@
     </p-tabView>
 </div>
 <p-toast position="top-right"
+         [life]="1000"
          [showTransformOptions]="'translateY(100%)'"
-         [showTransitionOptions]="'100ms'"
-         [hideTransitionOptions]="'100ms'"
+         [showTransitionOptions]="'500ms'"
+         [hideTransitionOptions]="'500ms'"
          [showTransformOptions]="'translateX(100%)'">
 
 </p-toast>

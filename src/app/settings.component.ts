@@ -80,6 +80,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return true;
     }
 
+    exportServicesTableData() {
+        let data = JSON.stringify(this.treeNodesData);
+        this.uiService.ipcSend('file:export', data, 'test.json')
+    }
+
+    importServicesTableData() {
+        // load from file
+        // save to profile
+        // convert to profilesFlat and load
+        this.uiService.ipcInvoke('file:import').then(jsonData => {
+            console.log(jsonData)
+        })
+
+    }
+
     async setProfileLogo(profile: any) {
         await this.uiService.ipcInvoke('sideBar:logo:set', profile.id).then(() => {
             this.refreshTable()
@@ -114,7 +129,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'});
             return
         }
-        this.uiService.ipcSend('profiles:delete',profileId)
+        this.uiService.ipcSend('profiles:delete', profileId)
         this.loadProfiles()
     }
 
@@ -137,6 +152,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     setActiveProfile(profileId: number) {
         this.uiService.ipcInvoke('profiles:setActive', profileId).then(() => {
             this.treeNodesData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
+            //this.refreshTable()
             this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileId.toString()})
         })
     }
@@ -213,6 +229,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             accept: () => {
                 this.deleteNodeByData(selectedNodeData, this.treeNodesData);
                 this.treeNodesData = [...this.treeNodesData];
+                this.nodeSave()
                 this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {
@@ -259,6 +276,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         }
         //this.selectedNode = newHeaderNode;
         this.treeNodesData = [...this.treeNodesData];
+        this.nodeSave()
         // this.messageService.add({severity: 'success', summary: this.selectedNode.data[key]});
     }
 
