@@ -416,29 +416,27 @@ ipcMain.on('file:export', (event, args) => {
     });
 })
 ipcMain.handle('file:import', async (event, args) => {
-    dialog.showOpenDialog({
-        properties: ['openFile'],
-        filters: [
-            {name: 'JSON Files', extensions: ['json']}
-        ]
-    }).then(result => {
+    try {
+        const result = await dialog.showOpenDialog({
+            properties: ['openFile'],
+            filters: [
+                {name: 'JSON Files', extensions: ['json']}
+            ]
+        })
         if (!result.canceled) {
-            const filePath = result.filePaths[0]; // Get the selected file path
-
-            try {
-                const fileContent = fs.readFileSync(filePath, 'utf-8');
-                const jsonData = JSON.parse(fileContent);
-                loadAppCfgFromProfile(args[0])
-                appConfig.set('servicesMenu', jsonData)
-                // console.log(jsonData)
-                return jsonData
-
-            } catch (error) {
-                console.error('Error reading or parsing JSON file:', error);
-            }
+            const filePath = result.filePaths[0];
+            const fileContent = fs.readFileSync(filePath, 'utf-8')
+            const jsonData = JSON.parse(fileContent);
+            loadAppCfgFromProfile(args[0])
+            appConfig.set('servicesMenu', jsonData)
+            //console.log(jsonData)
+            return jsonData
         }
-    });
-})
+    } catch (err) {
+        console.error('Error reading or parsing JSON file:', err)
+        throw err
+    }
+});
 
 // =====================================================================================
 function loadPrimeComponent(browserView, component) {
