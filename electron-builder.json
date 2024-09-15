@@ -7,7 +7,10 @@
     "!*",
     "!**/*",
     "main.js",
+    "mainMenu.js",
+    "updater.js",
     "assets/**/*",
+    "translations/**/*",
     "dist/**/*",
     "node_modules/**/*",
     "!node_modules/primeng/resources/themes/**/*",
@@ -22,7 +25,7 @@
   },
   "portable": {
     "unpackDirName": "udesk",
-    "splashImage": "assets/png/logo.png"
+    "splashImage": "assets/logo48b.png"
   },
   "mac": {
     "icon": "assets/mac/32.icns",
@@ -31,7 +34,7 @@
     ]
   },
   "linux": {
-    "icon": "assets/png/logo.png",
+    "icon": "assets/logo48b.png",
     "target": [
       "AppImage"
     ]

@@ -133,7 +133,7 @@
             <ng-template pTemplate="header">
                 <span>Сервисы</span>
             </ng-template>
-            <p-treeTable #tt *ngIf="showTable" [value]="treeNodesData"
+            <p-treeTable #tt *ngIf="showTable" [value]="servicesMenuData"
                          [columns]="cols"
                          [scrollable]="true"
                          styleClass="p-treetable-gridlines p-treetable-sm"
@@ -269,7 +269,7 @@
     </p-tabView>
 </div>
 <p-toast position="top-right"
-         [life]="1000"
+         [life]="2000"
          [showTransformOptions]="'translateY(100%)'"
          [showTransitionOptions]="'500ms'"
          [hideTransitionOptions]="'500ms'"

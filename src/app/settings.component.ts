@@ -17,7 +17,7 @@ import {SelectButtonChangeEvent} from "primeng/selectbutton";
 export class SettingsComponent implements OnInit, OnDestroy {
 
     activeIndex = 0;
-    treeNodesData: TreeNode[] | undefined;
+    servicesMenuData: TreeNode[] | undefined;
     cols: any[] | undefined;
     //selectedNode: TreeNode;
     selectedNodes: TreeNode[] | undefined;
@@ -35,6 +35,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     //profiles: { id: number; data: { key: string, value: string }[] }[]
     profilesFlat: { name: string; id: number; key: string; value: string; }[] = []
     showTable = true
+    activeProfileId: number
 
     constructor(
         private electronService: ElectronService,
@@ -49,7 +50,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
 
-        this.treeNodesData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
+        this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
         this.loadProfiles()
 
         // this.nodeTypes = [
@@ -81,8 +82,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     exportServicesTableData() {
-        let data = JSON.stringify(this.treeNodesData);
-        this.uiService.ipcSend('file:export', data, 'test.json')
+        let data = JSON.stringify(this.servicesMenuData);
+        this.uiService.ipcSend('file:export', data, 'profile-id-' + this.activeProfileId + '.json')
     }
 
     importServicesTableData() {
@@ -134,10 +135,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     loadProfiles() {
-        this.loadProfilesFlat(this.uiService.ipcSendSync('profiles:get'))
-    }
-
-    private loadProfilesFlat(profiles: { id: number; data: { key: string; value: string; }[]; }[]) {
+        let profiles : { id: number; data: { key: string; value: string; }[]; }[] = this.uiService.ipcSendSync('profiles:get')
+        this.activeProfileId = profiles[0].id
         this.profilesFlat = []
         profiles.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
                 let profileName = this.uiService.ipcSendSync('profiles:getProfileKey', profile.id, 'name')
@@ -150,8 +149,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     setActiveProfile(profileId: number) {
+        this.activeProfileId = profileId
         this.uiService.ipcInvoke('profiles:setActive', profileId).then(() => {
-            this.treeNodesData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
+            this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
             //this.refreshTable()
             this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileId.toString()})
         })
@@ -180,15 +180,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
 
     nodeSave() {
-        this.treeNodesData.forEach(node => this.removeTreeParent(node));
+        this.servicesMenuData.forEach(node => this.removeTreeParent(node));
         //this.uiService.saveToSessionStorage(this.treeNodesData);
-        this.uiService.ipcSend('sideBarMenu:set', this.treeNodesData)
+        this.uiService.ipcSend('sideBarMenu:set', this.servicesMenuData)
         // if (this.electronService.isElectronApp) {
         //     this.electronService.ipcRenderer.send('sideBarMenu:set', this.treeNodesData);
         // }
 
-        this.treeNodesData = [...this.treeNodesData];
-        this.messageService.add({severity: 'success', summary: 'Сохранено'});
+        this.servicesMenuData = [...this.servicesMenuData];
+        //this.messageService.add({severity: 'success', summary: 'Сохранено'});
     }
 
     removeTreeParent(obj: TreeNode) {
@@ -216,7 +216,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     delete(selectedNodeData: any) {
-        if (this.treeNodesData.length === 1) {
+        if (this.servicesMenuData.length === 1) {
             this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
             return;
         }
@@ -227,10 +227,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'Нет',
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
-                this.deleteNodeByData(selectedNodeData, this.treeNodesData);
-                this.treeNodesData = [...this.treeNodesData];
+                this.deleteNodeByData(selectedNodeData, this.servicesMenuData);
+                this.servicesMenuData = [...this.servicesMenuData];
                 this.nodeSave()
-                this.messageService.add({severity: 'success', summary: 'Deleted'});
+                //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {
             }
@@ -261,7 +261,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     addItem(selectedNodeData: any, asChild: boolean) {
         //this.unSavedEdits = true;
-        let node = this.getNodeByData(selectedNodeData, this.treeNodesData);
+        let node = this.getNodeByData(selectedNodeData, this.servicesMenuData);
         //console.log(node);
         const newId = Date.now();
         if (asChild) {
@@ -271,11 +271,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
             if (node.parent) {
                 node.parent.children.push(this.newNode(newId));
             } else {
-                this.treeNodesData.push(this.newNode(newId));
+                this.servicesMenuData.push(this.newNode(newId));
             }
         }
         //this.selectedNode = newHeaderNode;
-        this.treeNodesData = [...this.treeNodesData];
+        this.servicesMenuData = [...this.servicesMenuData];
         this.nodeSave()
         // this.messageService.add({severity: 'success', summary: this.selectedNode.data[key]});
     }

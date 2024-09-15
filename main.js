@@ -11,7 +11,7 @@ import fs from 'fs';
 
 // Localization
 import {loadTranslation, translate} from './translations/i18n.js'
-import {getMenu} from "./mainmenu.js";
+import {getMenu} from "./mainMenu.js";
 
 // App logs
 import appLog from 'electron-log'
@@ -33,7 +33,7 @@ let profileJson = cfg.create('profiles.json')
 loadAppCfgFromProfile()
 
 // App updater
-import {initUpdater} from "./src/updater.js";
+import {initUpdater} from "./updater.js";
 import updater from 'electron-simple-updater';
 //appLog.info(updater.buildId)
 initUpdater();
@@ -382,6 +382,8 @@ ipcMain.on('profiles:delete', (event, args) => {
     let profileList = getProfiles()
     let index = profileList.findIndex(p => p.id === args[0])
     if (index !== -1) profileList.splice(index, 1)
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
+    fs.rmSync(appConfigPath)
     profileJson.set("profiles", profileList)
 })
 ipcMain.on('profiles:getProfileKey', (event, args) => {
@@ -426,8 +428,9 @@ ipcMain.handle('file:import', async (event, args) => {
             try {
                 const fileContent = fs.readFileSync(filePath, 'utf-8');
                 const jsonData = JSON.parse(fileContent);
-
-                console.log(jsonData);
+                loadAppCfgFromProfile(args[0])
+                appConfig.set('servicesMenu', jsonData)
+                // console.log(jsonData)
                 return jsonData
 
             } catch (error) {
@@ -533,7 +536,8 @@ async function addProfile() {
     let profileList = getProfiles()
     const newFromFile = loadDefaultFromFile('profile-default.json')
     if (profileList.length >= 1) {
-        newFromFile.id = profileList.length + 1
+        newFromFile.id = Date.now()
+        // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
         let newName = "New Profile " + newFromFile.id
         profileList.forEach(profile => {
             if (getProfileKey(profile.id, 'name') === newName) {
@@ -545,10 +549,7 @@ async function addProfile() {
     profileList.push(newFromFile)
     profileJson.set("profiles", profileList)
 
-    // C:\Users\user\AppData\Roaming\Udesk\settings.json
-    // /home/developer/.config/Udesk/settings.json
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newFromFile.id + '.json'
-    appConfig = cfg.create(appConfigPath)
+    appConfig = loadAppConfigFromProfile(newFromFile.id)
     if (!appConfig.has('servicesMenu')) {
         appConfig.set('servicesMenu', loadDefaultFromFile('services-default.json'))
     }
@@ -569,8 +570,15 @@ function loadAppCfgFromProfile() {
         addProfile().then()
     }
     let profileList = getProfiles()
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileList[0].id + '.json'
-    appConfig = cfg.create(appConfigPath)
+    appConfig = loadAppConfigFromProfile(profileList[0].id)
 
     nativeTheme.themeSource = appConfig.get('theme', 'dark')
 }
+
+function loadAppConfigFromProfile(profileId) {
+    // C:\Users\user\AppData\Roaming\Udesk\settings.json
+    // /home/developer/.config/Udesk/settings.json
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'
+    return cfg.create(appConfigPath)
+}
+
