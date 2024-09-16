@@ -49,32 +49,48 @@
                              let-rowspan="rowspan">
                     <tr>
                         <td *ngIf="rowgroup" [attr.rowspan]="rowspan">
-                            <div class="flex align-items-center justify-content-left gap-2">
-
+                            <div class="flex flex-column gap-2">
                                 <span class="font-bold ml-2">{{ profile.name }}</span>
-                                <!--                            <button pButton type="button" icon="bx bx-archive-in" label="Load" [outlined]="true"-->
-                                <!--                                    pTooltip="Load" tooltipPosition="top" [style]="{'margin':'20px'}"-->
-                                <!--                                    (click)="setActiveProfile(profile2.id)"></button>-->
-                                <!--                            <button pButton type="button" icon="bx bx-trash" class="p-button-danger" [outlined]="true"-->
-                                <!--                                    label="Delete"-->
-                                <!--                                    pTooltip="Delete" tooltipPosition="top" [style]="{'margin':'20px'}"-->
-                                <!--                                    (click)="deleteProfile(profile2.id)"></button>-->
-                                <button pButton
-                                        type="button"
-                                        icon="bx bx-check"
-                                        (click)="setActiveProfile(profile.id)"
-                                        class="p-button-rounded p-button-text p-button-success mr-2"
-                                        [outlined]="true"
-                                >
-                                </button>
-                                <button pButton
-                                        type="button"
-                                        icon="bx bx-trash"
-                                        (click)="deleteProfile(profile.id)"
-                                        class="p-button-rounded p-button-text p-button-danger"
-                                        [outlined]="true"
-                                >
-                                </button>
+                                <div class="flex flex-row">
+                                    <div class="p-toolbar-group-start">
+                                        <button pButton
+                                                type="button"
+                                                pTooltip="load"
+                                                icon="bx bx-check"
+                                                (click)="setActiveProfile(profile.id)"
+                                                class="p-button-text p-button-success"
+                                                [outlined]="true"
+                                        >
+                                        </button>
+                                        <button pButton
+                                                type="button"
+                                                pTooltip="delete"
+                                                icon="bx bxs-trash"
+                                                (click)="deleteProfile(profile.id)"
+                                                class="p-button-text p-button-danger"
+                                                [outlined]="true"
+                                        >
+                                        </button>
+                                        <button pButton
+                                                type="button"
+                                                pTooltip="export"
+                                                icon="bx bxs-file-export"
+                                                (click)="exportServicesTableData(profile.id)"
+                                                class="p-button-text p-button-info"
+                                                [outlined]="true"
+                                        >
+                                        </button>
+                                        <button pButton
+                                                type="button"
+                                                pTooltip="import"
+                                                icon="bx bxs-file-import"
+                                                (click)="importServicesTableData(profile.id)"
+                                                class="p-button-text p-button-help"
+                                                [outlined]="true"
+                                        >
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </td>
 
@@ -89,7 +105,8 @@
                         </td>
                         <td *ngIf="(profile.key === 'logo')">
                             <img [alt]="profile.logo" ngSrc="{{getProfileLogo(profile)}}" height="32" width="32"
-                                 style="vertical-align: middle" (click)="setProfileLogo(profile)"/>
+                                 style="vertical-align: middle" pTooltip="change logo"
+                                 (click)="setProfileLogo(profile)"/>
                         </td>
                         <td *ngIf="(!['logo', 'lang'].includes(profile.key))" [pEditableColumn]="profile.value"
                             pEditableColumnField="value">
@@ -98,6 +115,7 @@
                                     <p-inputGroup>
                                         <input pInputText
                                                type="text"
+                                               (keydown.enter)="setProfileKey(profile.id, profile.key, profile.value)"
                                                (focusout)="setProfileKey(profile.id, profile.key, profile.value)"
                                                [(ngModel)]="profile.value"/>
                                         <button type="button" pButton
@@ -140,7 +158,7 @@
                          scrollHeight="500px"
                          [tableStyle]="{'margin-bottom':'20px'}"
                          selectionMode="single" sortField="id"
-                         [(selection)]="selectedNodes" dataKey="key" (onNodeSelect)="onSelect($event)">
+                         [(selection)]="selectedNode" dataKey="id" (onNodeSelect)="onSelect($event)">
                 <ng-template pTemplate="colgroup" let-columns>
                     <colgroup>
                         <col *ngFor="let col of columns"
@@ -148,43 +166,40 @@
                     </colgroup>
                 </ng-template>
                 <ng-template pTemplate="caption">
-
-                    <p-toolbar styleClass="mb-4 gap-2">
+                    <p-toolbar styleClass="mb-2 gap-1">
                         <ng-template pTemplate="left">
                             <div class="p-input-icon-left">
                                 <i class="pi pi-search"></i>
                                 <input
                                         type="text"
                                         pInputText
-                                        placeholder="Global Search"
+                                        placeholder="Поиск"
                                         (input)="tt.filterGlobal($event.target.value, 'contains')"/>
                             </div>
                         </ng-template>
-
-                        <ng-template pTemplate="right">
-                            <p-button
-                                    label="Import"
-                                    class="mr-2 inline-block" [outlined]="true"
-                                    (click)="importServicesTableData()"/>
-                            <p-button
-                                    severity="help"
-                                    label="Export"
-                                    icon="pi pi-upload" [outlined]="true"
-                                    (click)="exportServicesTableData()"/>
-                        </ng-template>
                     </p-toolbar>
-
                 </ng-template>
                 <ng-template pTemplate="header" let-columns>
                     <tr>
                         <th *ngFor="let col of columns" [ttSortableColumn]="col.field">
-                            <p *ngIf="col.header !='id'">{{ col.header }}</p>
-                            <p-treeTableSortIcon [field]="col.field"/>
+                            <div class="flex flex-row gap-2 align-items-center flex-wrap">
+                                <p *ngIf="col.header !='id'">{{ col.header }}</p>
+                                <p-treeTableSortIcon [field]="col.field"/>
+                            </div>
                         </th>
+                        <!--                        <th style="width:33%" [ttSortableColumn]="">-->
+                        <!--                            <div class="flex flex-row gap-2 align-items-center flex-wrap">-->
+                        <!--                                <p>Name</p>-->
+                        <!--                                <p-treeTableSortIcon [field]=""/>-->
+                        <!--                            </div>-->
+                        <!--                        </th>-->
+                        <!--                        <th style="width:33%">Link</th>-->
+                        <!--                        <th style="width:33%"></th>-->
                     </tr>
                 </ng-template>
-                <ng-template pTemplate="body" let-rowNode let-rowData="rowData" let-columns="columns">
-                    <tr [ttSelectableRow]="rowNode">
+                <ng-template pTemplate="body" let-rowNode let-rowData="rowData" let-columns="columns"
+                             let-editing="editing">
+                    <tr [ttSelectableRow]="rowNode" [pEditableRow]="rowNode">
                         <td *ngFor="let col of columns; let i = index" ttEditableColumn
                             [ngClass]="{'p-toggler-column': i === 0}">
                             <p-treeTableToggler [rowNode]="rowNode" *ngIf="i === 0"></p-treeTableToggler>
@@ -194,39 +209,68 @@
                                     <div class="p-inputgroup">
                                         <input pInputText type="text" [(ngModel)]="rowData[col.field]"
                                                [ngStyle]="{'width': i == 0 ? '90%': '100%',
-                            'margin-top': i == 0 ? '-30px': '0', 'margin-left': i == 0 ? '40px': '0' }"
-                                               *ngIf="col.editable">
+                                               'margin-top': i == 0 ? '-30px': '0',
+                                               'margin-left': i == 0 ? '40px': '0' }"
+                                               *ngIf="editing"
+                                               (keydown.enter)="nodeSave()"
+                                               (focusout)="nodeSave()"
+                                        >
                                         <!--<button type="button" pButton pRipple icon="bx bx-check" class="flex justify-content-center"-->
                                         <!--     click)="nodeSave()" *ngIf="edit"></button>-->
                                         <!--                    <p-dropdown appendTo="body" [options]="nodeTypes" [(ngModel)]="selectedNodeType"-->
                                         <!--                                (onChange)="onTypeSelect($event)" *ngIf="col.header == 'Тип'"></p-dropdown>-->
                                     </div>
                                 </ng-template>
-                                <ng-template pTemplate="output"
-                                             *ngIf="col.header !='id'">{{ getNodeTypeLabel(rowData[col.field]) }}
+                                <ng-template pTemplate="output">
+                                    {{ rowData[col.field] }}
                                 </ng-template>
 
                             </p-treeTableCellEditor>
                             <!--              <p-toggleButton styleClass="" onIcon="bx bx-pencil" offIcon="bx bx-pencil" [(ngModel)]="edit"-->
                             <!--                              (onChange)="onSelect($event)" *ngIf="col.header ==='id'"></p-toggleButton>-->
-                            <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
-                                    pTooltip="Add" tooltipPosition="top"
-                                    (click)="addItem(rowData, false)" *ngIf="col.header ==='id'"></button>
-                            <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
-                                    pTooltip="Add child" tooltipPosition="top"
-                                    (click)="addItem(rowData, true)" *ngIf="col.header ==='id'"></button>
-                            <button pButton type="button" icon="bx bx-trash-alt" class="p-button-text p-button-danger"
-                                    pTooltip="Удалить" tooltipPosition="top"
-                                    [disabled]="unSavedEdits" (click)="delete(rowData)"
-                                    *ngIf="col.header ==='id'"></button>
+
+                        </td>
+                        <td>
+                            <div class="flex align-items-center justify-content-center gap-2">
+                                <button *ngIf="!editing"
+                                        pButton
+                                        type="button"
+                                        icon="bx bx-pencil"
+                                        class="p-button-rounded p-button-text">
+                                </button>
+                                <button *ngIf="editing"
+                                        pButton
+                                        type="button"
+                                        icon="bx bx-check"
+                                        class="p-button-rounded p-button-text p-button-success mr-2">
+                                </button>
+                                <button *ngIf="editing"
+                                        pButton
+                                        type="button"
+                                        icon="bx bx-x"
+                                        class="p-button-rounded p-button-text p-button-danger">
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="summary">
                     <div style="text-align:left">
-                        <button pButton type="button" icon="bx bx-save" label="Сохранить" [outlined]="true"
-                                pTooltip="Сохранить" tooltipPosition="top"
-                                (click)="nodeSave()"></button>
+                        <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
+                                pTooltip="Add" tooltipPosition="top"
+                                [disabled]="!selectedNode"
+                                (click)="addItem(selectedNode.data, false)">
+                        </button>
+                        <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
+                                pTooltip="Add child" tooltipPosition="top"
+                                [disabled]="!selectedNode"
+                                (click)="addItem(selectedNode.data, true)">
+                        </button>
+                        <button pButton type="button" icon="bx bx-trash-alt" class="p-button-text p-button-danger"
+                                pTooltip="Удалить" tooltipPosition="top"
+                                [disabled]="!selectedNode"
+                                (click)="deleteItem(selectedNode.data)">
+                        </button>
                     </div>
                 </ng-template>
             </p-treeTable>
@@ -269,10 +313,10 @@
     </p-tabView>
 </div>
 <p-toast position="top-right"
-         [life]="2000"
+         [life]="4000"
          [showTransformOptions]="'translateY(100%)'"
-         [showTransitionOptions]="'500ms'"
-         [hideTransitionOptions]="'500ms'"
+         [showTransitionOptions]="'300ms'"
+         [hideTransitionOptions]="'300ms'"
          [showTransformOptions]="'translateX(100%)'">
 
 </p-toast>

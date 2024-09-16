@@ -1,5 +1,5 @@
 import {ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
-import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng/api';
+import {ConfirmationService, MessageService, SelectItem, TreeNode, TreeTableNode} from 'primeng/api';
 import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
 import {ElectronService} from 'ngx-electronyzer';
@@ -19,8 +19,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     activeIndex = 0;
     servicesMenuData: TreeNode[] | undefined;
     cols: any[] | undefined;
-    //selectedNode: TreeNode;
-    selectedNodes: TreeNode[] | undefined;
+    selectedNode: TreeNode;
+    //selectedNodes: TreeNode[] | undefined;
 
     unSavedEdits = false;
     isNotHeaderNode = true;
@@ -35,7 +35,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     //profiles: { id: number; data: { key: string, value: string }[] }[]
     profilesFlat: { name: string; id: number; key: string; value: string; }[] = []
     showTable = true
-    activeProfileId: number
 
     constructor(
         private electronService: ElectronService,
@@ -63,7 +62,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             {field: 'key', header: 'Name', editable: true, width: 300},
             {field: 'value', header: 'Link', editable: true, width: 300},
             //{field: 'type', header: 'Type', editable: false, width: 200},
-            {field: 'id', header: 'id', editable: false, width: 300},
+            //{field: 'id', header: 'id', editable: false, width: 300},
             //{width: 100}
         ];
     }
@@ -81,19 +80,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return true;
     }
 
-    exportServicesTableData() {
-        let data = JSON.stringify(this.servicesMenuData);
-        this.uiService.ipcSend('file:export', data, 'profile-id-' + this.activeProfileId + '.json')
+    exportServicesTableData(profileId: number) {
+        this.uiService.ipcInvoke('file:export', profileId).then(result => {
+            this.messageService.add(result)
+        })
     }
 
-    importServicesTableData() {
-        // load from file
-        // save to profile
-        // convert to profilesFlat and load
-        this.uiService.ipcInvoke('file:import').then(jsonData => {
-            console.log(jsonData)
+    importServicesTableData(profileId: number) {
+        this.uiService.ipcInvoke('file:import', profileId).then(result => {
+            this.messageService.add(result)
         })
-
     }
 
     async setProfileLogo(profile: any) {
@@ -127,16 +123,30 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     deleteProfile(profileId: number) {
         if (this.uiService.ipcSendSync('profiles:get').length === 1) {
-            this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'});
+            this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'})
             return
         }
-        this.uiService.ipcSend('profiles:delete', profileId)
-        this.loadProfiles()
+        this.confirmationService.confirm({
+            header: 'Подтверждение',
+            message: 'Удалить?',
+            acceptLabel: 'Да',
+            rejectLabel: 'Нет',
+            icon: 'bx bx-exclamation-triangle',
+            accept: () => {
+                this.uiService.ipcSend('profiles:delete', profileId)
+                this.loadProfiles()
+                //this.messageService.add({severity: 'success', summary: 'Deleted'});
+            },
+            reject: () => {
+            }
+        });
     }
 
     loadProfiles() {
-        let profiles : { id: number; data: { key: string; value: string; }[]; }[] = this.uiService.ipcSendSync('profiles:get')
-        this.activeProfileId = profiles[0].id
+        let profiles: {
+            id: number;
+            data: { key: string; value: string; }[];
+        }[] = this.uiService.ipcSendSync('profiles:get')
         this.profilesFlat = []
         profiles.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
                 let profileName = this.uiService.ipcSendSync('profiles:getProfileKey', profile.id, 'name')
@@ -149,7 +159,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     setActiveProfile(profileId: number) {
-        this.activeProfileId = profileId
         this.uiService.ipcInvoke('profiles:setActive', profileId).then(() => {
             this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
             //this.refreshTable()
@@ -165,9 +174,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return value;
     }
 
-    onSelect(event: { node: { data: { type: string | undefined; }; } | null; }) {
+    onSelect(event: any) {
         if (event.node != null) {
-            //this.selectedNode = event.node;
+            this.selectedNode = event.node
             this.selectedNodeType = event.node.data.type;
             this.isNotHeaderNode = (event.node.data.type !== 'header');
             // this.messageService.add({severity: 'info', summary: 'Node Selected', detail: this.selectedNode.data.key});
@@ -203,7 +212,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteNodeByData(data: any, nodes: TreeNode[]) {
-        let i;
+        let i: number;
         for (i = 0; i < nodes.length; i++) {
             if (nodes[i].data === data) {
                 nodes.splice(i, 1);
@@ -215,7 +224,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         }
     }
 
-    delete(selectedNodeData: any) {
+    deleteItem(selectedNodeData: any) {
         if (this.servicesMenuData.length === 1) {
             this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
             return;
@@ -227,6 +236,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'Нет',
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
+                console.log(selectedNodeData)
                 this.deleteNodeByData(selectedNodeData, this.servicesMenuData);
                 this.servicesMenuData = [...this.servicesMenuData];
                 this.nodeSave()
@@ -261,6 +271,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     addItem(selectedNodeData: any, asChild: boolean) {
         //this.unSavedEdits = true;
+        console.log(selectedNodeData)
         let node = this.getNodeByData(selectedNodeData, this.servicesMenuData);
         //console.log(node);
         const newId = Date.now();
@@ -308,4 +319,5 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     protected readonly Object = Object;
+    protected readonly toolbar = toolbar;
 }

@@ -402,18 +402,25 @@ ipcMain.handle('profiles:setProfileKey', async (event, args) => {
     return profileList
 })
 
-ipcMain.on('file:export', (event, args) => {
-    dialog.showSaveDialog({
-        defaultPath: args[1],
-        filters: [
-            {name: 'JSON', extensions: ['json']}
-        ]
-    }).then(result => {
+ipcMain.handle('file:export', async (event, args) => {
+    try {
+        const result = await dialog.showSaveDialog({
+            defaultPath: 'profile-id-' + args[0] + '.json',
+            filters: [
+                {name: 'JSON', extensions: ['json']}
+            ]
+        })
         if (!result.canceled) {
-            const filePath = result.filePath;
-            fs.writeFileSync(filePath, args[0], 'utf-8');
+            let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
+            const fileContent = fs.readFileSync(appConfigPath, 'utf-8')
+            fs.writeFileSync(result.filePath, fileContent, 'utf-8')
+            return {severity: 'success', summary: 'profile exported to ' + result.filePath}
         }
-    });
+    } catch (err) {
+        console.error('Error exporting file:', err)
+        return {severity: 'error', summary: err.message}
+    }
+
 })
 ipcMain.handle('file:import', async (event, args) => {
     try {
@@ -427,14 +434,16 @@ ipcMain.handle('file:import', async (event, args) => {
             const filePath = result.filePaths[0];
             const fileContent = fs.readFileSync(filePath, 'utf-8')
             const jsonData = JSON.parse(fileContent);
-            loadAppCfgFromProfile(args[0])
-            appConfig.set('servicesMenu', jsonData)
-            //console.log(jsonData)
-            return jsonData
+            if (!jsonData.hasOwnProperty("servicesMenu"))
+                return {severity: 'error', summary: 'file corrupted'}
+
+            let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
+            fs.writeFileSync(appConfigPath, fileContent)
+            return {severity: 'success', summary: 'profile imported from ' + result.filePaths[0]}
         }
     } catch (err) {
         console.error('Error reading or parsing JSON file:', err)
-        throw err
+        return {severity: 'error', summary: err.message}
     }
 });
 
