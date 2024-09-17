@@ -66,7 +66,7 @@ function createWindow() {
         minWidth: 1280,
         minHeight: 850,
         frame: false, // Use to linux
-        //backgroundColor: '#3f4254',
+        backgroundColor: '#000000',
         //show: false,
         icon: getProfileLogoPath(),
         // webPreferences: {
@@ -131,7 +131,7 @@ function createWindow() {
     if (url) {
         mainView.webContents.loadURL(url).then()
     } else {
-        openSettings()
+        toggleSettings()
     }
 
     // DevTools.
@@ -306,34 +306,32 @@ ipcMain.handle('maximize', () => {
 
 ipcMain.handle('load-url', (event, args) => {
     //dialog.showErrorBox('loadService', arg)
-    sideMenuWidth = 0
-    try {
-        new URL(args[0])
-    } catch (err) {
-        return
+    if (mainWindow.getBrowserViews().indexOf(settingsView) !== -1) {
+        mainWindow.removeBrowserView(settingsView)
     }
-    mainView.webContents.loadURL(args[0])
-        .catch(error => {
-            console.log(error.code)
-        })
+    if (args[1]) {
+        toggleSideMenu()
+    }
+    if (args[0]) {
+        try {
+            new URL(args[0])
+        } catch (err) {
+            return
+        }
+        mainView.webContents.loadURL(args[0])
+            .catch(error => {
+                console.log(error.code)
+            })
+    }
 })
 
 ipcMain.handle('open:settings', () => {
-    sideMenuWidth = 0
-    openSettings();
+    toggleSideMenu()
+    toggleSettings()
 })
+
 ipcMain.on('sideMenu:toggle', (event, args) => {
-    sideMenuWidth = sideMenu.getBounds().width
-    switch (sideMenuWidth) {
-        case 0:
-            sideMenuWidth = 230
-            loadPrimeComponent(sideMenu, 'sideMenu/' + args[0]);
-            break;
-        case 230:
-            sideMenuWidth = 0
-            break;
-    }
-    resizeMain()
+    toggleSideMenu(args);
 })
 ipcMain.on('settings:toggleTheme', (event, args) => {
     nativeTheme.themeSource = args[0]
@@ -448,6 +446,24 @@ ipcMain.handle('file:import', async (event, args) => {
 });
 
 // =====================================================================================
+function toggleSideMenu(args) {
+    sideMenuWidth = sideMenu.getBounds().width
+    if (args) {
+        switch (sideMenuWidth) {
+            case 0:
+                sideMenuWidth = 230
+                loadPrimeComponent(sideMenu, 'sideMenu/' + args[0]);
+                break;
+            case 230:
+                sideMenuWidth = 0
+                break;
+        }
+    } else {
+        sideMenuWidth = 0
+    }
+    resizeMain()
+}
+
 function loadPrimeComponent(browserView, component) {
     const url = `file://${__dirname}/dist/index.html`;
     browserView.webContents.loadURL(url).then(() => {
@@ -455,7 +471,7 @@ function loadPrimeComponent(browserView, component) {
     })
 }
 
-function openSettings() {
+function toggleSettings() {
     loadPrimeComponent(settingsView, 'settings');
     let views = mainWindow.getBrowserViews()
     if (views.indexOf(settingsView) === -1) {

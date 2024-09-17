@@ -1,10 +1,25 @@
 import {ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
-import {ConfirmationService, MessageService, SelectItem, TreeNode, TreeTableNode} from 'primeng/api';
+import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng/api';
 import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
-import {ElectronService} from 'ngx-electronyzer';
 import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
+import {ActivatedRouteSnapshot, CanDeactivateFn, RouterStateSnapshot, UrlTree} from "@angular/router";
+import {Observable} from "rxjs";
+
+
+export const canDeactivateGuard: CanDeactivateFn<any> = (
+    component: any,
+    currentRoute: ActivatedRouteSnapshot,
+    currentState: RouterStateSnapshot,
+    nextState?: RouterStateSnapshot
+): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree => {
+    // Check if there are unsaved changes
+    if (component.hasUnsavedChanges()) {
+        return confirm('You have unsaved changes. Are you sure you want to leave?');
+    }
+    return true;
+};
 
 @Component({
     selector: 'settings',
@@ -16,28 +31,26 @@ import {SelectButtonChangeEvent} from "primeng/selectbutton";
 
 export class SettingsComponent implements OnInit, OnDestroy {
 
-    activeIndex = 0;
-    servicesMenuData: TreeNode[] | undefined;
-    cols: any[] | undefined;
-    selectedNode: TreeNode;
-    //selectedNodes: TreeNode[] | undefined;
+    activeIndex = 0
+    servicesMenuData: TreeNode[] | undefined
+    cols: any[] | undefined
+    selectedNode: TreeNode
+    //selectedNodes: TreeNode[] | undefined
+    editingRow: any
 
-    unSavedEdits = false;
-    isNotHeaderNode = true;
+    nodeTypes: SelectItem[] | undefined
+    selectedNodeType: string | undefined
 
-    nodeTypes: SelectItem[] | undefined;
-    selectedNodeType: string | undefined;
-
-    ref: DynamicDialogRef | undefined;
-    theme = 'dark';
-    themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}];
+    ref: DynamicDialogRef | undefined
+    theme = 'dark'
+    themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}]
 
     //profiles: { id: number; data: { key: string, value: string }[] }[]
     profilesFlat: { name: string; id: number; key: string; value: string; }[] = []
+    activeProfileId: number
     showTable = true
 
     constructor(
-        private electronService: ElectronService,
         private uiService: UiService,
         private messageService: MessageService,
         public dialogService: DialogService,
@@ -52,18 +65,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
         this.loadProfiles()
 
-        // this.nodeTypes = [
-        //     {label: 'L1', value: 'L1'},
-        //     {label: 'L2', value: 'L2'},
-        //     {label: 'L3', value: 'L3'}
-        // ];
-
         this.cols = [
-            {field: 'key', header: 'Name', editable: true, width: 300},
-            {field: 'value', header: 'Link', editable: true, width: 300},
-            //{field: 'type', header: 'Type', editable: false, width: 200},
-            //{field: 'id', header: 'id', editable: false, width: 300},
-            //{width: 100}
+            {header: 'Name', field: 'key'},
+            {header: 'Link', field: 'value'}
         ];
     }
 
@@ -73,11 +77,27 @@ export class SettingsComponent implements OnInit, OnDestroy {
         }
     }
 
-    canDeactivate(): boolean {
-        if (this.unSavedEdits) {
-            return confirm('You have unsaved changes. Are you sure you want to leave?');
+    hasUnsavedChanges(): boolean {
+        return (this.editingRow)
+    }
+
+    startEdit(row: any) {
+        this.editingRow = row;
+    }
+
+    saveEdit() {
+        if (this.editingRow.hasOwnProperty('name')) {
+            this.setProfileKey(this.editingRow.id, this.editingRow.key, this.editingRow.value).then()
         }
-        return true;
+        if (this.editingRow.hasOwnProperty('type')) {
+            this.servicesMenuDataSave()
+        }
+        this.editingRow = null;
+    }
+
+    cancelEdit() {
+        // TODO Revert edited row to original state
+        this.editingRow = null;
     }
 
     exportServicesTableData(profileId: number) {
@@ -111,8 +131,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     async setProfileKey(profileId: number, keyName: string, value: string) {
-        await this.uiService.ipcInvoke('profiles:setProfileKey', profileId, keyName, value).then(res => {
+        await this.uiService.ipcInvoke('profiles:setProfileKey', profileId, keyName, value).then(() => {
             this.loadProfiles()
+            this.editingRow = null;
         })
     }
 
@@ -147,6 +168,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             id: number;
             data: { key: string; value: string; }[];
         }[] = this.uiService.ipcSendSync('profiles:get')
+        this.activeProfileId = profiles[0].id;
         this.profilesFlat = []
         profiles.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
                 let profileName = this.uiService.ipcSendSync('profiles:getProfileKey', profile.id, 'name')
@@ -161,6 +183,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     setActiveProfile(profileId: number) {
         this.uiService.ipcInvoke('profiles:setActive', profileId).then(() => {
             this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
+            this.activeProfileId = profileId
             //this.refreshTable()
             this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileId.toString()})
         })
@@ -174,21 +197,19 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return value;
     }
 
-    onSelect(event: any) {
-        if (event.node != null) {
-            this.selectedNode = event.node
-            this.selectedNodeType = event.node.data.type;
-            this.isNotHeaderNode = (event.node.data.type !== 'header');
-            // this.messageService.add({severity: 'info', summary: 'Node Selected', detail: this.selectedNode.data.key});
-        }
-    }
-
     onTypeSelect(event) {
         //this.selectedNode.data.type = event.value;
     }
 
+    onSelect(event: any) {
+        if (event.node != null) {
+            this.selectedNode = event.node
+            this.selectedNodeType = event.node.data.type;
+            // this.messageService.add({severity: 'info', summary: 'Node Selected', detail: this.selectedNode.data.key});
+        }
+    }
 
-    nodeSave() {
+    servicesMenuDataSave() {
         this.servicesMenuData.forEach(node => this.removeTreeParent(node));
         //this.uiService.saveToSessionStorage(this.treeNodesData);
         this.uiService.ipcSend('sideBarMenu:set', this.servicesMenuData)
@@ -239,7 +260,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
                 console.log(selectedNodeData)
                 this.deleteNodeByData(selectedNodeData, this.servicesMenuData);
                 this.servicesMenuData = [...this.servicesMenuData];
-                this.nodeSave()
+                this.servicesMenuDataSave()
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {
@@ -270,10 +291,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     addItem(selectedNodeData: any, asChild: boolean) {
-        //this.unSavedEdits = true;
         console.log(selectedNodeData)
         let node = this.getNodeByData(selectedNodeData, this.servicesMenuData);
-        //console.log(node);
         const newId = Date.now();
         if (asChild) {
             node.children.push(this.newNode(newId));
@@ -287,8 +306,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
         }
         //this.selectedNode = newHeaderNode;
         this.servicesMenuData = [...this.servicesMenuData];
-        this.nodeSave()
+        this.servicesMenuDataSave()
         // this.messageService.add({severity: 'success', summary: this.selectedNode.data[key]});
+    }
+
+    toggleTheme(event: SelectButtonChangeEvent) {
+        //this.theme = event.value
+        this.uiService.toggleTheme(this.document, this.theme)
+        this.uiService.ipcSend('settings:toggleTheme', this.theme)
+        //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
     }
 
     showDialog() {
@@ -311,13 +337,4 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     }
 
-    toggleTheme(event: SelectButtonChangeEvent) {
-        //this.theme = event.value
-        this.uiService.toggleTheme(this.document, this.theme)
-        this.uiService.ipcSend('settings:toggleTheme', this.theme)
-        //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
-    }
-
-    protected readonly Object = Object;
-    protected readonly toolbar = toolbar;
 }

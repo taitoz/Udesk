@@ -6,6 +6,18 @@
   overflow: hidden;
 }
 
+.row-gap {
+  margin-bottom: 20px;
+}
+
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40vw;
+  display: inline-block;
+}
+
 .profileKey {
   font-weight: bold;
   padding-left: 60px;

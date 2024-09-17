@@ -16,6 +16,7 @@ import {TitleBarComponent} from './titleBar.component';
 import {ToolbarModule} from "primeng/toolbar";
 import {FileUploadModule} from "primeng/fileupload";
 import {InputGroupModule} from "primeng/inputgroup";
+import {TagModule} from "primeng/tag";
 
 
 @NgModule({
@@ -30,7 +31,8 @@ import {InputGroupModule} from "primeng/inputgroup";
         ReactiveFormsModule,
         ToolbarModule,
         FileUploadModule,
-        InputGroupModule
+        InputGroupModule,
+        TagModule
     ],
     declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
     bootstrap: [AppComponent],
