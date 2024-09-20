@@ -96,7 +96,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     cancelEdit() {
-        // TODO Revert edited row to original state
+        if (this.editingRow.hasOwnProperty('name')) {
+            this.loadProfiles()
+        }
+        if (this.editingRow.hasOwnProperty('type')) {
+            this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
+        }
         this.editingRow = null;
     }
 

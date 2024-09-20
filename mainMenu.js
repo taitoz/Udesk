@@ -1,7 +1,30 @@
 import {app} from 'electron'
 import {loadTranslation, translate} from './translations/i18n.js'
 
-export function getMenu(window, locale) {
+export function getMainViewMenu(window) {
+    //loadTranslation(locale)
+    const template = [
+        {
+            label: translate('DevTools'),
+            accelerator: 'F12',
+            click: () => {
+                window.webContents.openDevTools({mode: 'detach'});
+            }
+        }
+        // {
+        //   role: 'help', label: translate('Help'),
+        //   submenu: [
+        //     {
+        //       label: translate('Learn more'),
+        //       click () { require('electron').shell.openExternal('https://github.com/crilleengvall/electron-tutorial-app') }
+        //     }
+        //   ]
+        // }
+    ]
+    return template
+}
+
+export function getMainWindowMenu(window, locale) {
     loadTranslation(locale)
     const template = [
         {

@@ -11,7 +11,7 @@ import fs from 'fs';
 
 // Localization
 import {loadTranslation, translate} from './translations/i18n.js'
-import {getMenu} from "./mainMenu.js";
+import {getMainViewMenu, getMainWindowMenu} from "./mainMenu.js";
 
 // App logs
 import appLog from 'electron-log'
@@ -113,6 +113,52 @@ function createWindow() {
         width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
         height: mainWindow.getBounds().height - titleBarHeight
     })
+
+    const menuTemplate = [
+        {
+            label: 'Copy',
+            click: () => {
+                console.log('Copy action triggered');
+            }
+        },
+        {
+            label: 'Paste',
+            click: () => {
+                console.log('Paste action triggered');
+            }
+        },
+        {
+            type: 'separator'
+        },
+        {
+            label: 'Inspect Element',
+            click: () => {
+                console.log('Inspect Element action triggered');
+            }
+        }
+    ];
+    const menu = Menu.buildFromTemplate(menuTemplate);
+    // mainView.webContents.on('did-finish-load', () => {
+    //     // Attach the contextmenu listener directly within the did-finish-load handler
+    //     mainView.webContents.on('contextmenu', (event) => {
+    //         event.preventDefault();
+    //         menu.popup({ window: mainView.webContents });
+    //     })
+    // })
+    window.addEventListener('contextmenu', (e) => {
+        e.preventDefault()
+        const template = [
+            {
+                label: 'Menu Item 1',
+                click: () => { e.sender.send('context-menu-command', 'menu-item-1') }
+            },
+            { type: 'separator' },
+            { label: 'Menu Item 2', type: 'checkbox', checked: true }
+        ]
+        const menu = Menu.buildFromTemplate(template)
+        menu.popup({ window: BrowserWindow.fromWebContents(e.sender) })
+    })
+
 
     settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     settingsView.setAutoResize({width: true, height: true})
