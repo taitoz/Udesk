@@ -145,19 +145,19 @@ function createWindow() {
     //         menu.popup({ window: mainView.webContents });
     //     })
     // })
-    window.addEventListener('contextmenu', (e) => {
-        e.preventDefault()
-        const template = [
-            {
-                label: 'Menu Item 1',
-                click: () => { e.sender.send('context-menu-command', 'menu-item-1') }
-            },
-            { type: 'separator' },
-            { label: 'Menu Item 2', type: 'checkbox', checked: true }
-        ]
-        const menu = Menu.buildFromTemplate(template)
-        menu.popup({ window: BrowserWindow.fromWebContents(e.sender) })
-    })
+    // window.addEventListener('contextmenu', (e) => {
+    //     e.preventDefault()
+    //     const template = [
+    //         {
+    //             label: 'Menu Item 1',
+    //             click: () => { e.sender.send('context-menu-command', 'menu-item-1') }
+    //         },
+    //         { type: 'separator' },
+    //         { label: 'Menu Item 2', type: 'checkbox', checked: true }
+    //     ]
+    //     const menu = Menu.buildFromTemplate(template)
+    //     menu.popup({ window: BrowserWindow.fromWebContents(e.sender) })
+    // })
 
 
     settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
