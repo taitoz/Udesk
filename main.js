@@ -149,7 +149,6 @@ async function createWindow() {
     await page.setUserAgent(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
     )
-    addHandlers(page)
 
     settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     settingsView.setAutoResize({width: true, height: true})
@@ -352,6 +351,8 @@ ipcMain.handle('load-url', (event, args) => {
         } catch (err) {
             return
         }
+        //TODO handlers as args
+        addHandlers(page)
         page.goto(args[0])
         // mainView.webContents.loadURL(args[0])
         //     .catch(error => {
@@ -493,7 +494,7 @@ function addHandlers(page) {
         };
 
         switch (url) {
-            case findTerm('/prometheus/'): {
+            case findTerm('/swagger'): {
                 // selectedLotId = url.substring(url.lastIndexOf('/') + 1)
                 console.log('request findTerm')
                 try {
@@ -522,9 +523,9 @@ function addHandlers(page) {
         };
 
         switch (url) {
-            case findTerm('/prometheus/'): {
+            case findTerm('/swagger'): {
                 console.log('response findTerm')
-                //await login(page)
+                await login(page)
                 break
             }
         }
@@ -534,10 +535,10 @@ function addHandlers(page) {
 async function login(page) {
     // const cookies = await page.cookies()
     // if (cookies[0] && cookies[0]['expires'] > 0) return
-    await waitElement(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b")
-    await typeToInput(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b", "username")
-    await typeToInput(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b", "password")
-    await clickElement(page, "loginButton")
+    // await waitElement(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b")
+    // await typeToInput(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b", "username")
+    // await typeToInput(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b", "password")
+    await clickElement(page, "#swagger-ui > section > div.swagger-ui > div:nth-child(2) > div:nth-child(2) > div > section > div > button")
 }
 
 async function typeToInput(page, selector, text) {
