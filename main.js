@@ -38,6 +38,16 @@ import updater from 'electron-simple-updater';
 //appLog.info(updater.buildId)
 initUpdater();
 
+// Puppeteer
+import pie from 'puppeteer-in-electron'
+import {TimeoutError} from 'puppeteer-core'
+import puppeteer from 'puppeteer-core'
+
+let puppeteerApp = puppeteer
+await pie.initialize(app)
+let browser
+let page
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -55,9 +65,9 @@ let titleBarHeight = 32
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
 
-function createWindow() {
+async function createWindow() {
 
-    const winCfg = cfg.window();
+    const winCfg = cfg.window()
 
     // Create the browser window.
     mainWindow = new BrowserWindow({
@@ -89,7 +99,7 @@ function createWindow() {
     loadPrimeComponent(titleBar, 'titleBar')
     titleBar.webContents.on('context-menu', (event) => {
         event.preventDefault()
-        Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup({ window: titleBar.webContents })
+        Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup({window: titleBar.webContents})
     })
 
     sideBar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
@@ -98,7 +108,7 @@ function createWindow() {
     sideBar.setAutoResize({width: false, height: true})
     loadPrimeComponent(sideBar, 'sideBar')
     sideBar.webContents.on('context-menu', (event) => {
-        Menu.buildFromTemplate(getMainViewMenu(sideBar)).popup({ window: sideBar.webContents })
+        Menu.buildFromTemplate(getMainViewMenu(sideBar)).popup({window: sideBar.webContents})
     })
 
     sideMenu = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
@@ -111,7 +121,7 @@ function createWindow() {
     })
     sideMenu.setAutoResize({width: false, height: true})
     sideMenu.webContents.on('context-menu', (event) => {
-        Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup({ window: sideMenu.webContents })
+        Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup({window: sideMenu.webContents})
     })
 
     mainView = new BrowserView()
@@ -124,7 +134,7 @@ function createWindow() {
         height: mainWindow.getBounds().height - titleBarHeight
     })
     mainView.webContents.on('context-menu', (event) => {
-        Menu.buildFromTemplate(getMainViewMenu(mainView)).popup({ window: mainView.webContents })
+        Menu.buildFromTemplate(getMainViewMenu(mainView)).popup({window: mainView.webContents})
     })
     mainView.webContents.on('input-event', (event, input) => {
         //event.preventDefault();
@@ -132,6 +142,14 @@ function createWindow() {
             mainView.webContents.reload()
         }
     })
+
+    // Puppeteer
+    browser = await pie.connect(app, puppeteerApp)
+    page = await pie.getPage(browser, mainView)
+    await page.setUserAgent(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    )
+    addHandlers(page)
 
     settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     settingsView.setAutoResize({width: true, height: true})
@@ -142,7 +160,7 @@ function createWindow() {
         height: mainWindow.getBounds().height - titleBarHeight
     })
     settingsView.webContents.on('context-menu', (event) => {
-        Menu.buildFromTemplate(getMainViewMenu(settingsView)).popup({ window: settingsView.webContents })
+        Menu.buildFromTemplate(getMainViewMenu(settingsView)).popup({window: settingsView.webContents})
     })
 
     //mainWindow.loadFile('index.html')
@@ -256,7 +274,7 @@ if (!singleInstanceLock) {
         } catch (error) {
             console.log(error)
         }
-        createWindow()
+        createWindow().then()
         //mainWindow.setMenu(Menu.buildFromTemplate(getMenu(mainWindow, app.getLocale())))
     })
 }
@@ -334,10 +352,11 @@ ipcMain.handle('load-url', (event, args) => {
         } catch (err) {
             return
         }
-        mainView.webContents.loadURL(args[0])
-            .catch(error => {
-                console.log(error.code)
-            })
+        page.goto(args[0])
+        // mainView.webContents.loadURL(args[0])
+        //     .catch(error => {
+        //         console.log(error.code)
+        //     })
     }
 })
 
@@ -460,6 +479,100 @@ ipcMain.handle('file:import', async (event, args) => {
         return {severity: 'error', summary: err.message}
     }
 });
+
+// =====================================================================================
+function addHandlers(page) {
+    page.setRequestInterception(true);
+    page.on('request', async request => {
+        let url = request.url()
+        console.log(url)
+        const findTerm = (term) => {
+            if (url.includes(term)) {
+                return url;
+            } else return ''
+        };
+
+        switch (url) {
+            case findTerm('/prometheus/'): {
+                // selectedLotId = url.substring(url.lastIndexOf('/') + 1)
+                console.log('request findTerm')
+                try {
+                } catch (e) {
+                }
+                //await login(page)
+                request.continue()
+                break
+            }
+            default: {
+                request.continue()
+            }
+        }
+    })
+
+    page.on('response', async response => {
+        //console.log(response.status())
+        let url = '';
+        if (response.status() === 200) url = response.url();
+        //console.log(response.url())
+
+        const findTerm = (term) => {
+            if (url.includes(term)) {
+                return url;
+            } else return ''
+        };
+
+        switch (url) {
+            case findTerm('/prometheus/'): {
+                console.log('response findTerm')
+                //await login(page)
+                break
+            }
+        }
+    });
+}
+
+async function login(page) {
+    // const cookies = await page.cookies()
+    // if (cookies[0] && cookies[0]['expires'] > 0) return
+    await waitElement(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b")
+    await typeToInput(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b", "username")
+    await typeToInput(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b", "password")
+    await clickElement(page, "loginButton")
+}
+
+async function typeToInput(page, selector, text) {
+    try {
+        await page.waitForSelector(selector, {timeout: 60000})
+        await page.type(selector, text)
+    } catch (e) {
+        if (e instanceof TimeoutError) {
+            //page.reload()
+        }
+    }
+}
+
+async function clickElement(page, selector) {
+    try {
+        const element = await page.waitForSelector(selector, {visible: true}, {timeout: 60000});
+        await element.click()
+    } catch (e) {
+        if (e instanceof TimeoutError) {
+            //page.reload()
+            appLog.error("timeout on click: " + selector)
+        }
+    }
+}
+
+async function waitElement(page, selector) {
+    try {
+        return await page.waitForSelector(selector, {timeout: 60000})
+    } catch (e) {
+        if (e instanceof TimeoutError) {
+            //page.reload()
+            appLog.error("timeout on wait: " + selector)
+        }
+    }
+}
 
 // =====================================================================================
 function toggleSideMenu(args) {
