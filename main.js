@@ -87,12 +87,19 @@ function createWindow() {
     titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
     titleBar.setAutoResize({width: true, height: false})
     loadPrimeComponent(titleBar, 'titleBar')
+    titleBar.webContents.on('context-menu', (event) => {
+        event.preventDefault()
+        Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup({ window: titleBar.webContents })
+    })
 
     sideBar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.addBrowserView(sideBar)
     sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: mainWindow.getBounds().height})
     sideBar.setAutoResize({width: false, height: true})
     loadPrimeComponent(sideBar, 'sideBar')
+    sideBar.webContents.on('context-menu', (event) => {
+        Menu.buildFromTemplate(getMainViewMenu(sideBar)).popup({ window: sideBar.webContents })
+    })
 
     sideMenu = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.addBrowserView(sideMenu)
@@ -103,6 +110,9 @@ function createWindow() {
         height: mainWindow.getBounds().height
     })
     sideMenu.setAutoResize({width: false, height: true})
+    sideMenu.webContents.on('context-menu', (event) => {
+        Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup({ window: sideMenu.webContents })
+    })
 
     mainView = new BrowserView()
     mainWindow.addBrowserView(mainView)
@@ -113,52 +123,15 @@ function createWindow() {
         width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
         height: mainWindow.getBounds().height - titleBarHeight
     })
-
-    const menuTemplate = [
-        {
-            label: 'Copy',
-            click: () => {
-                console.log('Copy action triggered');
-            }
-        },
-        {
-            label: 'Paste',
-            click: () => {
-                console.log('Paste action triggered');
-            }
-        },
-        {
-            type: 'separator'
-        },
-        {
-            label: 'Inspect Element',
-            click: () => {
-                console.log('Inspect Element action triggered');
-            }
+    mainView.webContents.on('context-menu', (event) => {
+        Menu.buildFromTemplate(getMainViewMenu(mainView)).popup({ window: mainView.webContents })
+    })
+    mainView.webContents.on('input-event', (event, input) => {
+        //event.preventDefault();
+        if (input.type === 'rawKeyDown' && input.key === 'F5') {
+            mainView.webContents.reload()
         }
-    ];
-    const menu = Menu.buildFromTemplate(menuTemplate);
-    // mainView.webContents.on('did-finish-load', () => {
-    //     // Attach the contextmenu listener directly within the did-finish-load handler
-    //     mainView.webContents.on('contextmenu', (event) => {
-    //         event.preventDefault();
-    //         menu.popup({ window: mainView.webContents });
-    //     })
-    // })
-    // window.addEventListener('contextmenu', (e) => {
-    //     e.preventDefault()
-    //     const template = [
-    //         {
-    //             label: 'Menu Item 1',
-    //             click: () => { e.sender.send('context-menu-command', 'menu-item-1') }
-    //         },
-    //         { type: 'separator' },
-    //         { label: 'Menu Item 2', type: 'checkbox', checked: true }
-    //     ]
-    //     const menu = Menu.buildFromTemplate(template)
-    //     menu.popup({ window: BrowserWindow.fromWebContents(e.sender) })
-    // })
-
+    })
 
     settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     settingsView.setAutoResize({width: true, height: true})
@@ -167,6 +140,9 @@ function createWindow() {
         y: titleBarHeight,
         width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
         height: mainWindow.getBounds().height - titleBarHeight
+    })
+    settingsView.webContents.on('context-menu', (event) => {
+        Menu.buildFromTemplate(getMainViewMenu(settingsView)).popup({ window: settingsView.webContents })
     })
 
     //mainWindow.loadFile('index.html')
@@ -179,12 +155,6 @@ function createWindow() {
     } else {
         toggleSettings()
     }
-
-    // DevTools.
-    // mainWindow.webContents.openDevTools({mode: 'detach'});
-    settingsView.webContents.openDevTools({mode: 'detach'});
-    // sideBar.webContents.openDevTools({mode: 'detach'});
-    // sideMenu.webContents.openDevTools({mode: 'detach'});
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {

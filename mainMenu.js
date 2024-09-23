@@ -1,12 +1,30 @@
 import {app} from 'electron'
 import {loadTranslation, translate} from './translations/i18n.js'
 
+
 export function getMainViewMenu(window) {
     //loadTranslation(locale)
     const template = [
         {
+            label: 'Copy',
+            role: 'copy',
+            click: () => {
+                console.log('Copy action triggered');
+            }
+        },
+        {
+            label: 'Paste',
+            role:'paste',
+            click: () => {
+                console.log('Paste action triggered');
+            }
+        },
+        {
+            type: 'separator'
+        },
+        {
             label: translate('DevTools'),
-            accelerator: 'F12',
+            // accelerator: 'F12',
             click: () => {
                 window.webContents.openDevTools({mode: 'detach'});
             }
