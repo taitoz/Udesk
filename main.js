@@ -40,9 +40,8 @@ initUpdater();
 
 // Puppeteer
 import pie from 'puppeteer-in-electron'
-import {TimeoutError} from 'puppeteer-core'
 import puppeteer from 'puppeteer-core'
-
+import {addResponseHandlers} from "./mainPageActions.js";
 let puppeteerApp = puppeteer
 await pie.initialize(app)
 let browser
@@ -168,7 +167,8 @@ async function createWindow() {
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
     let url = getProfileKey(0, 'homeUrl')
     if (url) {
-        mainView.webContents.loadURL(url).then()
+        page.goto(url)
+        // mainView.webContents.loadURL(url).then()
     } else {
         toggleSettings()
     }
@@ -351,8 +351,27 @@ ipcMain.handle('load-url', (event, args) => {
         } catch (err) {
             return
         }
-        //TODO handlers as args
-        addHandlers(page)
+        //TODO pageActions to file
+        let pageActions = {
+            term: 'kibana-elk-services.vlife.kz/app/login',
+            actions: [
+                {
+                    action: 'typeToInput',
+                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input',
+                    value: 'k.pak',
+                },
+                {
+                    action: 'typeToInput',
+                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(2) > div > div > div > input',
+                    value: 'M6VmO89JpQzANE2409',
+                },
+                {
+                    action: 'clickElement',
+                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(3) > div > button'
+                }
+            ]
+        }
+        addResponseHandlers(page, pageActions)
         page.goto(args[0])
         // mainView.webContents.loadURL(args[0])
         //     .catch(error => {
@@ -480,100 +499,6 @@ ipcMain.handle('file:import', async (event, args) => {
         return {severity: 'error', summary: err.message}
     }
 });
-
-// =====================================================================================
-function addHandlers(page) {
-    page.setRequestInterception(true);
-    page.on('request', async request => {
-        let url = request.url()
-        console.log(url)
-        const findTerm = (term) => {
-            if (url.includes(term)) {
-                return url;
-            } else return ''
-        };
-
-        switch (url) {
-            case findTerm('/swagger'): {
-                // selectedLotId = url.substring(url.lastIndexOf('/') + 1)
-                console.log('request findTerm')
-                try {
-                } catch (e) {
-                }
-                //await login(page)
-                request.continue()
-                break
-            }
-            default: {
-                request.continue()
-            }
-        }
-    })
-
-    page.on('response', async response => {
-        //console.log(response.status())
-        let url = '';
-        if (response.status() === 200) url = response.url();
-        //console.log(response.url())
-
-        const findTerm = (term) => {
-            if (url.includes(term)) {
-                return url;
-            } else return ''
-        };
-
-        switch (url) {
-            case findTerm('/swagger'): {
-                console.log('response findTerm')
-                await login(page)
-                break
-            }
-        }
-    });
-}
-
-async function login(page) {
-    // const cookies = await page.cookies()
-    // if (cookies[0] && cookies[0]['expires'] > 0) return
-    // await waitElement(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b")
-    // await typeToInput(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b", "username")
-    // await typeToInput(page, "#i28ab7e21-79af-11ef-9f4e-832af4b1cc9b", "password")
-    await clickElement(page, "#swagger-ui > section > div.swagger-ui > div:nth-child(2) > div:nth-child(2) > div > section > div > button")
-}
-
-async function typeToInput(page, selector, text) {
-    try {
-        await page.waitForSelector(selector, {timeout: 60000})
-        await page.type(selector, text)
-    } catch (e) {
-        if (e instanceof TimeoutError) {
-            //page.reload()
-        }
-    }
-}
-
-async function clickElement(page, selector) {
-    try {
-        const element = await page.waitForSelector(selector, {visible: true}, {timeout: 60000});
-        await element.click()
-    } catch (e) {
-        if (e instanceof TimeoutError) {
-            //page.reload()
-            appLog.error("timeout on click: " + selector)
-        }
-    }
-}
-
-async function waitElement(page, selector) {
-    try {
-        return await page.waitForSelector(selector, {timeout: 60000})
-    } catch (e) {
-        if (e instanceof TimeoutError) {
-            //page.reload()
-            appLog.error("timeout on wait: " + selector)
-        }
-    }
-}
 
 // =====================================================================================
 function toggleSideMenu(args) {

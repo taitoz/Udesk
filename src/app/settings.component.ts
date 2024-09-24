@@ -161,6 +161,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             accept: () => {
                 this.uiService.ipcSend('profiles:delete', profileId)
                 this.loadProfiles()
+                this.setActiveProfile(this.activeProfileId)
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {
@@ -250,8 +251,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
         }
     }
 
-    deleteItem(selectedNodeData: any) {
-        if (this.servicesMenuData.length === 1) {
+    deleteItem(selectedNode: TreeNode) {
+        console.log(this.servicesMenuData)
+        if (this.servicesMenuData.length === 1 && selectedNode.parent === null) {
             this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
             return;
         }
@@ -262,10 +264,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'Нет',
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
-                console.log(selectedNodeData)
-                this.deleteNodeByData(selectedNodeData, this.servicesMenuData);
+                console.log(selectedNode)
+                this.deleteNodeByData(selectedNode.data, this.servicesMenuData);
                 this.servicesMenuData = [...this.servicesMenuData];
                 this.servicesMenuDataSave()
+                this.selectedNode = null
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {

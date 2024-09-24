@@ -4,7 +4,7 @@ import {loadTranslation, translate} from './translations/i18n.js'
 
 export function getMainViewMenu(window) {
     //loadTranslation(locale)
-    const template = [
+    return [
         {
             label: 'Copy',
             role: 'copy',
@@ -14,7 +14,7 @@ export function getMainViewMenu(window) {
         },
         {
             label: 'Paste',
-            role:'paste',
+            role: 'paste',
             click: () => {
                 console.log('Paste action triggered');
             }
@@ -39,7 +39,6 @@ export function getMainViewMenu(window) {
         //   ]
         // }
     ]
-    return template
 }
 
 export function getMainWindowMenu(window, locale) {

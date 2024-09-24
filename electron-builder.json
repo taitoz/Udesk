@@ -7,7 +7,8 @@
     "!*",
     "!**/*",
     "main.js",
-    "mainMenu.js",
+    "mainMenus.js",
+    "mainPageActions.js",
     "updater.js",
     "assets/**/*",
     "translations/**/*",
@@ -25,7 +26,7 @@
   },
   "portable": {
     "unpackDirName": "udesk",
-    "splashImage": "assets/logo48b.png"
+    "splashImage": "assets/Udesk_logo.png"
   },
   "mac": {
     "icon": "assets/mac/32.icns",
@@ -34,7 +35,7 @@
     ]
   },
   "linux": {
-    "icon": "assets/logo48b.png",
+    "icon": "assets/Udesk_logo.png",
     "target": [
       "AppImage"
     ]
