@@ -11,7 +11,7 @@ import fs from 'fs';
 
 // Localization
 import {loadTranslation, translate} from './translations/i18n.js'
-import {getMainViewMenu, getMainWindowMenu} from "./mainMenu.js";
+import {getMainViewMenu, getMainWindowMenu} from "./mainMenus.js";
 
 // App logs
 import appLog from 'electron-log'
@@ -371,7 +371,30 @@ ipcMain.handle('load-url', (event, args) => {
                 }
             ]
         }
-        addResponseHandlers(page, pageActions)
+        let pageActions2 = {
+            term: '192.168.1.1/index.html',
+            actions: [
+                // {
+                //     action: 'waitElement',
+                //     selector: 'input.textfield:nth-child(2)'
+                // },
+                {
+                    action: 'typeToInput',
+                    selector: 'input.textfield:nth-child(2)',
+                    value: 'admin',
+                },
+                {
+                    action: 'typeToInput',
+                    selector: 'input.textfield:nth-child(5)',
+                    value: 'admin',
+                },
+                {
+                    action: 'clickElement',
+                    selector: '#btnSignIn'
+                }
+            ]
+        }
+        addResponseHandlers(page, pageActions2)
         page.goto(args[0])
         // mainView.webContents.loadURL(args[0])
         //     .catch(error => {
