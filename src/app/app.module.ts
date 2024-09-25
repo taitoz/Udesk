@@ -1,7 +1,7 @@
 import {NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {HttpClientModule} from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
 import {UiService} from './ui.service';
@@ -19,12 +19,10 @@ import {InputGroupModule} from "primeng/inputgroup";
 import {TagModule} from "primeng/tag";
 
 
-@NgModule({
-    imports: [
-        PrimeNgModule,
+@NgModule({ declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
+    bootstrap: [AppComponent], imports: [PrimeNgModule,
         BrowserModule,
         BrowserAnimationsModule,
-        HttpClientModule,
         FormsModule,
         AppRouters,
         NgOptimizedImage,
@@ -32,12 +30,7 @@ import {TagModule} from "primeng/tag";
         ToolbarModule,
         FileUploadModule,
         InputGroupModule,
-        TagModule
-    ],
-    declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
-    bootstrap: [AppComponent],
-    providers: [UiService]
-})
+        TagModule], providers: [UiService, provideHttpClient(withInterceptorsFromDi())] })
 
 export class AppModule {
 }

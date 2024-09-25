@@ -1,4 +1,4 @@
-import {HttpClient} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {EventEmitter, Injectable, Output} from '@angular/core';
 import {TreeNode} from 'primeng/api';
 import {SessionStorageService} from 'angular-web-storage';

@@ -1,5 +1,5 @@
 import {
-    BrowserView, BrowserWindow, ipcMain, Menu, nativeTheme,
+    WebContentsView, BrowserWindow, ipcMain, Menu, nativeTheme,
     app, Tray, dialog, screen, globalShortcut
 } from 'electron'
 
@@ -91,41 +91,38 @@ async function createWindow() {
     })
     winCfg.assign(mainWindow);
 
-    titleBar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.addBrowserView(titleBar)
+    titleBar = new WebContentsView ({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainWindow.contentView.addChildView(titleBar)
     titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
-    titleBar.setAutoResize({width: true, height: false})
     loadPrimeComponent(titleBar, 'titleBar')
     titleBar.webContents.on('context-menu', (event) => {
         event.preventDefault()
         Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup({window: titleBar.webContents})
     })
 
-    sideBar = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.addBrowserView(sideBar)
+    sideBar = new WebContentsView ({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainWindow.contentView.addChildView(sideBar)
     sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: mainWindow.getBounds().height})
-    sideBar.setAutoResize({width: false, height: true})
     loadPrimeComponent(sideBar, 'sideBar')
     sideBar.webContents.on('context-menu', (event) => {
         Menu.buildFromTemplate(getMainViewMenu(sideBar)).popup({window: sideBar.webContents})
     })
 
-    sideMenu = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.addBrowserView(sideMenu)
+    sideMenu = new WebContentsView ({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainWindow.contentView.addChildView(sideMenu)
     sideMenu.setBounds({
         x: sideBarWidth,
         y: titleBarHeight,
         width: sideMenuWidth,
         height: mainWindow.getBounds().height
     })
-    sideMenu.setAutoResize({width: false, height: true})
+    // sideMenu.setAutoResize({width: false, height: true})
     sideMenu.webContents.on('context-menu', (event) => {
         Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup({window: sideMenu.webContents})
     })
 
-    mainView = new BrowserView()
-    mainWindow.addBrowserView(mainView)
-    mainView.setAutoResize({width: true, height: true})
+    mainView = new WebContentsView ()
+    mainWindow.contentView.addChildView(mainView)
     mainView.setBounds({
         x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
@@ -149,8 +146,8 @@ async function createWindow() {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
     )
 
-    settingsView = new BrowserView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    settingsView.setAutoResize({width: true, height: true})
+    settingsView = new WebContentsView ({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    // settingsView.setAutoResize({width: true, height: true})
     settingsView.setBounds({
         x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
@@ -167,7 +164,7 @@ async function createWindow() {
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
     let url = getProfileKey(0, 'homeUrl')
     if (url) {
-        page.goto(url)
+        await page.goto(url)
         // mainView.webContents.loadURL(url).then()
     } else {
         toggleSettings()
@@ -175,7 +172,7 @@ async function createWindow() {
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
-        //resizeMain()
+        resizeMain()
     })
 
     // Emitted when the window is closed.
@@ -210,6 +207,8 @@ function resizeMain() {
     //     width: sidebarWidth,
     //     height: newBounds.height
     // })
+    titleBar.setBounds({x: 0, y: 0, width: newBounds.width, height: titleBarHeight})
+    sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: newBounds.height})
 
     sideMenu.setBounds({
         x: sideBarWidth,
@@ -247,10 +246,12 @@ if (!singleInstanceLock) {
         }
     })
 
-    app.on('ready', function () {
-        loadTranslation(app.getLocale())
+    app.on('ready', async function () {
+
         //const icon = nativeImage.createFromPath()
         try {
+            loadTranslation(app.getLocale())
+            await createWindow()
             // const ret = globalShortcut.register('CommandOrControl+R', () => {
             //     app.relaunch();
             //     app.exit();
@@ -273,7 +274,6 @@ if (!singleInstanceLock) {
         } catch (error) {
             console.log(error)
         }
-        createWindow().then()
         //mainWindow.setMenu(Menu.buildFromTemplate(getMenu(mainWindow, app.getLocale())))
     })
 }
@@ -339,8 +339,9 @@ ipcMain.handle('maximize', () => {
 
 ipcMain.handle('load-url', (event, args) => {
     //dialog.showErrorBox('loadService', arg)
-    if (mainWindow.getBrowserViews().indexOf(settingsView) !== -1) {
-        mainWindow.removeBrowserView(settingsView)
+    let views = mainWindow.contentView.children
+    if (views.indexOf(settingsView) !== -1) {
+        mainWindow.contentView.removeChildView(settingsView)
     }
     if (args[1]) {
         toggleSideMenu()
@@ -551,11 +552,11 @@ function loadPrimeComponent(browserView, component) {
 
 function toggleSettings() {
     loadPrimeComponent(settingsView, 'settings');
-    let views = mainWindow.getBrowserViews()
+    let views = mainWindow.contentView.children
     if (views.indexOf(settingsView) === -1) {
-        mainWindow.addBrowserView(settingsView)
+        mainWindow.contentView.addChildView(settingsView)
     } else {
-        mainWindow.removeBrowserView(settingsView)
+        mainWindow.contentView.removeChildView(settingsView)
     }
 }
 
