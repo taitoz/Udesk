@@ -40,8 +40,9 @@ initUpdater();
 
 // Puppeteer
 import pie from 'puppeteer-in-electron'
-import puppeteer from 'puppeteer-core'
+import puppeteer from 'puppeteer-extra'
 import {addResponseHandlers} from "./mainPageActions.js";
+
 let puppeteerApp = puppeteer
 await pie.initialize(app)
 let browser
@@ -64,7 +65,7 @@ let titleBarHeight = 32
 app.disableHardwareAcceleration()
 app.commandLine.appendSwitch('ignore-certificate-errors')
 
-async function createWindow() {
+function createWindow() {
 
     const winCfg = cfg.window()
 
@@ -91,8 +92,8 @@ async function createWindow() {
     })
     winCfg.assign(mainWindow);
 
-    titleBar = new WebContentsView ({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.contentView.addChildView(titleBar)
+    titleBar = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainWindow.contentView.addChildView(titleBar, 0)
     titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
     loadPrimeComponent(titleBar, 'titleBar')
     titleBar.webContents.on('context-menu', (event) => {
@@ -100,29 +101,28 @@ async function createWindow() {
         Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup({window: titleBar.webContents})
     })
 
-    sideBar = new WebContentsView ({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.contentView.addChildView(sideBar)
+    sideBar = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainWindow.contentView.addChildView(sideBar, 1)
     sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: mainWindow.getBounds().height})
     loadPrimeComponent(sideBar, 'sideBar')
     sideBar.webContents.on('context-menu', (event) => {
         Menu.buildFromTemplate(getMainViewMenu(sideBar)).popup({window: sideBar.webContents})
     })
 
-    sideMenu = new WebContentsView ({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.contentView.addChildView(sideMenu)
+    sideMenu = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
+    mainWindow.contentView.addChildView(sideMenu, 2)
     sideMenu.setBounds({
         x: sideBarWidth,
         y: titleBarHeight,
         width: sideMenuWidth,
         height: mainWindow.getBounds().height
     })
-    // sideMenu.setAutoResize({width: false, height: true})
     sideMenu.webContents.on('context-menu', (event) => {
         Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup({window: sideMenu.webContents})
     })
 
-    mainView = new WebContentsView ()
-    mainWindow.contentView.addChildView(mainView)
+    mainView = new WebContentsView()
+    mainWindow.contentView.addChildView(mainView, 3)
     mainView.setBounds({
         x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
@@ -140,19 +140,20 @@ async function createWindow() {
     })
 
     // Puppeteer
-    browser = await pie.connect(app, puppeteerApp)
-    page = await pie.getPage(browser, mainView)
-    await page.setUserAgent(
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-    )
+    browser = pie.connect(app, puppeteerApp).then(() => {
+        page = pie.getPage(browser, mainView).then(() => {
+            page.setUserAgent(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+            )
+        })
+    })
 
-    settingsView = new WebContentsView ({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    // settingsView.setAutoResize({width: true, height: true})
+    settingsView = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     settingsView.setBounds({
         x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
         width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
-        height: mainWindow.getBounds().height - titleBarHeight
+        height: mainWindow.getBounds().height
     })
     settingsView.webContents.on('context-menu', (event) => {
         Menu.buildFromTemplate(getMainViewMenu(settingsView)).popup({window: settingsView.webContents})
@@ -164,8 +165,8 @@ async function createWindow() {
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
     let url = getProfileKey(0, 'homeUrl')
     if (url) {
-        await page.goto(url)
-        // mainView.webContents.loadURL(url).then()
+        //await page.goto(url)
+        mainView.webContents.loadURL(url).then()
     } else {
         toggleSettings()
     }
@@ -224,12 +225,14 @@ function resizeMain() {
         height: newBounds.height
     })
 
-    settingsView.setBounds({
-        x: (sideBarWidth + sideMenuWidth),
-        y: titleBarHeight,
-        width: newBounds.width - (sideBarWidth + sideMenuWidth),
-        height: newBounds.height
-    })
+    if (mainWindow.contentView.children.includes(settingsView)) {
+        settingsView.setBounds({
+            x: (sideBarWidth + sideMenuWidth),
+            y: titleBarHeight,
+            width: newBounds.width - (sideBarWidth + sideMenuWidth),
+            height: newBounds.height
+        })
+    }
 }
 
 // This method will be called when Electron has finished
@@ -246,12 +249,12 @@ if (!singleInstanceLock) {
         }
     })
 
-    app.on('ready', async function () {
+    app.on('ready', function () {
 
         //const icon = nativeImage.createFromPath()
         try {
             loadTranslation(app.getLocale())
-            await createWindow()
+            createWindow()
             // const ret = globalShortcut.register('CommandOrControl+R', () => {
             //     app.relaunch();
             //     app.exit();
@@ -310,7 +313,7 @@ nativeTheme.on("updated", () => {
 
 // =====================================================================================
 ipcMain.handle('back', () => {
-    mainView.webContents.goBack()
+    mainView.webContents.navigationHistory.goBack()
 })
 ipcMain.handle('reload', () => {
     if (mainView.webContents.getURL().includes('primeng-ui')) return;
@@ -339,8 +342,7 @@ ipcMain.handle('maximize', () => {
 
 ipcMain.handle('load-url', (event, args) => {
     //dialog.showErrorBox('loadService', arg)
-    let views = mainWindow.contentView.children
-    if (views.indexOf(settingsView) !== -1) {
+    if (mainWindow.contentView.children.includes(settingsView)) {
         mainWindow.contentView.removeChildView(settingsView)
     }
     if (args[1]) {
@@ -395,16 +397,16 @@ ipcMain.handle('load-url', (event, args) => {
                 }
             ]
         }
-        addResponseHandlers(page, pageActions2)
-        page.goto(args[0])
-        // mainView.webContents.loadURL(args[0])
-        //     .catch(error => {
-        //         console.log(error.code)
-        //     })
+        //addResponseHandlers(page, pageActions2)
+        //page.goto(args[0])
+        mainView.webContents.loadURL(args[0])
+            .catch(error => {
+                console.log(error.code)
+            })
     }
 })
 
-ipcMain.handle('open:settings', () => {
+ipcMain.handle('open:settings', (event, args) => {
     toggleSideMenu()
     toggleSettings()
 })
@@ -551,10 +553,9 @@ function loadPrimeComponent(browserView, component) {
 }
 
 function toggleSettings() {
-    loadPrimeComponent(settingsView, 'settings');
-    let views = mainWindow.contentView.children
-    if (views.indexOf(settingsView) === -1) {
-        mainWindow.contentView.addChildView(settingsView)
+    if (!mainWindow.contentView.children.includes(settingsView)) {
+        mainWindow.contentView.addChildView(settingsView, 4);
+        loadPrimeComponent(settingsView, 'settings')
     } else {
         mainWindow.contentView.removeChildView(settingsView)
     }

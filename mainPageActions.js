@@ -1,4 +1,4 @@
-import {TimeoutError} from "puppeteer-core";
+//import {TimeoutError} from "puppeteer-core";
 
 
 export function addRequestHandlers(page, pageActions) {
@@ -65,9 +65,9 @@ async function typeToInput(page, selector, text) {
         await page.waitForSelector(selector, {timeout: 60000})
         await page.type(selector, text)
     } catch (e) {
-        if (e instanceof TimeoutError) {
+        // if (e instanceof TimeoutError) {
             //page.reload()
-        }
+        // }
     }
 }
 
@@ -76,10 +76,10 @@ async function clickElement(page, selector) {
         const element = await page.waitForSelector(selector, {visible: true}, {timeout: 60000});
         await element.click()
     } catch (e) {
-        if (e instanceof TimeoutError) {
+        // if (e instanceof TimeoutError) {
             //page.reload()
-            console.error("timeout on click: " + selector)
-        }
+        //     console.error("timeout on click: " + selector)
+        // }
     }
 }
 
@@ -87,10 +87,10 @@ async function selectElement(page, selector, values) {
     try {
         await page.select(selector, values)
     } catch (e) {
-        if (e instanceof TimeoutError) {
+        // if (e instanceof TimeoutError) {
             //page.reload()
-            console.error("timeout on select: " + selector)
-        }
+        //     console.error("timeout on select: " + selector)
+        // }
     }
 }
 
@@ -98,10 +98,10 @@ async function waitElement(page, selector) {
     try {
         return await page.waitForSelector(selector, {timeout: 60000})
     } catch (e) {
-        if (e instanceof TimeoutError) {
+        // if (e instanceof TimeoutError) {
             //page.reload()
-            console.error("timeout on wait: " + selector)
-        }
+        //     console.error("timeout on wait: " + selector)
+        // }
     }
 }
 
