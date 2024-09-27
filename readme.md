@@ -1,7 +1,7 @@
 # Installation
 
 ## Requirements
-Node version: v18.18.0
+Node version: v20.17.0
 
 ## Step 1
 npm install --save-dev

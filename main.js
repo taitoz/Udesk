@@ -1,6 +1,5 @@
 import {
-    WebContentsView, BrowserWindow, ipcMain, Menu, nativeTheme,
-    app, Tray, dialog, screen, globalShortcut
+    WebContentsView, BrowserWindow, ipcMain, Menu, nativeTheme, app, Tray, dialog, screen, globalShortcut
 } from 'electron'
 
 import path, {dirname} from 'node:path';
@@ -35,17 +34,13 @@ loadAppCfgFromProfile()
 // App updater
 import {initUpdater} from "./updater.js";
 import updater from 'electron-simple-updater';
-//appLog.info(updater.buildId)
-initUpdater();
 
 // Puppeteer
 import pie from 'puppeteer-in-electron'
 import puppeteer from 'puppeteer-extra'
 import {addResponseHandlers} from "./mainPageActions.js";
-
 let puppeteerApp = puppeteer
 await pie.initialize(app)
-let browser
 let page
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -62,24 +57,15 @@ let sideBarWidth = 70
 let sideMenuWidth = 0
 let titleBarHeight = 32
 
-app.disableHardwareAcceleration()
-app.commandLine.appendSwitch('ignore-certificate-errors')
-
 function createWindow() {
 
     const winCfg = cfg.window()
 
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 1280,
-        height: 850,
-        minWidth: 1280,
-        minHeight: 850,
-        frame: false, // Use to linux
-        backgroundColor: '#000000',
-        //show: false,
-        icon: getProfileLogoPath(),
-        // webPreferences: {
+        width: 1280, height: 850, minWidth: 1280, minHeight: 850, frame: false, // Use to linux
+        backgroundColor: '#000000', //show: false,
+        icon: getProfileLogoPath(), // webPreferences: {
         //   offscreen: true
         // }
         //titleBarStyle: 'hidden',
@@ -87,8 +73,7 @@ function createWindow() {
         webPreferences: {
             // sandbox: false,
             // preload: path.join(__dirname, 'preload.js')
-        },
-        ...winCfg.options(),
+        }, ...winCfg.options(),
     })
     winCfg.assign(mainWindow);
 
@@ -112,10 +97,7 @@ function createWindow() {
     sideMenu = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.contentView.addChildView(sideMenu, 2)
     sideMenu.setBounds({
-        x: sideBarWidth,
-        y: titleBarHeight,
-        width: sideMenuWidth,
-        height: mainWindow.getBounds().height
+        x: sideBarWidth, y: titleBarHeight, width: sideMenuWidth, height: mainWindow.getBounds().height
     })
     sideMenu.webContents.on('context-menu', (event) => {
         Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup({window: sideMenu.webContents})
@@ -139,15 +121,6 @@ function createWindow() {
         }
     })
 
-    // Puppeteer
-    browser = pie.connect(app, puppeteerApp).then(() => {
-        page = pie.getPage(browser, mainView).then(() => {
-            page.setUserAgent(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-            )
-        })
-    })
-
     settingsView = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     settingsView.setBounds({
         x: (sideBarWidth + sideMenuWidth),
@@ -163,13 +136,27 @@ function createWindow() {
     //mainView.webContents.loadFile(`index.html`).then()
     //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
     //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
-    let url = getProfileKey(0, 'homeUrl')
-    if (url) {
-        //await page.goto(url)
-        mainView.webContents.loadURL(url).then()
-    } else {
-        toggleSettings()
-    }
+
+    // Puppeteer
+    pie.connect(app, puppeteerApp).then(async browser => {
+        pie.getPage(browser, mainView).then(_page => {
+            page = _page
+            let url = getProfileKey(0, 'homeUrl')
+            if (url) {
+                _page.goto(url)
+                // page.setUserAgent(
+                //     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+                // )
+                // mainView.webContents.loadURL(url).catch(error => {
+                //     if (error.code === 'ERR_ABORTED') return;
+                //     throw error
+                // })
+            } else {
+                toggleSettings()
+            }
+        })
+    })
+
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -212,10 +199,7 @@ function resizeMain() {
     sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: newBounds.height})
 
     sideMenu.setBounds({
-        x: sideBarWidth,
-        y: titleBarHeight,
-        width: sideMenuWidth,
-        height: newBounds.height
+        x: sideBarWidth, y: titleBarHeight, width: sideMenuWidth, height: newBounds.height
     })
 
     mainView.setBounds({
@@ -250,11 +234,14 @@ if (!singleInstanceLock) {
     })
 
     app.on('ready', function () {
-
         //const icon = nativeImage.createFromPath()
         try {
+            //appLog.info(updater.buildId)
+            //initUpdater();
+
             loadTranslation(app.getLocale())
             createWindow()
+
             // const ret = globalShortcut.register('CommandOrControl+R', () => {
             //     app.relaunch();
             //     app.exit();
@@ -263,14 +250,11 @@ if (!singleInstanceLock) {
             //     console.log('registration failed')
             // }
             appTray = new Tray(getProfileLogoPath())
-            const trayMenu = Menu.buildFromTemplate([
-                {
-                    label: translate('Close'),
-                    click: () => {
-                        app.quit()
-                    }
+            const trayMenu = Menu.buildFromTemplate([{
+                label: translate('Close'), click: () => {
+                    app.quit()
                 }
-            ])
+            }])
             appTray.setContextMenu(trayMenu)
             appTray.setToolTip('UDesk')
             appTray.setTitle('UDesk')
@@ -333,8 +317,7 @@ ipcMain.handle('maximize', () => {
         let cursor = screen.getCursorScreenPoint()
         const currentScreen = screen.getDisplayNearestPoint({x: cursor.x, y: cursor.y})
         mainWindow.setBounds({
-            width: currentScreen.workAreaSize.width,
-            height: currentScreen.workAreaSize.height
+            width: currentScreen.workAreaSize.width, height: currentScreen.workAreaSize.height
         })
     }
     resizeMain()
@@ -356,53 +339,49 @@ ipcMain.handle('load-url', (event, args) => {
         }
         //TODO pageActions to file
         let pageActions = {
-            term: 'kibana-elk-services.vlife.kz/app/login',
-            actions: [
-                {
-                    action: 'typeToInput',
-                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input',
-                    value: 'k.pak',
-                },
-                {
-                    action: 'typeToInput',
-                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(2) > div > div > div > input',
-                    value: 'M6VmO89JpQzANE2409',
-                },
-                {
-                    action: 'clickElement',
-                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(3) > div > button'
-                }
-            ]
+            term: 'kibana-elk-services.vlife.kz/app/login', actions: [{
+                action: 'typeToInput',
+                selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input',
+                value: 'k.pak',
+            }, {
+                action: 'typeToInput',
+                selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(2) > div > div > div > input',
+                value: 'M6VmO89JpQzANE2409',
+            }, {
+                action: 'clickElement',
+                selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(3) > div > button'
+            }]
         }
         let pageActions2 = {
-            term: '192.168.1.1/index.html',
-            actions: [
-                // {
+            term: '192.168.1.1/index.html', actions: [// {
                 //     action: 'waitElement',
                 //     selector: 'input.textfield:nth-child(2)'
                 // },
                 {
-                    action: 'typeToInput',
-                    selector: 'input.textfield:nth-child(2)',
-                    value: 'admin',
-                },
-                {
-                    action: 'typeToInput',
-                    selector: 'input.textfield:nth-child(5)',
-                    value: 'admin',
-                },
-                {
-                    action: 'clickElement',
-                    selector: '#btnSignIn'
-                }
-            ]
+                    action: 'typeToInput', selector: 'input.textfield:nth-child(2)', value: 'admin',
+                }, {
+                    action: 'typeToInput', selector: 'input.textfield:nth-child(5)', value: 'admin',
+                }, {
+                    action: 'clickElement', selector: '#btnSignIn'
+                }]
         }
-        //addResponseHandlers(page, pageActions2)
-        //page.goto(args[0])
-        mainView.webContents.loadURL(args[0])
-            .catch(error => {
-                console.log(error.code)
-            })
+        addResponseHandlers(page, pageActions)
+        page.goto(args[0])
+        // mainView.webContents.loadURL(args[0]).catch(error => {
+        //     if (error.code === 'ERR_ABORTED') return;
+        //     throw error;
+        // });
+        // mainView.webContents.on('dom-ready', () => {
+        // mainView.webContents.executeJavaScript(`
+        //     const event = new KeyboardEvent('keydown', { key: 'Tab' });
+        //     document.activeElement.dispatchEvent(event);
+        // `);
+        // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Tab' })
+        // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'a' })
+        // if (elementExists) {
+        //     mainView.webContents.executeJavaScript(`document.querySelector('#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input').value = 'test';`).then();
+        // }
+        // })
     }
 })
 
@@ -424,11 +403,7 @@ ipcMain.on('sideBar:logo:get', (event, args) => {
 })
 ipcMain.handle('sideBar:logo:set', async (event, args) => {
     await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
-        title: "",
-        properties: ['openFile'],
-        filters: [
-            {name: 'Images', extensions: ['jpg', 'png', 'gif']}
-        ]
+        title: "", properties: ['openFile'], filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif']}]
     }).then(function (response) {
         if (!response.canceled) {
             setProfileLogo(response.filePaths[0], args[0])
@@ -484,10 +459,7 @@ ipcMain.handle('profiles:setProfileKey', async (event, args) => {
 ipcMain.handle('file:export', async (event, args) => {
     try {
         const result = await dialog.showSaveDialog({
-            defaultPath: 'profile-id-' + args[0] + '.json',
-            filters: [
-                {name: 'JSON', extensions: ['json']}
-            ]
+            defaultPath: 'profile-id-' + args[0] + '.json', filters: [{name: 'JSON', extensions: ['json']}]
         })
         if (!result.canceled) {
             let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
@@ -504,17 +476,13 @@ ipcMain.handle('file:export', async (event, args) => {
 ipcMain.handle('file:import', async (event, args) => {
     try {
         const result = await dialog.showOpenDialog({
-            properties: ['openFile'],
-            filters: [
-                {name: 'JSON Files', extensions: ['json']}
-            ]
+            properties: ['openFile'], filters: [{name: 'JSON Files', extensions: ['json']}]
         })
         if (!result.canceled) {
             const filePath = result.filePaths[0];
             const fileContent = fs.readFileSync(filePath, 'utf-8')
             const jsonData = JSON.parse(fileContent);
-            if (!jsonData.hasOwnProperty("servicesMenu"))
-                return {severity: 'error', summary: 'file corrupted'}
+            if (!jsonData.hasOwnProperty("servicesMenu")) return {severity: 'error', summary: 'file corrupted'}
 
             let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
             fs.writeFileSync(appConfigPath, fileContent)
@@ -576,10 +544,7 @@ function getProfileLogoPath(profileId) {
 
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     if (!fs.existsSync(logoPath)) {
-        fs.cpSync(
-            path.join(__dirname, 'assets', `logo48b.png`),
-            logoPath
-        )
+        fs.cpSync(path.join(__dirname, 'assets', `logo48b.png`), logoPath)
     }
     return logoPath
 }
@@ -593,9 +558,7 @@ function updateAppLogo(logoPath) {
 function setProfileLogo(newLogoPath, profileId) {
     let profileList = getProfiles()
     let index = profileList.findIndex(p => p.id === profileId)
-    const logoName = (newLogoPath.includes('/'))
-        ? newLogoPath.split("/").pop()
-        : newLogoPath.split("\\").pop()
+    const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     fs.cpSync(newLogoPath, logoPath)
     profileList[index].data.forEach(data => {
