@@ -45,7 +45,9 @@ await pie.initialize(app)
 let page
 
 
-const icon = nativeImage.createFromPath(getProfileLogoPath())
+const appIcon = nativeImage.createFromPath(
+    path.join(__dirname, 'assets', `Udesk_logo.png`)
+)
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -69,8 +71,8 @@ function createWindow() {
         width: 1200, height: 720, minWidth: 1200, minHeight: 720,
         backgroundColor: "#1c1c1c",
         titleBarStyle: "hidden",
-        //icon: getProfileLogoPath(),
-        ...(process.platform === "linux" ? {icon} : {}),
+        icon: appIcon,
+        ...(process.platform === "linux" ? {icon: appIcon} : {}),
         trafficLightPosition: {x: 16, y: 16},
         titleBarOverlay: {
             symbolColor: "#DADBE1",
@@ -270,7 +272,7 @@ if (!singleInstanceLock) {
                 appTray.popUpContextMenu(trayMenu);
             };
 
-            appTray.setToolTip("Hydra");
+            appTray.setToolTip("Udesk");
 
             if (process.platform !== "darwin") {
                 appTray.addListener("click", () => {
@@ -374,7 +376,7 @@ ipcMain.handle('load-url', (event, args) => {
                     action: 'clickElement', selector: '#btnSignIn'
                 }]
         }
-        addResponseHandlers(page, pageActions)
+        addResponseHandlers(page, pageActions2)
         page.goto(args[0])
         // mainView.webContents.loadURL(args[0]).catch(error => {
         //     if (error.code === 'ERR_ABORTED') return;
