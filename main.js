@@ -1,5 +1,5 @@
 import {
-    WebContentsView, BrowserWindow, ipcMain, Menu, nativeTheme, app, Tray, dialog, screen, globalShortcut
+    WebContentsView, BrowserWindow, ipcMain, Menu, nativeTheme, app, Tray, dialog, screen, globalShortcut, nativeImage
 } from 'electron'
 
 import path, {dirname} from 'node:path';
@@ -39,9 +39,13 @@ import updater from 'electron-simple-updater';
 import pie from 'puppeteer-in-electron'
 import puppeteer from 'puppeteer-extra'
 import {addResponseHandlers} from "./mainPageActions.js";
+
 let puppeteerApp = puppeteer
 await pie.initialize(app)
 let page
+
+
+const icon = nativeImage.createFromPath(getProfileLogoPath())
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -61,20 +65,26 @@ function createWindow() {
 
     const winCfg = cfg.window()
 
-    // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 1280, height: 850, minWidth: 1280, minHeight: 850, frame: false, // Use to linux
-        backgroundColor: '#000000', //show: false,
-        icon: getProfileLogoPath(), // webPreferences: {
-        //   offscreen: true
-        // }
-        //titleBarStyle: 'hidden',
-        //titleBarOverlay: false,
+        width: 1200, height: 720, minWidth: 1200, minHeight: 720,
+        backgroundColor: "#1c1c1c",
+        titleBarStyle: "hidden",
+        //icon: getProfileLogoPath(),
+        ...(process.platform === "linux" ? {icon} : {}),
+        trafficLightPosition: {x: 16, y: 16},
+        titleBarOverlay: {
+            symbolColor: "#DADBE1",
+            color: "#1e1e1e",
+            height: 32,
+        },
         webPreferences: {
-            // sandbox: false,
-            // preload: path.join(__dirname, 'preload.js')
-        }, ...winCfg.options(),
-    })
+            //preload: path.join(__dirname, 'preload.js'),
+            sandbox: false,
+        },
+        ...winCfg.options(),
+        //show: false,
+    });
+
     winCfg.assign(mainWindow);
 
     titleBar = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
@@ -156,7 +166,6 @@ function createWindow() {
             }
         })
     })
-
 
     // catch resize event emitted on window
     mainWindow.on('resize', function () {
@@ -255,9 +264,28 @@ if (!singleInstanceLock) {
                     app.quit()
                 }
             }])
-            appTray.setContextMenu(trayMenu)
-            appTray.setToolTip('UDesk')
-            appTray.setTitle('UDesk')
+
+            const showContextMenu = async () => {
+                //const contextMenu = await updateSystemTray();
+                appTray.popUpContextMenu(trayMenu);
+            };
+
+            appTray.setToolTip("Hydra");
+
+            if (process.platform !== "darwin") {
+                appTray.addListener("click", () => {
+                    if (mainWindow) {
+                        if (mainWindow.isMinimized()) mainWindow.restore()
+                        mainWindow.focus()
+                    }
+                    //this.createMainWindow();
+                });
+
+                appTray.addListener("right-click", showContextMenu);
+            } else {
+                appTray.addListener("click", showContextMenu);
+                appTray.addListener("right-click", showContextMenu);
+            }
         } catch (error) {
             console.log(error)
         }
@@ -302,25 +330,6 @@ ipcMain.handle('back', () => {
 ipcMain.handle('reload', () => {
     if (mainView.webContents.getURL().includes('primeng-ui')) return;
     mainView.webContents.reload()
-})
-ipcMain.handle('close', () => {
-    mainWindow.close()
-})
-ipcMain.handle('minimize', () => {
-    mainWindow.minimize()
-})
-ipcMain.handle('maximize', () => {
-    if (mainWindow.isMaximized()) {
-        mainWindow.unmaximize()
-    } else {
-        mainWindow.maximize()
-        let cursor = screen.getCursorScreenPoint()
-        const currentScreen = screen.getDisplayNearestPoint({x: cursor.x, y: cursor.y})
-        mainWindow.setBounds({
-            width: currentScreen.workAreaSize.width, height: currentScreen.workAreaSize.height
-        })
-    }
-    resizeMain()
 })
 
 ipcMain.handle('load-url', (event, args) => {
@@ -524,6 +533,7 @@ function toggleSettings() {
     if (!mainWindow.contentView.children.includes(settingsView)) {
         mainWindow.contentView.addChildView(settingsView, 4);
         loadPrimeComponent(settingsView, 'settings')
+        resizeMain()
     } else {
         mainWindow.contentView.removeChildView(settingsView)
     }
