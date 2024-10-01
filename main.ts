@@ -1,36 +1,19 @@
 import {
-    app,
-    BrowserWindow,
-    dialog,
-    globalShortcut,
-    ipcMain,
-    Menu,
-    nativeImage,
-    nativeTheme,
-    Tray,
-    WebContentsView
+    WebContentsView, BrowserWindow, ipcMain, Menu, nativeTheme, app, Tray, dialog, screen, globalShortcut, nativeImage
 } from 'electron'
 
 import path, {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import fs from 'fs';
 
 // Localization
 import {loadTranslation, translate} from './translations/i18n.js'
-import {getMainViewMenu} from "./mainMenus.js";
+import {getMainViewMenu, getMainWindowMenu} from "./mainMenus.js";
 
 // App logs
 import appLog from 'electron-log'
-import cfg from 'electron-cfg';
-// App updater
-
-// Puppeteer
-import pie from 'puppeteer-in-electron'
-import puppeteer from 'puppeteer-extra'
-import {addResponseHandlers} from "./mainPageActions.js";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
 //%USERPROFILE%\AppData\Roaming\electron-gzk-bot\logs\
 appLog.transports.file.fileName = Date.now() + ".log"
 Object.assign(console, appLog.functions);
@@ -42,10 +25,20 @@ app.commandLine.appendSwitch('--disable-background-timer-throttling')
 app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows')
 app.commandLine.appendSwitch('--disable-renderer-backgrounding')
 const singleInstanceLock = app.requestSingleInstanceLock()
+import cfg from 'electron-cfg';
 
 let appConfig
 let profileJson = cfg.create('profiles.json')
 loadAppCfgFromProfile()
+
+// App updater
+import {initUpdater} from "./updater.js";
+import updater from 'electron-simple-updater';
+
+// Puppeteer
+import pie from 'puppeteer-in-electron'
+import puppeteer from 'puppeteer-extra'
+import {addResponseHandlers} from "./mainPageActions.js";
 
 let puppeteerApp = puppeteer
 await pie.initialize(app)
@@ -103,15 +96,15 @@ function createWindow() {
     loadPrimeComponent(titleBar, 'titleBar')
     titleBar.webContents.on('context-menu', (event) => {
         event.preventDefault()
-        Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup()
+        Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup({window: titleBar.webContents})
     })
 
     sideBar = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.contentView.addChildView(sideBar, 1)
     sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: mainWindow.getBounds().height})
     loadPrimeComponent(sideBar, 'sideBar')
-    sideBar.webContents.on('context-menu', () => {
-        Menu.buildFromTemplate(getMainViewMenu(sideBar)).popup()
+    sideBar.webContents.on('context-menu', (event) => {
+        Menu.buildFromTemplate(getMainViewMenu(sideBar)).popup({window: sideBar.webContents})
     })
 
     sideMenu = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
@@ -119,8 +112,8 @@ function createWindow() {
     sideMenu.setBounds({
         x: sideBarWidth, y: titleBarHeight, width: sideMenuWidth, height: mainWindow.getBounds().height
     })
-    sideMenu.webContents.on('context-menu', () => {
-        Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup()
+    sideMenu.webContents.on('context-menu', (event) => {
+        Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup({window: sideMenu.webContents})
     })
 
     mainView = new WebContentsView()
@@ -131,8 +124,8 @@ function createWindow() {
         width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
         height: mainWindow.getBounds().height - titleBarHeight
     })
-    mainView.webContents.on('context-menu', () => {
-        Menu.buildFromTemplate(getMainViewMenu(mainView)).popup()
+    mainView.webContents.on('context-menu', (event) => {
+        Menu.buildFromTemplate(getMainViewMenu(mainView)).popup({window: mainView.webContents})
     })
     mainView.webContents.on('input-event', (event, input) => {
         //event.preventDefault();
@@ -148,7 +141,7 @@ function createWindow() {
         width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
         height: mainWindow.getBounds().height
     })
-    settingsView.webContents.on('context-menu', () => {
+    settingsView.webContents.on('context-menu', (event) => {
         Menu.buildFromTemplate(getMainViewMenu(settingsView)).popup({window: settingsView.webContents})
     })
 
@@ -241,55 +234,68 @@ function resizeMain() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', function () {
-    //const icon = nativeImage.createFromPath()
-    try {
-        //appLog.info(updater.buildId)
-        //initUpdater();
-        loadTranslation(app.getLocale())
-        createWindow()
-
-        // const ret = globalShortcut.register('CommandOrControl+R', () => {
-        //     app.relaunch();
-        //     app.exit();
-        // })
-        // if (!ret) {
-        //     console.log('registration failed')
-        // }
-        appTray = new Tray(appIcon)
-        const trayMenu = Menu.buildFromTemplate([{
-            label: translate('Close'), click: () => {
-                app.quit()
-            }
-        }])
-
-        const showContextMenu = async () => {
-            //const contextMenu = await updateSystemTray();
-            appTray.popUpContextMenu(trayMenu);
-        };
-
-        appTray.setToolTip("UDesk");
-
-        if (process.platform !== "darwin") {
-            appTray.addListener("click", () => {
-                if (mainWindow) {
-                    if (mainWindow.isMinimized()) mainWindow.restore()
-                    mainWindow.focus()
-                }
-                //this.createMainWindow();
-            });
-
-            appTray.addListener("right-click", showContextMenu);
-        } else {
-            appTray.addListener("click", showContextMenu);
-            appTray.addListener("right-click", showContextMenu);
+if (!singleInstanceLock) {
+    app.quit()
+} else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+        // Someone tried to run a second instance, we should focus our window.
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore()
+            mainWindow.focus()
         }
-    } catch (error) {
-        console.log(error)
-    }
-    //mainWindow.setMenu(Menu.buildFromTemplate(getMenu(mainWindow, app.getLocale())))
-})
+    })
 
+    app.on('ready', function () {
+        //const icon = nativeImage.createFromPath()
+        try {
+            //appLog.info(updater.buildId)
+            //initUpdater();
+
+            loadTranslation(app.getLocale())
+            createWindow()
+
+            // const ret = globalShortcut.register('CommandOrControl+R', () => {
+            //     app.relaunch();
+            //     app.exit();
+            // })
+            // if (!ret) {
+            //     console.log('registration failed')
+            // }
+            appTray = new Tray(getProfileLogoPath())
+            const trayMenu = Menu.buildFromTemplate([{
+                label: translate('Close'), click: () => {
+                    app.quit()
+                }
+            }])
+
+            const showContextMenu = async () => {
+                //const contextMenu = await updateSystemTray();
+                appTray.popUpContextMenu(trayMenu);
+            };
+
+            appTray.setToolTip("Udesk");
+
+            console.log(process.env)
+            if (process.platform !== "darwin") {
+                appTray.addListener("click", () => {
+                    if (mainWindow) {
+                        if (mainWindow.isMinimized()) mainWindow.restore()
+                        mainWindow.focus()
+                    }
+                    //this.createMainWindow();
+                });
+
+                appTray.addListener("right-click", showContextMenu);
+            } else {
+                appTray.addListener("click", showContextMenu);
+                appTray.addListener("right-click", showContextMenu);
+            }
+        } catch (error) {
+            console.log(error)
+        }
+        //mainWindow.setMenu(Menu.buildFromTemplate(getMenu(mainWindow, app.getLocale())))
+    })
+}
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -392,7 +398,7 @@ ipcMain.handle('load-url', (event, args) => {
     }
 })
 
-ipcMain.handle('open:settings', () => {
+ipcMain.handle('open:settings', (event, args) => {
     toggleSideMenu()
     toggleSettings()
 })
@@ -480,14 +486,19 @@ ipcMain.handle('file:export', async (event, args) => {
     }
 
 })
-ipcMain.handle('file:import', async () => {
+ipcMain.handle('file:import', async (event, args) => {
     try {
         const result = await dialog.showOpenDialog({
             properties: ['openFile'], filters: [{name: 'JSON Files', extensions: ['json']}]
         })
         if (!result.canceled) {
             const filePath = result.filePaths[0];
-            addProfile(filePath).then()
+            const fileContent = fs.readFileSync(filePath, 'utf-8')
+            const jsonData = JSON.parse(fileContent);
+            if (!jsonData.hasOwnProperty("servicesMenu")) return {severity: 'error', summary: 'file corrupted'}
+
+            let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
+            fs.writeFileSync(appConfigPath, fileContent)
             return {severity: 'success', summary: 'profile imported from ' + result.filePaths[0]}
         }
     } catch (err) {
@@ -497,48 +508,6 @@ ipcMain.handle('file:import', async () => {
 });
 
 // =====================================================================================
-async function addProfile(filePath) {
-
-    let profileList = getProfiles()
-    let newFromFile = filePath
-        ? loadDefaultFromFile(filePath)
-        : loadDefaultFromFile(path.join(__dirname, 'assets', 'profile-default.json'));
-    //TODO replace
-    if (profileList.length >= 1) {
-        // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-        if (profileList.findIndex(p => p.id === newFromFile.id) !== -1){
-            newFromFile.id = Date.now()
-        }
-        let name = "New Profile " + newFromFile.id
-        if (profileList.findIndex(p => getProfileKey(p.id, 'name') === name) !== -1){
-            name += '_'
-        }
-        newFromFile.data.find(p => p.key === 'name').value = name
-    }
-    profileList.push(newFromFile)
-    profileJson.set("profiles", profileList)
-
-    appConfig = loadAppConfigFromProfile(newFromFile.id)
-    if (!appConfig.has('servicesMenu')) {
-        appConfig.set('servicesMenu', loadDefaultFromFile(path.join(__dirname, 'assets', 'services-default.json')))
-    }
-    if (!appConfig.has('web1cMenu')) {
-        appConfig.set('web1cMenu', loadDefaultFromFile(path.join(__dirname, 'assets', 'web1c.json')))
-    }
-    if (!appConfig.has('theme')) {
-        appConfig.set('theme', 'dark')
-    }
-}
-
-function loadDefaultFromFile(filePath) {
-    try {
-        const fileContent = fs.readFileSync(filePath, 'utf-8')
-        return JSON.parse(fileContent)
-    } catch (e) {
-        return {severity: 'error', message: e.message}
-    }
-}
-
 function toggleSideMenu(args) {
     sideMenuWidth = sideMenu.getBounds().width
     if (args) {
@@ -572,6 +541,10 @@ function toggleSettings() {
     } else {
         mainWindow.contentView.removeChildView(settingsView)
     }
+}
+
+function loadDefaultFromFile(fileName) {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, 'assets', fileName), 'utf8'))
 }
 
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
@@ -635,6 +608,36 @@ function setActiveProfile(profileId) {
         profileJson.set("profiles", profileList)
         loadAppCfgFromProfile(profileId)
         updateAppLogo(getProfileLogoPath(profileId))
+    }
+}
+
+async function addProfile() {
+
+    let profileList = getProfiles()
+    const newFromFile = loadDefaultFromFile('profile-default.json')
+    if (profileList.length >= 1) {
+        newFromFile.id = Date.now()
+        // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
+        let newName = "New Profile " + newFromFile.id
+        profileList.forEach(profile => {
+            if (getProfileKey(profile.id, 'name') === newName) {
+                newName += '_'
+            }
+        })
+        newFromFile.data.find(p => p.key === 'name').value = newName
+    }
+    profileList.push(newFromFile)
+    profileJson.set("profiles", profileList)
+
+    appConfig = loadAppConfigFromProfile(newFromFile.id)
+    if (!appConfig.has('servicesMenu')) {
+        appConfig.set('servicesMenu', loadDefaultFromFile('services-default.json'))
+    }
+    if (!appConfig.has('web1cMenu')) {
+        appConfig.set('web1cMenu', loadDefaultFromFile('web1c.json'))
+    }
+    if (!appConfig.has('theme')) {
+        appConfig.set('theme', 'dark')
     }
 }
 

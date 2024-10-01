@@ -26,221 +26,232 @@
             <ng-template pTemplate="header">
                 <span>Профиль</span>
             </ng-template>
-
-            <p-table *ngIf="showTable" [value]="profilesFlat"
-                     styleClass="p-datatable-striped"
-                     rowGroupMode="rowspan"
-                     groupRowsBy="name"
-                     [scrollable]="true"
-                     scrollHeight="700px">
-                <ng-template pTemplate="body" let-profile let-rowgroup="rowgroup" let-rowspan="rowspan">
-                    <tr>
-                        <td *ngIf="rowgroup" [attr.rowspan]="rowspan">
-                            <div class="flex flex-column gap-2">
-                                <span class="font-bold ml-2 truncate-text">{{ profile.name }}</span>
-                                <div class="flex flex-row">
-                                    <div class="p-toolbar-group-start">
-                                        <button pButton type="button"
-                                                pTooltip="load" tooltipPosition="top"
-                                                icon="bx bx-check"
-                                                (click)="setActiveProfile(profile.id)"
-                                                class="p-button-text p-button-success" [outlined]="true">
-                                        </button>
-                                        <button pButton type="button"
-                                                pTooltip="delete" tooltipPosition="top"
-                                                icon="bx bxs-trash"
-                                                (click)="deleteProfile(profile.id)"
-                                                class="p-button-text p-button-danger" [outlined]="true">
-                                        </button>
-                                        <button pButton type="button"
-                                                pTooltip="export" tooltipPosition="top"
-                                                icon="bx bxs-file-export"
-                                                (click)="exportServicesTableData(profile.id)"
-                                                class="p-button-text p-button-info" [outlined]="true">
-                                        </button>
-                                        <button pButton type="button"
-                                                pTooltip="import" tooltipPosition="top"
-                                                icon="bx bxs-file-import"
-                                                (click)="importServicesTableData(profile.id)"
-                                                class="p-button-text p-button-help" [outlined]="true">
-                                        </button>
+            <div class="tableContainer">
+                <p-table *ngIf="showTable" [value]="profilesFlat"
+                         styleClass="p-datatable-striped"
+                         rowGroupMode="rowspan"
+                         groupRowsBy="name"
+                         [scrollable]="true"
+                         scrollHeight="flex">
+                    <ng-template pTemplate="body" let-profile let-rowgroup="rowgroup" let-rowspan="rowspan">
+                        <tr>
+                            <td *ngIf="rowgroup" [attr.rowspan]="rowspan">
+                                <div class="flex flex-column gap-2">
+                                    <span class="font-bold ml-2 truncate-text">{{ profile.name }}</span>
+                                    <div class="flex flex-row">
+                                        <div class="p-toolbar-group-start">
+                                            <button pButton type="button"
+                                                    pTooltip="load" tooltipPosition="top"
+                                                    icon="bx bx-check"
+                                                    (click)="setActiveProfile(profile.id)"
+                                                    class="p-button-text p-button-success" [outlined]="true">
+                                            </button>
+                                            <button pButton type="button"
+                                                    pTooltip="delete" tooltipPosition="top"
+                                                    icon="bx bxs-trash"
+                                                    (click)="deleteProfile(profile.id)"
+                                                    class="p-button-text p-button-danger" [outlined]="true">
+                                            </button>
+                                            <button pButton type="button"
+                                                    pTooltip="export" tooltipPosition="top"
+                                                    icon="bx bxs-file-export"
+                                                    (click)="exportServicesTableData(profile.id)"
+                                                    class="p-button-text p-button-info" [outlined]="true">
+                                            </button>
+                                            <button pButton type="button"
+                                                    pTooltip="import" tooltipPosition="top"
+                                                    icon="bx bxs-file-import"
+                                                    (click)="importServicesTableData(profile.id)"
+                                                    class="p-button-text p-button-help" [outlined]="true">
+                                            </button>
+                                        </div>
                                     </div>
+                                    <p-tag *ngIf="activeProfileId === profile.id"
+                                           [value]="'active'"
+                                           [severity]="'success'"/>
                                 </div>
-                                <p-tag *ngIf="activeProfileId === profile.id"
-                                       [value]="'active'"
-                                       [severity]="'success'"/>
-                            </div>
-                        </td>
+                            </td>
 
-                        <td class="profileKey">
-                            {{ profile.key }}
-                        </td>
-                        <td *ngIf="(profile.key === 'lang')">
-                            <p-dropdown placeholder="Select"
-                                    [options]="['ru', 'en']"
-                                    [(ngModel)]="profile.value"/>
-                        </td>
-                        <td *ngIf="(profile.key === 'logo')">
-                            <img [alt]="profile.logo" ngSrc="{{getProfileLogo(profile)}}" height="32" width="32"
-                                 style="vertical-align: middle" pTooltip="profile logo"
-                            />
-                        </td>
-                        <td *ngIf="(!['logo', 'lang'].includes(profile.key))">
+                            <td class="profileKey">
+                                {{ profile.key }}
+                            </td>
+                            <td *ngIf="(profile.key === 'lang')">
+                                <p-dropdown placeholder="Select"
+                                            [options]="['ru', 'en']"
+                                            [(ngModel)]="profile.value"/>
+                            </td>
+                            <td *ngIf="(profile.key === 'logo')">
+                                <img [alt]="profile.logo" ngSrc="{{getProfileLogo(profile)}}" height="32" width="32"
+                                     style="vertical-align: middle" pTooltip="profile logo"
+                                />
+                            </td>
+                            <td *ngIf="(!['logo', 'lang'].includes(profile.key))">
                             <span *ngIf="!editingRow" class="truncate-text">
                                 {{ profile.value }}
                             </span>
-                            <input *ngIf="editingRow"
-                                   pInputText type="text"
-                                   [(ngModel)]="profile.value"
-                                   [ngStyle]="{'width': '100%'}"
-                                   (keydown.space)="$event.stopPropagation()"
-                                   (keydown.enter)="saveEdit()"
-                                   (keydown.escape)="cancelEdit()">
-                        </td>
-                        <td *ngIf="(['name', 'homeUrl'].includes(profile.key))" style="width:10%">
-                            <div class="flex align-items-center justify-content-center gap-2">
-                                <button *ngIf="!editingRow"
-                                        pButton type="button"
-                                        icon="bx bx-pencil"
-                                        class="p-button-rounded p-button-text"
-                                        (click)="startEdit(profile)">
-                                </button>
-                                <button *ngIf="editingRow"
-                                        pButton type="button"
-                                        icon="bx bx-check"
-                                        class="p-button-rounded p-button-text p-button-success mr-2"
-                                        (click)="saveEdit()">
-                                </button>
-                                <button *ngIf="editingRow"
-                                        pButton type="button"
-                                        icon="bx bx-x"
-                                        class="p-button-rounded p-button-text p-button-danger"
-                                        (click)="cancelEdit()">
-                                </button>
+                                <input *ngIf="editingRow"
+                                       pInputText type="text"
+                                       [(ngModel)]="profile.value"
+                                       [ngStyle]="{'width': '100%'}"
+                                       (keydown.space)="$event.stopPropagation()"
+                                       (keydown.enter)="saveEdit()"
+                                       (keydown.escape)="cancelEdit()">
+                            </td>
+                            <td *ngIf="(['name', 'homeUrl'].includes(profile.key))" style="width:10%">
+                                <div class="flex align-items-center justify-content-center gap-2">
+                                    <button *ngIf="!editingRow"
+                                            pButton type="button"
+                                            icon="bx bx-pencil"
+                                            class="p-button-rounded p-button-text"
+                                            (click)="startEdit(profile)">
+                                    </button>
+                                    <button *ngIf="editingRow"
+                                            pButton type="button"
+                                            icon="bx bx-check"
+                                            class="p-button-rounded p-button-text p-button-success mr-2"
+                                            (click)="saveEdit()">
+                                    </button>
+                                    <button *ngIf="editingRow"
+                                            pButton type="button"
+                                            icon="bx bx-x"
+                                            class="p-button-rounded p-button-text p-button-danger"
+                                            (click)="cancelEdit()">
+                                    </button>
+                                </div>
+                            </td>
+                            <td *ngIf="(['logo'].includes(profile.key))" style="width:10%">
+                                <div class="flex align-items-center justify-content-center gap-2">
+                                    <button *ngIf="!editingRow"
+                                            pButton type="button"
+                                            icon="bx bx-pencil"
+                                            class="p-button-rounded p-button-text"
+                                            (click)="setProfileLogo(profile)">
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="summary">
+                        <div class="p-toolbar-group-start">
+                            <div style="text-align:left">
+                                <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
+                                        pTooltip="Add" label="Add"
+                                        tooltipPosition="top"
+                                        (click)="addProfile()"></button>
                             </div>
-                        </td>
-                        <td *ngIf="(['logo'].includes(profile.key))" style="width:10%">
-                            <div class="flex align-items-center justify-content-center gap-2">
-                                <button *ngIf="!editingRow"
-                                        pButton type="button"
-                                        icon="bx bx-pencil"
-                                        class="p-button-rounded p-button-text"
-                                        (click)="setProfileLogo(profile)">
-                                </button>
+                            <div style="text-align:left">
+                                <button pButton type="button" icon="bx bxs-file-import" class="p-button-text"
+                                        pTooltip="Import" label="Import"
+                                        tooltipPosition="top"
+                                        (click)="importServicesTableData(0)"></button>
                             </div>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="summary">
-                    <div style="text-align:left">
-                        <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
-                                pTooltip="Add" label="Add"
-                                tooltipPosition="top"
-                                (click)="addProfile()"></button>
-                    </div>
-                </ng-template>
-            </p-table>
+                        </div>
+                    </ng-template>
+                </p-table>
+            </div>
         </p-tabPanel>
 
         <p-tabPanel>
             <ng-template pTemplate="header">
                 <span>Сервисы</span>
             </ng-template>
-            <p-treeTable #tt *ngIf="showTable" [value]="servicesMenuData"
-                         [columns]="cols"
-                         [scrollable]="true"
-                         scrollHeight="500px"
-                         styleClass="p-treetable-gridlines p-treetable-sm"
-                         selectionMode="single" sortField="id"
-                         [(selection)]="selectedNode" dataKey="id" (onNodeSelect)="onSelect($event)">
-                <ng-template pTemplate="caption">
-                    <p-toolbar styleClass="mb-2 gap-1">
-                        <ng-template pTemplate="left">
-                            <div class="p-input-icon-left">
-                                <i class="pi pi-search"></i>
-                                <input type="text" pInputText placeholder="Поиск"
-                                       (input)="tt.filterGlobal($event.target.value, 'contains')"/>
-                            </div>
-                        </ng-template>
-                    </p-toolbar>
-                </ng-template>
-                <ng-template pTemplate="header" let-columns>
-                    <tr>
-                        <th *ngFor="let col of columns" [ttSortableColumn]="col.field">
-                            <div class="flex flex-row gap-2 align-items-center flex-wrap">
-                                <p>{{ col.header }}</p>
-                                <p-treeTableSortIcon [field]="col.field"/>
-                            </div>
-                        </th>
-                        <th style="width:10%"></th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-rowNode let-rowData="rowData" let-columns="columns">
-                    <tr [ttSelectableRow]="rowNode">
-                        <td *ngFor="let col of columns; let i = index"
-                            [ngClass]="{'p-toggler-column': i === 0}">
-                            <p-treeTableToggler [rowNode]="rowNode" *ngIf="i === 0"></p-treeTableToggler>
-                            <span *ngIf="!editingRow || editingRow.id !== rowData.id" class="truncate-text">
+            <div class="tableContainer">
+                <p-treeTable #tt *ngIf="showTable" [value]="servicesMenuData"
+                             [columns]="cols"
+                             [scrollable]="true"
+                             scrollHeight="flex"
+                             styleClass="p-treetable-gridlines p-treetable-sm"
+                             selectionMode="single" sortField="id"
+                             [(selection)]="selectedNode" dataKey="id" (onNodeSelect)="onSelect($event)">
+                    <ng-template pTemplate="caption">
+                        <p-toolbar styleClass="mb-2 gap-1">
+                            <ng-template pTemplate="left">
+                                <div class="p-input-icon-left">
+                                    <i class="pi pi-search"></i>
+                                    <input type="text" pInputText placeholder="Поиск"
+                                           (input)="tt.filterGlobal($event.target.value, 'contains')"/>
+                                </div>
+                            </ng-template>
+                        </p-toolbar>
+                    </ng-template>
+                    <ng-template pTemplate="header" let-columns>
+                        <tr>
+                            <th *ngFor="let col of columns" [ttSortableColumn]="col.field">
+                                <div class="flex flex-row gap-2 align-items-center flex-wrap">
+                                    <p>{{ col.header }}</p>
+                                    <p-treeTableSortIcon [field]="col.field"/>
+                                </div>
+                            </th>
+                            <th style="width:10%"></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-rowNode let-rowData="rowData" let-columns="columns">
+                        <tr [ttSelectableRow]="rowNode">
+                            <td *ngFor="let col of columns; let i = index"
+                                [ngClass]="{'p-toggler-column': i === 0}">
+                                <p-treeTableToggler [rowNode]="rowNode" *ngIf="i === 0"></p-treeTableToggler>
+                                <span *ngIf="!editingRow || editingRow.id !== rowData.id" class="truncate-text">
                                 {{ rowData[col.field] }}
                             </span>
-                            <input *ngIf="editingRow && editingRow.id === rowData.id"
-                                   pInputText type="text"
-                                   [(ngModel)]="rowData[col.field]"
-                                   [ngStyle]="{'width': i == 0 ? '70%': '100%'}"
-                                   (keydown.space)="$event.stopPropagation()"
-                                   (keydown.enter)="saveEdit()"
-                                   (keydown.escape)="cancelEdit()">
-                        </td>
-                        <td style="width:10%">
-                            <div class="flex align-items-center justify-content-center gap-2">
-                                <button *ngIf="!editingRow || editingRow.id !== rowData.id"
-                                        pButton
-                                        type="button"
-                                        icon="bx bx-pencil"
-                                        class="p-button-rounded p-button-text"
-                                        (click)="startEdit(rowData)">
-                                </button>
-                                <button *ngIf="editingRow && editingRow.id === rowData.id"
-                                        pButton
-                                        type="button"
-                                        icon="bx bx-check"
-                                        class="p-button-rounded p-button-text p-button-success mr-2"
-                                        (click)="saveEdit()">
-                                </button>
-                                <button *ngIf="editingRow && editingRow.id === rowData.id"
-                                        pButton
-                                        type="button"
-                                        icon="bx bx-x"
-                                        class="p-button-rounded p-button-text p-button-danger"
-                                        (click)="cancelEdit()">
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="summary">
-                    <div style="text-align:left">
-                        <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
-                                pTooltip="Add" label="Add"
-                                tooltipPosition="top"
-                                [disabled]="!selectedNode"
-                                (click)="addItem(selectedNode.data, false)">
-                        </button>
-                        <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
-                                pTooltip="Add child" label="Add child"
-                                tooltipPosition="top"
-                                [disabled]="!selectedNode"
-                                (click)="addItem(selectedNode.data, true)">
-                        </button>
-                        <button pButton type="button" icon="bx bx-trash-alt" class="p-button-text p-button-danger"
-                                pTooltip="Удалить" label="Delete"
-                                tooltipPosition="top"
-                                [disabled]="!selectedNode"
-                                (click)="deleteItem(selectedNode)">
-                        </button>
-                    </div>
-                </ng-template>
-            </p-treeTable>
+                                <input *ngIf="editingRow && editingRow.id === rowData.id"
+                                       pInputText type="text"
+                                       [(ngModel)]="rowData[col.field]"
+                                       [ngStyle]="{'width': i == 0 ? '70%': '100%'}"
+                                       (keydown.space)="$event.stopPropagation()"
+                                       (keydown.enter)="saveEdit()"
+                                       (keydown.escape)="cancelEdit()">
+                            </td>
+                            <td style="width:10%">
+                                <div class="flex align-items-center justify-content-center gap-2">
+                                    <button *ngIf="!editingRow || editingRow.id !== rowData.id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-pencil"
+                                            class="p-button-rounded p-button-text"
+                                            (click)="startEdit(rowData)">
+                                    </button>
+                                    <button *ngIf="editingRow && editingRow.id === rowData.id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-check"
+                                            class="p-button-rounded p-button-text p-button-success mr-2"
+                                            (click)="saveEdit()">
+                                    </button>
+                                    <button *ngIf="editingRow && editingRow.id === rowData.id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-x"
+                                            class="p-button-rounded p-button-text p-button-danger"
+                                            (click)="cancelEdit()">
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="summary">
+                        <div style="text-align:left">
+                            <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
+                                    pTooltip="Add" label="Add"
+                                    tooltipPosition="top"
+                                    [disabled]="!selectedNode"
+                                    (click)="addItem(selectedNode.data, false)">
+                            </button>
+                            <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
+                                    pTooltip="Add child" label="Add child"
+                                    tooltipPosition="top"
+                                    [disabled]="!selectedNode"
+                                    (click)="addItem(selectedNode.data, true)">
+                            </button>
+                            <button pButton type="button" icon="bx bx-trash-alt" class="p-button-text p-button-danger"
+                                    pTooltip="Удалить" label="Delete"
+                                    tooltipPosition="top"
+                                    [disabled]="!selectedNode"
+                                    (click)="deleteItem(selectedNode)">
+                            </button>
+                        </div>
+                    </ng-template>
+                </p-treeTable>
+            </div>
         </p-tabPanel>
 
         <p-tabPanel>

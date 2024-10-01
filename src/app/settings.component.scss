@@ -6,6 +6,15 @@
   overflow: hidden;
 }
 
+.tableContainer {
+  height: calc(100vh - 180px); /* Adjust 100px as needed for header/footer */
+  overflow: auto; /* Enable scrolling if content exceeds height */
+}
+
+::ng-deep .p-treetable-scrollable-wrapper {
+  height: 46vh;
+}
+
 .row-gap {
   margin-bottom: 20px;
 }
