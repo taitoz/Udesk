@@ -45,7 +45,7 @@ const singleInstanceLock = app.requestSingleInstanceLock()
 
 let appConfig
 let profileJson = cfg.create('profiles.json')
-loadAppCfgFromProfile()
+loadActiveProfile()
 
 let puppeteerApp = puppeteer
 await pie.initialize(app)
@@ -372,7 +372,7 @@ ipcMain.handle('load-url', (event, args) => {
                     action: 'clickElement', selector: '#btnSignIn'
                 }]
         }
-        addResponseHandlers(page, pageActions2)
+        addResponseHandlers(page, pageActions)
         page.goto(args[0])
         // mainView.webContents.loadURL(args[0]).catch(error => {
         //     if (error.code === 'ERR_ABORTED') return;
@@ -465,8 +465,10 @@ ipcMain.handle('profiles:setProfileKey', async (event, args) => {
 
 ipcMain.handle('file:export', async (event, args) => {
     try {
+        const profileName = getProfileKey(args[0], 'name')
         const result = await dialog.showSaveDialog({
-            defaultPath: 'profile-id-' + args[0] + '.json', filters: [{name: 'JSON', extensions: ['json']}]
+
+            defaultPath: profileName + '.json', filters: [{name: 'JSON', extensions: ['json']}]
         })
         if (!result.canceled) {
             let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
@@ -500,42 +502,82 @@ ipcMain.handle('file:import', async () => {
 async function addProfile(filePath) {
 
     let profileList = getProfiles()
-    let newFromFile = filePath
-        ? loadDefaultFromFile(filePath)
-        : loadDefaultFromFile(path.join(__dirname, 'assets', 'profile-default.json'));
-    //TODO replace
-    if (profileList.length >= 1) {
+    let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
+    const defaultProfileName = 'Default Profile'
+    let newProfileName = defaultProfileName
+    if (filePath) {
+        const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
+        newProfileName = fileName.split(".").shift()
+        let index = profileList.findIndex(p => getProfileKey(p.id, 'name') === newProfileName)
+        if (index === -1) {
+            newProfile.id = Date.now()
+            profileList.push(newProfile)
+        } else {
+            newProfile.id = profileList[index].id
+            profileList[index] = newProfile
+        }
+        let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile.id + '.json'
+        fs.cpSync(filePath, appConfigPath)
+    } else {
+        let i = 1
+        while (profileList.findIndex(p => getProfileKey(p.id, 'name') === newProfileName) !== -1) {
+            newProfileName = defaultProfileName + ' ' + i;
+            i++;
+        }
         // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-        if (profileList.findIndex(p => p.id === newFromFile.id) !== -1){
-            newFromFile.id = Date.now()
-        }
-        let name = "New Profile " + newFromFile.id
-        if (profileList.findIndex(p => getProfileKey(p.id, 'name') === name) !== -1){
-            name += '_'
-        }
-        newFromFile.data.find(p => p.key === 'name').value = name
-    }
-    profileList.push(newFromFile)
-    profileJson.set("profiles", profileList)
-
-    appConfig = loadAppConfigFromProfile(newFromFile.id)
-    if (!appConfig.has('servicesMenu')) {
-        appConfig.set('servicesMenu', loadDefaultFromFile(path.join(__dirname, 'assets', 'services-default.json')))
-    }
-    if (!appConfig.has('web1cMenu')) {
-        appConfig.set('web1cMenu', loadDefaultFromFile(path.join(__dirname, 'assets', 'web1c.json')))
-    }
-    if (!appConfig.has('theme')) {
+        newProfile.id = Date.now()
+        let appConfig = loadAppConfigFromProfile(newProfile.id)
+        appConfig.set('servicesMenu', loadFromFile(path.join(__dirname, 'assets', 'services-default.json')))
+        appConfig.set('web1cMenu', loadFromFile(path.join(__dirname, 'assets', 'web1c.json')))
         appConfig.set('theme', 'dark')
+        profileList.push(newProfile)
     }
+
+    newProfile.data.find(p => p.key === 'name').value = newProfileName
+    profileJson.set("profiles", profileList)
+    //refresh table
+    setActiveProfile(newProfile.id)
 }
 
-function loadDefaultFromFile(filePath) {
+function loadAppConfigFromProfile(profileId) {
+    // C:\Users\user\AppData\Roaming\Udesk\settings.json
+    // /home/developer/.config/Udesk/settings.json
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'
+    return cfg.create(appConfigPath)
+}
+
+function loadActiveProfile() {
+
+    // profiles.observe('active', () => {
+    // })
+    if (!profileJson.has('profiles')) {
+        profileJson.set('profiles', [])
+        addProfile().then()
+    }
+    let profileList = getProfiles()
+    appConfig = loadAppConfigFromProfile(profileList[0].id)
+
+    nativeTheme.themeSource = appConfig.get('theme', 'dark')
+}
+
+function loadFromFile(filePath) {
+    // add validation
     try {
         const fileContent = fs.readFileSync(filePath, 'utf-8')
         return JSON.parse(fileContent)
     } catch (e) {
         return {severity: 'error', message: e.message}
+    }
+}
+
+function setActiveProfile(profileId) {
+    let profileList = getProfiles()
+    let index = profileList.findIndex(p => p.id === profileId)
+    if (index !== -1) {
+        profileList.unshift(...profileList.splice(index, 1))
+        profileJson.set("profiles", profileList)
+        loadActiveProfile()
+        updateAppLogo(getProfileLogoPath(profileId))
     }
 }
 
@@ -626,36 +668,3 @@ function getProfileKey(profileId, keyName) {
 function getProfiles() {
     return profileJson.get("profiles")
 }
-
-function setActiveProfile(profileId) {
-    let profileList = getProfiles()
-    let index = profileList.findIndex(p => p.id === profileId)
-    if (index !== -1) {
-        profileList.unshift(...profileList.splice(index, 1))
-        profileJson.set("profiles", profileList)
-        loadAppCfgFromProfile(profileId)
-        updateAppLogo(getProfileLogoPath(profileId))
-    }
-}
-
-function loadAppCfgFromProfile() {
-
-    // profiles.observe('active', () => {
-    // })
-    if (!profileJson.has('profiles')) {
-        profileJson.set('profiles', [])
-        addProfile().then()
-    }
-    let profileList = getProfiles()
-    appConfig = loadAppConfigFromProfile(profileList[0].id)
-
-    nativeTheme.themeSource = appConfig.get('theme', 'dark')
-}
-
-function loadAppConfigFromProfile(profileId) {
-    // C:\Users\user\AppData\Roaming\Udesk\settings.json
-    // /home/developer/.config/Udesk/settings.json
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'
-    return cfg.create(appConfigPath)
-}
-
