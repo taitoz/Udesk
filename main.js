@@ -27,7 +27,7 @@ import cfg from 'electron-cfg';
 // Puppeteer
 import pie from 'puppeteer-in-electron'
 import puppeteer from 'puppeteer-extra'
-import {addResponseHandlers} from "./mainPageActions.js";
+import {addResponseHandlers, executePageActions} from "./mainPageActions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -346,18 +346,22 @@ ipcMain.handle('load-url', (event, args) => {
         }
         //TODO pageActions to file
         let pageActions = {
-            term: 'kibana-elk-services.vlife.kz/app/login', actions: [{
-                action: 'typeToInput',
-                selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input',
-                value: 'k.pak',
-            }, {
-                action: 'typeToInput',
-                selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(2) > div > div > div > input',
-                value: 'M6VmO89JpQzANE2409',
-            }, {
-                action: 'clickElement',
-                selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(3) > div > button'
-            }]
+            term: 'kibana-elk-services.vlife.kz/app/login', actions: [
+                {
+                    action: 'typeToInput',
+                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input',
+                    value: 'k.pak',
+                },
+                {
+                    action: 'typeToInput',
+                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(2) > div > div > div > input',
+                    value: 'M6VmO89JpQzANE2409',
+                },
+                {
+                    action: 'clickElement',
+                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(3) > div > button'
+                }
+            ]
         }
         let pageActions2 = {
             term: '192.168.1.1/index.html', actions: [// {
@@ -372,8 +376,13 @@ ipcMain.handle('load-url', (event, args) => {
                     action: 'clickElement', selector: '#btnSignIn'
                 }]
         }
-        addResponseHandlers(page, pageActions)
-        page.goto(args[0])
+
+        page.goto(args[0], {
+            waitUntil: "networkidle0",
+        }).then(async () => {
+            await executePageActions(page, pageActions)
+        })
+
         // mainView.webContents.loadURL(args[0]).catch(error => {
         //     if (error.code === 'ERR_ABORTED') return;
         //     throw error;
@@ -561,7 +570,7 @@ function loadActiveProfile() {
 }
 
 function loadFromFile(filePath) {
-    // add validation
+    //TODO add validation
     try {
         const fileContent = fs.readFileSync(filePath, 'utf-8')
         return JSON.parse(fileContent)

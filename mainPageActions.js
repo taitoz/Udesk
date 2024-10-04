@@ -3,7 +3,7 @@
 
 export function addRequestHandlers(page, pageActions) {
     page.setRequestInterception(true);
-    page.on('request', async request => {
+    page.on('request', request => {
         let url = request.url()
         console.log(url)
         const findTerm = (term) => {
@@ -19,7 +19,7 @@ export function addRequestHandlers(page, pageActions) {
                 try {
                 } catch (e) {
                 }
-                //await login(page)
+                // login(page)
                 request.continue()
                 break
             }
@@ -30,54 +30,88 @@ export function addRequestHandlers(page, pageActions) {
     })
 }
 
+export async function executePageActions(page, pageActions) {
+    console.log('executePageActions')
+    for (const pageAction of pageActions.actions) {
+        switch (pageAction.action) {
+            case 'waitElement': {
+                await waitElement(page, pageAction.selector);
+                break
+            }
+            case 'typeToInput': {
+                await typeToInput(page, pageAction.selector, pageAction.value)
+                break
+            }
+            case 'clickElement': {
+                await clickElement(page, pageAction.selector)
+                break
+            }
+            case 'selectElement': {
+                await selectElement(page, pageAction.selector, pageAction.value)
+                break
+            }
+        }
+    }
+}
+
 export function addResponseHandlers(page, pageActions) {
-    let wasExecuted = false
-    page.on('response', async response => {
+    console.log('addResponseHandlers')
+    page.on('response', response => {
         //console.log(response.status())
-        if (response.status() === 200 && response.url().includes(pageActions.term) && !wasExecuted) {
+        if (response.status() === 200 && response.url().includes(pageActions.term)) {
             for (const pageAction of pageActions.actions) {
                 switch (pageAction.action) {
                     case 'waitElement': {
-                        await waitElement(page, pageAction.selector);
+                        waitElement(page, pageAction.selector);
                         break
                     }
                     case 'typeToInput': {
-                        await typeToInput(page, pageAction.selector, pageAction.value)
+                        typeToInput(page, pageAction.selector, pageAction.value)
                         break
                     }
                     case 'clickElement': {
-                        await clickElement(page, pageAction.selector)
+                        clickElement(page, pageAction.selector)
                         break
                     }
                     case 'selectElement': {
-                        await selectElement(page, pageAction.selector, pageAction.value)
+                        selectElement(page, pageAction.selector, pageAction.value)
                         break
                     }
                 }
             }
-            wasExecuted = true
         }
     });
 }
 
 async function typeToInput(page, selector, text) {
     try {
-        await page.waitForSelector(selector, {timeout: 60000})
+        //page.waitForSelector(selector, {timeout: 60000}).then(() => {
         await page.type(selector, text)
+        await page.$eval(
+            selector,
+            (handle, text) => {
+                handle.value = text;
+                handle.dispatchEvent(new Event('change', {bubbles: false}));
+            },
+            text
+        );
+
+        //})
     } catch (e) {
         // if (e instanceof TimeoutError) {
-            //page.reload()
+        //page.reload()
         // }
     }
 }
 
 async function clickElement(page, selector) {
     try {
-        const element = await page.waitForSelector(selector, {visible: true}, {timeout: 60000});
-        await element.click()
+        await page.waitForSelector(selector, {visible: true}, {timeout: 60000}).then(async element => {
+            await element.click()
+        })
     } catch (e) {
         // if (e instanceof TimeoutError) {
-            //page.reload()
+        //page.reload()
         //     console.error("timeout on click: " + selector)
         // }
     }
@@ -85,10 +119,12 @@ async function clickElement(page, selector) {
 
 async function selectElement(page, selector, values) {
     try {
-        await page.select(selector, values)
+        await page.waitForSelector(selector, {timeout: 60000}).then(async () => {
+            await page.select(selector, values)
+        })
     } catch (e) {
         // if (e instanceof TimeoutError) {
-            //page.reload()
+        //page.reload()
         //     console.error("timeout on select: " + selector)
         // }
     }
@@ -99,7 +135,7 @@ async function waitElement(page, selector) {
         return await page.waitForSelector(selector, {timeout: 60000})
     } catch (e) {
         // if (e instanceof TimeoutError) {
-            //page.reload()
+        //page.reload()
         //     console.error("timeout on wait: " + selector)
         // }
     }
