@@ -380,7 +380,7 @@ ipcMain.handle('load-url', (event, args) => {
         page.goto(args[0], {
             waitUntil: "networkidle0",
         }).then(async () => {
-            await executePageActions(page, pageActions)
+            await executePageActions(page, pageActions2)
         })
 
         // mainView.webContents.loadURL(args[0]).catch(error => {

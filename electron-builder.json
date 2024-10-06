@@ -1,11 +1,12 @@
 {
   "asar": true,
+  "asarUnpack": [
+    "node_modules/puppeteer-core/**/*"
+  ],
   "directories": {
     "output": "release-builds/"
   },
   "files": [
-    "!*",
-    "!**/*",
     "main.js",
     "mainMenus.js",
     "mainPageActions.js",
