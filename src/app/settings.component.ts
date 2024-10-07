@@ -39,7 +39,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     editingRow: any
 
     nodeTypes: SelectItem[] | undefined
-    selectedNodeType: string | undefined
+    pageActions: any[] | undefined
 
     ref: DynamicDialogRef | undefined
     theme = 'dark'
@@ -89,7 +89,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         if (this.editingRow.hasOwnProperty('name')) {
             this.setProfileKey(this.editingRow.id, this.editingRow.key, this.editingRow.value).then()
         }
-        if (this.editingRow.hasOwnProperty('type')) {
+        if (this.editingRow.hasOwnProperty('pageActions')) {
             this.servicesMenuDataSave()
         }
         this.editingRow = null;
@@ -99,7 +99,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         if (this.editingRow.hasOwnProperty('name')) {
             this.loadProfiles()
         }
-        if (this.editingRow.hasOwnProperty('type')) {
+        if (this.editingRow.hasOwnProperty('pageActions')) {
             this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
         }
         this.editingRow = null;
@@ -195,22 +195,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
         })
     }
 
-    getNodeTypeLabel(value: string): string {
-        // const nodeType = this.nodeTypes.find(i => i.value === value);
-        // if (nodeType) {
-        //     return nodeType.label;
-        // }
-        return value;
-    }
-
-    onTypeSelect(event) {
-        //this.selectedNode.data.type = event.value;
-    }
 
     onSelect(event: any) {
         if (event.node != null) {
             this.selectedNode = event.node
-            this.selectedNodeType = event.node.data.type;
+            this.pageActions = event.node.data.pageActions;
             // this.messageService.add({severity: 'info', summary: 'Node Selected', detail: this.selectedNode.data.key});
         }
     }
@@ -293,7 +282,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     newNode(id: any): TreeNode<any> {
         return {
-            data: {id: id, key: 'key', value: 'value', type: 'type'},
+            data: {id: id, key: 'key', value: 'value', pageActions: []},
             children: []
         };
     }

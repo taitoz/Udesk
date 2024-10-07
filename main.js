@@ -27,7 +27,7 @@ import cfg from 'electron-cfg';
 // Puppeteer
 import pie from 'puppeteer-in-electron'
 import puppeteer from 'puppeteer-extra'
-import {addResponseHandlers, executePageActions} from "./mainPageActions.js";
+import {executePageActions} from "./mainPageActions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -335,70 +335,52 @@ ipcMain.handle('load-url', (event, args) => {
     if (mainWindow.contentView.children.includes(settingsView)) {
         mainWindow.contentView.removeChildView(settingsView)
     }
-    if (args[1]) {
-        toggleSideMenu()
-    }
-    if (args[0]) {
-        try {
-            new URL(args[0])
-        } catch (err) {
-            return
+    try {
+        if (args[1]) {
+            toggleSideMenu()
         }
-        //TODO pageActions to file
-        let pageActions = {
-            term: 'kibana-elk-services.vlife.kz/app/login', actions: [
+        if (args[0]) {
+            new URL(args[0])
+            //TODO pageActions to file
+            let pageActions2 = [
                 {
-                    action: 'typeToInput',
-                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input',
-                    value: 'k.pak',
+                    "action": "typeToInput", "selector": "input.textfield:nth-child(2)", "value": "admin",
                 },
                 {
-                    action: 'typeToInput',
-                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(2) > div > div > div > input',
-                    value: 'M6VmO89JpQzANE2409',
+                    "action": "typeToInput", "selector": "input.textfield:nth-child(5)", "value": "admin",
                 },
                 {
-                    action: 'clickElement',
-                    selector: '#app-wrapper > div > div.application > div > ul > form > div:nth-child(3) > div > button'
+                    "action": "clickElement", "selector": "#btnSignIn"
                 }
             ]
+            page.goto(args[0], {
+                waitUntil: "networkidle0",
+            }).then(async () => {
+                if (args[2] && args[2].length > 0) {
+                    await executePageActions(page, args[2])
+                }
+            })
         }
-        let pageActions2 = {
-            term: '192.168.1.1/index.html', actions: [// {
-                //     action: 'waitElement',
-                //     selector: 'input.textfield:nth-child(2)'
-                // },
-                {
-                    action: 'typeToInput', selector: 'input.textfield:nth-child(2)', value: 'admin',
-                }, {
-                    action: 'typeToInput', selector: 'input.textfield:nth-child(5)', value: 'admin',
-                }, {
-                    action: 'clickElement', selector: '#btnSignIn'
-                }]
-        }
-
-        page.goto(args[0], {
-            waitUntil: "networkidle0",
-        }).then(async () => {
-            await executePageActions(page, pageActions2)
-        })
-
-        // mainView.webContents.loadURL(args[0]).catch(error => {
-        //     if (error.code === 'ERR_ABORTED') return;
-        //     throw error;
-        // });
-        // mainView.webContents.on('dom-ready', () => {
-        // mainView.webContents.executeJavaScript(`
-        //     const event = new KeyboardEvent('keydown', { key: 'Tab' });
-        //     document.activeElement.dispatchEvent(event);
-        // `);
-        // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Tab' })
-        // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'a' })
-        // if (elementExists) {
-        //     mainView.webContents.executeJavaScript(`document.querySelector('#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input').value = 'test';`).then();
-        // }
-        // })
+    } catch (error) {
+        if (error.code !== 'ERR_ABORTED') console.log(error.message)
     }
+
+    // mainView.webContents.loadURL(args[0]).catch(error => {
+    //     if (error.code === 'ERR_ABORTED') return;
+    //     throw error;
+    // });
+    // mainView.webContents.on('dom-ready', () => {
+    // mainView.webContents.executeJavaScript(`
+    //     const event = new KeyboardEvent('keydown', { key: 'Tab' });
+    //     document.activeElement.dispatchEvent(event);
+    // `);
+    // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Tab' })
+    // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'a' })
+    // if (elementExists) {
+    //     mainView.webContents.executeJavaScript(`document.querySelector('#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input').value = 'test';`).then();
+    // }
+    // })
+
 })
 
 ipcMain.handle('open:settings', () => {
@@ -430,7 +412,13 @@ ipcMain.handle('sideBar:logo:set', async (event, args) => {
 })
 
 ipcMain.on('sideBarMenu:get', (event, args) => {
-    event.returnValue = appConfig.get(args[0])
+
+    const appConfigValue = appConfig.get(args[0])
+    if (!appConfigValue) {
+        //TODO add validation
+        throw new Error('profile is corrupted')
+    }
+    event.returnValue = appConfigValue
 })
 ipcMain.on('sideBarMenu:set', (event, args) => {
     appConfig.set('servicesMenu', args[0])

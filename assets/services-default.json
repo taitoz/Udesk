@@ -37,7 +37,7 @@
       "id": 4,
       "key": "ЭДО",
       "value": "https://edo.uchet.kz/",
-      "type": "type"
+      "pageActions": []
     },
     "children": [],
     "parent": null
@@ -47,7 +47,7 @@
       "id": 5,
       "key": "Обучение",
       "value": "https://profitraining.kz/",
-      "type": "type"
+      "pageActions": []
     },
     "children": [
       {
@@ -55,7 +55,7 @@
           "id": 1717342885020,
           "key": "Вебинары",
           "value": "https://uchet.kz/webinar/",
-          "type": "type"
+          "pageActions": []
         },
         "children": [
           {
@@ -63,7 +63,7 @@
               "id": 1717343016317,
               "key": "Архив",
               "value": "https://uchet.kz/webinar/archive/",
-              "type": "type"
+              "pageActions": []
             },
             "children": [],
             "parent": null
@@ -77,7 +77,7 @@
           "id": 1717342935600,
           "key": "Экзаменационные модули",
           "value": "https://profitraining.kz/modules.php",
-          "type": "type"
+          "pageActions": []
         },
         "children": [],
         "parent": null
@@ -91,7 +91,7 @@
       "id": 6,
       "key": "Проверка контрагента",
       "value": "https://pk.uchet.kz/",
-      "type": "type"
+      "pageActions": []
     },
     "children": [],
     "parent": null
@@ -101,7 +101,7 @@
       "id": 7,
       "key": "ПОБ",
       "value": "https://pob.uchet.kz/",
-      "type": "type"
+      "pageActions": []
     },
     "children": [],
     "parent": null
@@ -111,7 +111,7 @@
       "id": 8,
       "key": "Dashboard",
       "value": "https://dashboard.uchet.kz/",
-      "type": "type"
+      "pageActions": []
     },
     "children": [],
     "parent": null
@@ -121,7 +121,7 @@
       "id": 9,
       "key": "Аудит",
       "value": "https://audit.uchet.kz/",
-      "type": "type"
+      "pageActions": []
     },
     "children": [],
     "parent": null
@@ -131,7 +131,7 @@
       "id": 10,
       "key": "Аутсорсинг",
       "value": "https://uchet.kz/fran/our-fran.html",
-      "type": "type"
+      "pageActions": []
     },
     "children": [],
     "parent": null
@@ -141,7 +141,7 @@
       "id": 11,
       "key": "Арсенал бухгалтера",
       "value": "https://ab.uchet.kz/",
-      "type": "type"
+      "pageActions": []
     },
     "children": [],
     "parent": null

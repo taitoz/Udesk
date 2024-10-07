@@ -30,6 +30,7 @@ export class SideBarComponent implements OnInit {
     }
 
     openLink(url: string) {
+        //TODO add pageActions
         this.uiService.ipcInvoke('load-url', url).then()
     }
 
