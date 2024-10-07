@@ -341,18 +341,6 @@ ipcMain.handle('load-url', (event, args) => {
         }
         if (args[0]) {
             new URL(args[0])
-            //TODO pageActions to file
-            let pageActions2 = [
-                {
-                    "action": "typeToInput", "selector": "input.textfield:nth-child(2)", "value": "admin",
-                },
-                {
-                    "action": "typeToInput", "selector": "input.textfield:nth-child(5)", "value": "admin",
-                },
-                {
-                    "action": "clickElement", "selector": "#btnSignIn"
-                }
-            ]
             page.goto(args[0], {
                 waitUntil: "networkidle0",
             }).then(async () => {
