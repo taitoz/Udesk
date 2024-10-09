@@ -410,7 +410,6 @@ ipcMain.on('sideBarMenu:get', (event, args) => {
 })
 ipcMain.on('sideBarMenu:set', (event, args) => {
     appConfig.set('servicesMenu', args[0])
-    loadPrimeComponent(sideMenu, 'sideMenu/services')
 })
 
 ipcMain.on('profiles:get', (event) => {
