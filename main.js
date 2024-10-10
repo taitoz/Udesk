@@ -22,6 +22,7 @@ import {getMainViewMenu} from "./mainMenus.js";
 // App logs
 import appLog from 'electron-log'
 import cfg from 'electron-cfg';
+
 // App updater
 
 // Puppeteer
@@ -43,14 +44,23 @@ app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows')
 app.commandLine.appendSwitch('--disable-renderer-backgrounding')
 const singleInstanceLock = app.requestSingleInstanceLock()
 
+import {
+    countProfiles,
+    deleteProfile,
+    getProfile,
+    getProfileKey,
+    getProfiles,
+    setProfileKey,
+    upsertProfile
+} from "./mainDb.js";
+
 let appConfig
-let profileJson = cfg.create('profiles.json')
+let appCfg = cfg.create('config.json')
 loadActiveProfile()
 
 let puppeteerApp = puppeteer
 await pie.initialize(app)
 let page
-
 
 const appIcon = nativeImage.createFromPath(
     path.join(__dirname, 'assets', `Udesk_logo.png`)
@@ -73,7 +83,7 @@ let titleBarHeight = 32
 function createWindow() {
     if (mainWindow) return
 
-    const winCfg = cfg.window()
+    const winCfg = appCfg.window()
 
     mainWindow = new BrowserWindow({
         width: 1200, height: 720, minWidth: 1200, minHeight: 720,
@@ -424,34 +434,23 @@ ipcMain.on('profiles:add', () => {
     addProfile().then()
 })
 ipcMain.on('profiles:delete', (event, args) => {
-    let profileList = getProfiles()
-    let index = profileList.findIndex(p => p.id === args[0])
-    if (index !== -1) profileList.splice(index, 1)
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
+    const profile = getProfile(args[0])
+    deleteProfile(args[0])
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile._id + '.json'
     fs.rmSync(appConfigPath)
-    profileJson.set("profiles", profileList)
 })
 ipcMain.on('profiles:getProfileKey', (event, args) => {
-    event.returnValue = getProfileKey(args[0], args[1])
+    const activeProfile = getProfile(appCfg.get('activeProfile'))
+    event.returnValue = activeProfile.data.find(p => p.key === args[0]).value
 })
 ipcMain.handle('profiles:setProfileKey', async (event, args) => {
-    let profileList = getProfiles()
-    //const profileListCopy = structuredClone(profileList)
-    const profile = profileList.find(p => p.id === args[0])
-    profile.data.forEach(data => {
-        if (data.key === args[1]) {
-            data.value = args[2]
-        }
-    })
-    profileJson.set("profiles", profileList)
-    return profileList
+    setProfileKey(args[0], args[1], args[2])
 })
 
 ipcMain.handle('file:export', async (event, args) => {
     try {
         const profileName = getProfileKey(args[0], 'name')
         const result = await dialog.showSaveDialog({
-
             defaultPath: profileName + '.json', filters: [{name: 'JSON', extensions: ['json']}]
         })
         if (!result.canceled) {
@@ -485,42 +484,29 @@ ipcMain.handle('file:import', async () => {
 // =====================================================================================
 async function addProfile(filePath) {
 
-    let profileList = getProfiles()
     let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
     const defaultProfileName = 'Default Profile'
     let newProfileName = defaultProfileName
     if (filePath) {
         const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
-        newProfileName = fileName.split(".").shift()
-        let index = profileList.findIndex(p => getProfileKey(p.id, 'name') === newProfileName)
-        if (index === -1) {
-            newProfile.id = Date.now()
-            profileList.push(newProfile)
-        } else {
-            newProfile.id = profileList[index].id
-            profileList[index] = newProfile
-        }
-        let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile.id + '.json'
+        newProfile.name = fileName.split(".").shift()
+        let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile._id + '.json'
         fs.cpSync(filePath, appConfigPath)
     } else {
         let i = 1
-        while (profileList.findIndex(p => getProfileKey(p.id, 'name') === newProfileName) !== -1) {
+        while (getProfile(newProfileName) !== null) {
             newProfileName = defaultProfileName + ' ' + i;
             i++;
         }
         // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-        newProfile.id = Date.now()
-        let appConfig = loadAppConfigFromProfile(newProfile.id)
+        let appConfig = loadAppConfigFromProfile(newProfile._id)
         appConfig.set('servicesMenu', loadFromFile(path.join(__dirname, 'assets', 'services-default.json')))
         appConfig.set('web1cMenu', loadFromFile(path.join(__dirname, 'assets', 'web1c.json')))
         appConfig.set('theme', 'dark')
-        profileList.push(newProfile)
     }
-
-    newProfile.data.find(p => p.key === 'name').value = newProfileName
-    profileJson.set("profiles", profileList)
+    upsertProfile(newProfile)
     //refresh table
-    setActiveProfile(newProfile.id)
+    setActiveProfile(newProfile.name)
 }
 
 function loadAppConfigFromProfile(profileId) {
@@ -531,15 +517,11 @@ function loadAppConfigFromProfile(profileId) {
 }
 
 function loadActiveProfile() {
-
-    // profiles.observe('active', () => {
-    // })
-    if (!profileJson.has('profiles')) {
-        profileJson.set('profiles', [])
+    if (countProfiles() === 0) {
         addProfile().then()
     }
-    let profileList = getProfiles()
-    appConfig = loadAppConfigFromProfile(profileList[0].id)
+    let profile = getProfile(appCfg.get('activeProfile'))
+    appConfig = loadAppConfigFromProfile(profile._id)
 
     nativeTheme.themeSource = appConfig.get('theme', 'dark')
 }
@@ -554,14 +536,12 @@ function loadFromFile(filePath) {
     }
 }
 
-function setActiveProfile(profileId) {
-    let profileList = getProfiles()
-    let index = profileList.findIndex(p => p.id === profileId)
-    if (index !== -1) {
-        profileList.unshift(...profileList.splice(index, 1))
-        profileJson.set("profiles", profileList)
+function setActiveProfile(profileName) {
+    let profile = getProfile(profileName)
+    if(profile) {
+        appCfg.set('activeProfile', profileName)
         loadActiveProfile()
-        updateAppLogo(getProfileLogoPath(profileId))
+        updateAppLogo(getProfileLogoPath(profileName))
     }
 }
 
@@ -622,33 +602,12 @@ function updateAppLogo(logoPath) {
     appTray.setImage(logoPath)
 }
 
-function setProfileLogo(newLogoPath, profileId) {
-    let profileList = getProfiles()
-    let index = profileList.findIndex(p => p.id === profileId)
+function setProfileLogo(newLogoPath, profileName) {
     const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     fs.cpSync(newLogoPath, logoPath)
-    profileList[index].data.forEach(data => {
-        if (data.key === 'logo') {
-            data.value = logoName
-        }
-    })
-    profileJson.set("profiles", profileList)
-    if (index === 0) {
+    setProfileKey(profileName, 'logo', newLogoPath)
+    if (profileName === appCfg.get('activeProfile')) {
         updateAppLogo(logoPath);
     }
-}
-
-function getProfileKey(profileId, keyName) {
-    let profileList = getProfiles()
-    if (profileId === 0) {
-        return profileList[profileId].data.find(p => p.key === keyName).value
-    } else {
-        let index = profileList.findIndex(p => p.id === profileId)
-        return profileList[index].data.find(p => p.key === keyName).value
-    }
-}
-
-function getProfiles() {
-    return profileJson.get("profiles")
 }

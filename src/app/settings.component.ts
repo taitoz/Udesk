@@ -45,9 +45,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     theme = 'dark'
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}]
 
-    //profiles: { id: number; data: { key: string, value: string }[] }[]
-    profilesFlat: { name: string; id: number; key: string; value: string; }[] = []
-    activeProfileId: number
+    //profiles: { _id: string; name: string; data: { key: string, value: string }[] }[]
+    profilesFlat: { name: string; id: string; key: string; value: string; }[] = []
+    activeProfileName: string
     showTable = true
 
     constructor(
@@ -105,26 +105,26 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.editingRow = null;
     }
 
-    exportServicesTableData(profileId: number) {
-        this.uiService.ipcInvoke('file:export', profileId).then(result => {
+    exportServicesTableData(profileName: string) {
+        this.uiService.ipcInvoke('file:export', profileName).then(result => {
             this.messageService.add(result)
         })
     }
 
-    importServicesTableData(profileId: number) {
-        this.uiService.ipcInvoke('file:import', profileId).then(result => {
+    importServicesTableData(profileName: string) {
+        this.uiService.ipcInvoke('file:import', profileName).then(result => {
             this.messageService.add(result)
         })
     }
 
     async setProfileLogo(profile: any) {
-        await this.uiService.ipcInvoke('sideBar:logo:set', profile.id).then(() => {
+        await this.uiService.ipcInvoke('sideBar:logo:set', profile.name).then(() => {
             this.refreshTable()
         })
     }
 
     getProfileLogo(profile: any) {
-        return this.uiService.ipcSendSync('sideBar:logo:get', profile.id)
+        return this.uiService.ipcSendSync('sideBar:logo:get', profile.name)
     }
 
     refreshTable() {
@@ -135,8 +135,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges()
     }
 
-    async setProfileKey(profileId: number, keyName: string, value: string) {
-        await this.uiService.ipcInvoke('profiles:setProfileKey', profileId, keyName, value).then(() => {
+    async setProfileKey(profileName: string, keyName: string, value: string) {
+        await this.uiService.ipcInvoke('profiles:setProfileKey', profileName, keyName, value).then(() => {
             this.loadProfiles()
             this.editingRow = null;
         })
@@ -147,7 +147,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.loadProfiles()
     }
 
-    deleteProfile(profileId: number) {
+    deleteProfile(profileName: string) {
         if (this.uiService.ipcSendSync('profiles:get').length === 1) {
             this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'})
             return
@@ -159,9 +159,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'Нет',
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
-                this.uiService.ipcSend('profiles:delete', profileId)
+                this.uiService.ipcSend('profiles:delete', profileName)
                 this.loadProfiles()
-                this.setActiveProfile(this.activeProfileId)
+                this.setActiveProfile(this.activeProfileName)
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {
@@ -171,27 +171,27 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     loadProfiles() {
         let profiles: {
-            id: number;
+            _id: string;
+            name: string;
             data: { key: string; value: string; }[];
         }[] = this.uiService.ipcSendSync('profiles:get')
-        this.activeProfileId = profiles[0].id;
+        this.activeProfileName = profiles[0].name;
         this.profilesFlat = []
-        profiles.forEach(((profile: { id: number; data: { key: string, value: string }[] }) => {
-                let profileName = this.uiService.ipcSendSync('profiles:getProfileKey', profile.id, 'name')
+        profiles.forEach(((profile: { _id: string; name: string; data: { key: string, value: string }[] }) => {
                 profile.data.forEach(data => {
-                    this.profilesFlat.push({name: profileName, id: profile.id, key: data.key, value: data.value})
+                    this.profilesFlat.push({name: profile.name, id: profile._id, key: data.key, value: data.value})
                 })
             })
         )
         this.refreshTable()
     }
 
-    setActiveProfile(profileId: number) {
-        this.uiService.ipcInvoke('profiles:setActive', profileId).then(() => {
+    setActiveProfile(profileName: string) {
+        this.uiService.ipcInvoke('profiles:setActive', profileName).then(() => {
             this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
-            this.activeProfileId = profileId
+            this.activeProfileName = profileName
             //this.refreshTable()
-            this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileId.toString()})
+            this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName.toString()})
         })
     }
 

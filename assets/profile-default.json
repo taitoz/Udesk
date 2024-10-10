@@ -1,10 +1,6 @@
 {
-  "id": 1722285750000,
+  "name": "default",
   "data": [
-    {
-      "key": "name",
-      "value": ""
-    },
     {
       "key": "logo",
       "value": "logo48b.png"

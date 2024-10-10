@@ -43,24 +43,24 @@
                                             <button pButton type="button"
                                                     pTooltip="load" tooltipPosition="top"
                                                     icon="bx bx-check"
-                                                    (click)="setActiveProfile(profile.id)"
+                                                    (click)="setActiveProfile(profile.name)"
                                                     class="p-button-text p-button-success" [outlined]="true">
                                             </button>
                                             <button pButton type="button"
                                                     pTooltip="delete" tooltipPosition="top"
                                                     icon="bx bxs-trash"
-                                                    (click)="deleteProfile(profile.id)"
+                                                    (click)="deleteProfile(profile.name)"
                                                     class="p-button-text p-button-danger" [outlined]="true">
                                             </button>
                                             <button pButton type="button"
                                                     pTooltip="export" tooltipPosition="top"
                                                     icon="bx bxs-file-export"
-                                                    (click)="exportServicesTableData(profile.id)"
+                                                    (click)="exportServicesTableData(profile.name)"
                                                     class="p-button-text p-button-info" [outlined]="true">
                                             </button>
                                         </div>
                                     </div>
-                                    <p-tag *ngIf="activeProfileId === profile.id"
+                                    <p-tag *ngIf="activeProfileName === profile.name"
                                            [value]="'active'"
                                            [severity]="'success'"/>
                                 </div>
