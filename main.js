@@ -45,7 +45,6 @@ app.commandLine.appendSwitch('--disable-renderer-backgrounding')
 const singleInstanceLock = app.requestSingleInstanceLock()
 
 import {
-    countProfiles,
     deleteProfile,
     getProfile,
     getProfileKey,
@@ -484,11 +483,15 @@ ipcMain.handle('file:import', async () => {
 // =====================================================================================
 async function addProfile(filePath) {
 
-    let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
+    //TODO query active if 0 add default
+    // else return active
+    // set = set multi active false, set active by name
+    
     const defaultProfileName = 'Default Profile'
     let newProfileName = defaultProfileName
     if (filePath) {
         const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
+
         newProfile.name = fileName.split(".").shift()
         let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile._id + '.json'
         fs.cpSync(filePath, appConfigPath)
@@ -517,23 +520,16 @@ function loadAppConfigFromProfile(profileId) {
 }
 
 function loadActiveProfile() {
-    if (countProfiles() === 0) {
+
+    if (getProfiles().length === 0) {
         addProfile().then()
     }
+    console.log(appCfg.get('activeProfile'))
     let profile = getProfile(appCfg.get('activeProfile'))
+    console.log(profile)
     appConfig = loadAppConfigFromProfile(profile._id)
 
     nativeTheme.themeSource = appConfig.get('theme', 'dark')
-}
-
-function loadFromFile(filePath) {
-    //TODO add validation
-    try {
-        const fileContent = fs.readFileSync(filePath, 'utf-8')
-        return JSON.parse(fileContent)
-    } catch (e) {
-        return {severity: 'error', message: e.message}
-    }
 }
 
 function setActiveProfile(profileName) {

@@ -1,5 +1,7 @@
 import Datastore from "nestdb";
 import {app} from "electron";
+import fs from "fs";
+import path from "node:path";
 
 const db = {};
 db.profiles = new Datastore({filename: app.getPath('userData') + '/profilesDb.json', autoload: true});
@@ -22,18 +24,12 @@ export function getProfileKey(profileName, keyName) {
     return profile.data.find(p => p.key === keyName).value
 }
 
-export function countProfiles(): number {
-    db.profiles.count({}, function (err, count) {
-        return count
-    });
-}
-
 export function getProfiles() {
     return db.profiles.getAllData()
 }
 
-export function getProfile(profileName): any {
-    db.profiles.findOne({name: profileName}, (err, data) => {
+export function getProfile(profileName) {
+    return db.profiles.findOne({name: profileName}, (err, data) => {
         if (err) console.log(err)
         return data
     })
@@ -70,3 +66,20 @@ export function initDb() {
         }
     });
 }
+
+export function loadActiveProfile(){
+
+
+    let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
+}
+
+function loadFromFile(filePath) {
+    //TODO add validation
+    try {
+        const fileContent = fs.readFileSync(filePath, 'utf-8')
+        return JSON.parse(fileContent)
+    } catch (e) {
+        return {severity: 'error', message: e.message}
+    }
+}
+
