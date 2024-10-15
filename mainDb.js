@@ -8,6 +8,29 @@ db.profiles = new Datastore({filename: app.getPath('userData') + '/profilesDb.js
 //db.services = new Datastore({filename:app.getPath('userData') + '/servicesDb.json', autoload: true})
 //db.pageActions = new Datastore({filename:app.getPath('userData') + '/pageActionsDb.json', autoload: true})
 
+export function initDb() {
+    return new Datastore({
+        filename: app.getPath('userData') + '/nestDb.json', autoload: true
+        , onload: function (err) {
+            if (err) {
+                console.error('Failed to load the datastore:', err);
+            } else {
+                console.log('Loaded the datastore!');
+            }
+        }
+    });
+}
+
+export function getServicesMenu(){
+    //TODO servicesMenu to profile
+    // web1cMenu to services-default
+    // services-default to profile-default
+}
+
+export function setServicesMenu(){
+
+}
+
 export function setProfileKey(profileName, key, value) {
     const profile = getProfile(profileName)
     if (!profile) return
@@ -43,20 +66,17 @@ export function deleteProfile(profileName) {
 }
 
 export function upsertProfile(profile) {
-
     // db.profiles.insert(profile)
-
     db.profiles.update({name: profile.name}, profile, {upsert: true}, function (err, numAffected, affectedDocuments, upsert) {
         if (err) console.log(err)
         console.log(numAffected)
     })
-
     db.profiles.persistence.compactDatafile()
 }
 
 export function importProfile(filePath) {
     const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
-
+    let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
     newProfile.name = fileName.split(".").shift()
     let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile._id + '.json'
     fs.cpSync(filePath, appConfigPath)
@@ -73,15 +93,9 @@ export function addProfileFromDefault() {
             newProfile.name = newProfile.name + ' ' + i;
             i++;
         }
-        // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-        let appConfig = loadAppConfigFromProfile(newProfile._id)
-        appConfig.set('servicesMenu', loadFromFile(path.join(__dirname, 'assets', 'services-default.json')))
-        appConfig.set('web1cMenu', loadFromFile(path.join(__dirname, 'assets', 'web1c.json')))
-        appConfig.set('theme', 'dark')
     })
     upsertProfile(newProfile)
-    //refresh table
-    setActiveProfile(newProfile.name)
+    return newProfile
 }
 
 export function getActiveProfile() {
@@ -109,8 +123,7 @@ export function setActiveProfile(profileName) {
     })
 }
 
-
-function loadFromFile(filePath) {
+export function loadFromFile(filePath) {
     //TODO add validation
     try {
         const fileContent = fs.readFileSync(filePath, 'utf-8')
@@ -119,18 +132,3 @@ function loadFromFile(filePath) {
         return {severity: 'error', message: e.message}
     }
 }
-
-export function initDb() {
-    return new Datastore({
-        filename: app.getPath('userData') + '/nestDb.json', autoload: true
-        , onload: function (err) {
-            if (err) {
-                console.error('Failed to load the datastore:', err);
-            } else {
-                console.log('Loaded the datastore!');
-            }
-        }
-    });
-}
-
-

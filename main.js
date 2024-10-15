@@ -24,6 +24,8 @@ import appLog from 'electron-log'
 import cfg from 'electron-cfg';
 
 // App updater
+import {initUpdater} from "./updater.js";
+// initUpdater()
 
 // Puppeteer
 import pie from 'puppeteer-in-electron'
@@ -49,11 +51,12 @@ import {
     deleteProfile, getActiveProfile,
     getProfile,
     getProfileKey,
-    getProfiles, importProfile, setActiveProfile,
+    getProfiles, importProfile, loadFromFile, setActiveProfile,
     setProfileKey
 } from "./mainDb.js";
 
-let appConfig
+
+let appConfig //
 let appCfg = cfg.create('config.json')
 loadActiveProfile()
 
@@ -430,7 +433,14 @@ ipcMain.handle('profiles:setActive', async (event, args) => {
     //app.exit()
 })
 ipcMain.on('profiles:add', () => {
-    addProfileFromDefault()
+    let newProfile = addProfileFromDefault()
+    // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
+    let appConfig = loadAppConfigFromProfile(newProfile._id)
+    appConfig.set('servicesMenu', loadFromFile(path.join(__dirname, 'assets', 'services-default.json')))
+    appConfig.set('web1cMenu', loadFromFile(path.join(__dirname, 'assets', 'web1c.json')))
+    appConfig.set('theme', 'dark')
+    //refresh table
+    setActiveProfile(newProfile.name)
 })
 ipcMain.on('profiles:delete', (event, args) => {
     const profile = getProfile(args[0])
@@ -502,6 +512,38 @@ function setActiveProfile1(profileName) {
     updateAppLogo(getProfileLogoPath(profileName)) //
 }
 
+// https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
+function getProfileLogoPath(profileName) {
+    let logoName
+    if (!profileName) {
+        logoName = getProfileKey(0, 'logo')
+    } else {
+        logoName = getProfileKey(profileName, 'logo')
+    }
+
+    const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
+    if (!fs.existsSync(logoPath)) {
+        fs.cpSync(path.join(__dirname, 'assets', `logo48b.png`), logoPath)
+    }
+    return logoPath
+}
+
+function updateAppLogo(logoPath) {
+    sideBar.webContents.send('logo-update', logoPath)
+    mainWindow.setIcon(logoPath)
+    appTray.setImage(logoPath)
+}
+
+function setProfileLogo(newLogoPath, profileName) {
+    const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
+    const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
+    fs.cpSync(newLogoPath, logoPath)
+    setProfileKey(profileName, 'logo', newLogoPath)
+    if (profileName === getActiveProfile().name) {
+        updateAppLogo(logoPath);
+    }
+}
+
 function toggleSideMenu(args) {
     sideMenuWidth = sideMenu.getBounds().width
     if (args) {
@@ -534,37 +576,5 @@ function toggleSettings() {
         resizeMain()
     } else {
         mainWindow.contentView.removeChildView(settingsView)
-    }
-}
-
-// https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
-function getProfileLogoPath(profileId) {
-    let logoName
-    if (!profileId) {
-        logoName = getProfileKey(0, 'logo')
-    } else {
-        logoName = getProfileKey(profileId, 'logo')
-    }
-
-    const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
-    if (!fs.existsSync(logoPath)) {
-        fs.cpSync(path.join(__dirname, 'assets', `logo48b.png`), logoPath)
-    }
-    return logoPath
-}
-
-function updateAppLogo(logoPath) {
-    sideBar.webContents.send('logo-update', logoPath)
-    mainWindow.setIcon(logoPath)
-    appTray.setImage(logoPath)
-}
-
-function setProfileLogo(newLogoPath, profileName) {
-    const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
-    const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
-    fs.cpSync(newLogoPath, logoPath)
-    setProfileKey(profileName, 'logo', newLogoPath)
-    if (profileName === getActiveProfile().name) {
-        updateAppLogo(logoPath);
     }
 }
