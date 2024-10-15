@@ -54,6 +54,72 @@ export function upsertProfile(profile) {
     db.profiles.persistence.compactDatafile()
 }
 
+export function importProfile(filePath) {
+    const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
+
+    newProfile.name = fileName.split(".").shift()
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile._id + '.json'
+    fs.cpSync(filePath, appConfigPath)
+    upsertProfile(newProfile)
+    //refresh table
+    setActiveProfile(newProfile.name)
+}
+
+export function addProfileFromDefault() {
+    let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
+    db.profiles.count({name: newProfile.name}, function (err, count) {
+        let i = 1
+        while (count !== 0) {
+            newProfile.name = newProfile.name + ' ' + i;
+            i++;
+        }
+        // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
+        let appConfig = loadAppConfigFromProfile(newProfile._id)
+        appConfig.set('servicesMenu', loadFromFile(path.join(__dirname, 'assets', 'services-default.json')))
+        appConfig.set('web1cMenu', loadFromFile(path.join(__dirname, 'assets', 'web1c.json')))
+        appConfig.set('theme', 'dark')
+    })
+    upsertProfile(newProfile)
+    //refresh table
+    setActiveProfile(newProfile.name)
+}
+
+export function getActiveProfile() {
+    return db.profiles.count({active: true}, function (err, count) {
+        if (count === 0) {
+            let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
+            upsertProfile(newProfile)
+            return newProfile
+        } else {
+            return db.profiles.findOne({active: true}, (err, data) => {
+                if (err) console.log(err)
+                return data
+            })
+        }
+    });
+}
+
+export function setActiveProfile(profileName) {
+    db.profiles.update({}, {$set: {active: false}}, {multi: true, upsert: false}, function (err, numRemoved) {
+    })
+    db.profiles.update({name: profileName}, {$set: {active: true}}, {
+        multi: false,
+        upsert: false
+    }, function (err, numRemoved) {
+    })
+}
+
+
+function loadFromFile(filePath) {
+    //TODO add validation
+    try {
+        const fileContent = fs.readFileSync(filePath, 'utf-8')
+        return JSON.parse(fileContent)
+    } catch (e) {
+        return {severity: 'error', message: e.message}
+    }
+}
+
 export function initDb() {
     return new Datastore({
         filename: app.getPath('userData') + '/nestDb.json', autoload: true
@@ -67,19 +133,4 @@ export function initDb() {
     });
 }
 
-export function loadActiveProfile(){
-
-
-    let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
-}
-
-function loadFromFile(filePath) {
-    //TODO add validation
-    try {
-        const fileContent = fs.readFileSync(filePath, 'utf-8')
-        return JSON.parse(fileContent)
-    } catch (e) {
-        return {severity: 'error', message: e.message}
-    }
-}
 

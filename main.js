@@ -45,12 +45,12 @@ app.commandLine.appendSwitch('--disable-renderer-backgrounding')
 const singleInstanceLock = app.requestSingleInstanceLock()
 
 import {
-    deleteProfile,
+    addProfileFromDefault,
+    deleteProfile, getActiveProfile,
     getProfile,
     getProfileKey,
-    getProfiles,
-    setProfileKey,
-    upsertProfile
+    getProfiles, importProfile, setActiveProfile,
+    setProfileKey
 } from "./mainDb.js";
 
 let appConfig
@@ -425,12 +425,12 @@ ipcMain.on('profiles:get', (event) => {
     event.returnValue = getProfiles()
 })
 ipcMain.handle('profiles:setActive', async (event, args) => {
-    await setActiveProfile(args[0])
+    await setActiveProfile1(args[0])
     //app.relaunch()
     //app.exit()
 })
 ipcMain.on('profiles:add', () => {
-    addProfile().then()
+    addProfileFromDefault()
 })
 ipcMain.on('profiles:delete', (event, args) => {
     const profile = getProfile(args[0])
@@ -439,7 +439,7 @@ ipcMain.on('profiles:delete', (event, args) => {
     fs.rmSync(appConfigPath)
 })
 ipcMain.on('profiles:getProfileKey', (event, args) => {
-    const activeProfile = getProfile(appCfg.get('activeProfile'))
+    const activeProfile = getActiveProfile()
     event.returnValue = activeProfile.data.find(p => p.key === args[0]).value
 })
 ipcMain.handle('profiles:setProfileKey', async (event, args) => {
@@ -471,7 +471,7 @@ ipcMain.handle('file:import', async () => {
         })
         if (!result.canceled) {
             const filePath = result.filePaths[0];
-            addProfile(filePath).then()
+            importProfile(filePath)
             return {severity: 'success', summary: 'profile imported from ' + result.filePaths[0]}
         }
     } catch (err) {
@@ -481,36 +481,6 @@ ipcMain.handle('file:import', async () => {
 });
 
 // =====================================================================================
-async function addProfile(filePath) {
-
-    //TODO query active if 0 add default
-    // else return active
-    // set = set multi active false, set active by name
-    
-    const defaultProfileName = 'Default Profile'
-    let newProfileName = defaultProfileName
-    if (filePath) {
-        const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
-
-        newProfile.name = fileName.split(".").shift()
-        let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile._id + '.json'
-        fs.cpSync(filePath, appConfigPath)
-    } else {
-        let i = 1
-        while (getProfile(newProfileName) !== null) {
-            newProfileName = defaultProfileName + ' ' + i;
-            i++;
-        }
-        // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-        let appConfig = loadAppConfigFromProfile(newProfile._id)
-        appConfig.set('servicesMenu', loadFromFile(path.join(__dirname, 'assets', 'services-default.json')))
-        appConfig.set('web1cMenu', loadFromFile(path.join(__dirname, 'assets', 'web1c.json')))
-        appConfig.set('theme', 'dark')
-    }
-    upsertProfile(newProfile)
-    //refresh table
-    setActiveProfile(newProfile.name)
-}
 
 function loadAppConfigFromProfile(profileId) {
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
@@ -521,24 +491,15 @@ function loadAppConfigFromProfile(profileId) {
 
 function loadActiveProfile() {
 
-    if (getProfiles().length === 0) {
-        addProfile().then()
-    }
-    console.log(appCfg.get('activeProfile'))
-    let profile = getProfile(appCfg.get('activeProfile'))
-    console.log(profile)
-    appConfig = loadAppConfigFromProfile(profile._id)
+    let activeProfile = getActiveProfile()
+    appConfig = loadAppConfigFromProfile(activeProfile._id) //
 
     nativeTheme.themeSource = appConfig.get('theme', 'dark')
 }
 
-function setActiveProfile(profileName) {
-    let profile = getProfile(profileName)
-    if(profile) {
-        appCfg.set('activeProfile', profileName)
-        loadActiveProfile()
-        updateAppLogo(getProfileLogoPath(profileName))
-    }
+function setActiveProfile1(profileName) {
+    setActiveProfile(profileName)
+    updateAppLogo(getProfileLogoPath(profileName)) //
 }
 
 function toggleSideMenu(args) {
@@ -603,7 +564,7 @@ function setProfileLogo(newLogoPath, profileName) {
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     fs.cpSync(newLogoPath, logoPath)
     setProfileKey(profileName, 'logo', newLogoPath)
-    if (profileName === appCfg.get('activeProfile')) {
+    if (profileName === getActiveProfile().name) {
         updateAppLogo(logoPath);
     }
 }
