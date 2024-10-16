@@ -1,7 +1,9 @@
 import Datastore from "nestdb";
 import {app} from "electron";
 import fs from "fs";
-import path from "node:path";
+import path, {dirname} from "node:path";
+import {fileURLToPath} from "node:url";
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const db = {};
 db.profiles = new Datastore({filename: app.getPath('userData') + '/profilesDb.json', autoload: true});
@@ -44,6 +46,7 @@ export function setProfileKey(profileName, key, value) {
 
 export function getProfileKey(profileName, keyName) {
     const profile = getProfile(profileName)
+    console.log(profile)
     return profile.data.find(p => p.key === keyName).value
 }
 
@@ -52,10 +55,13 @@ export function getProfiles() {
 }
 
 export function getProfile(profileName) {
-    return db.profiles.findOne({name: profileName}, (err, data) => {
+    let res = {}
+    db.profiles.findOne({name: profileName}, (err, data) => {
         if (err) console.log(err)
-        return data
+        console.log(data)
+        res = data
     })
+    return res
 }
 
 export function deleteProfile(profileName) {
@@ -78,7 +84,7 @@ export function importProfile(filePath) {
     const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
     let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
     newProfile.name = fileName.split(".").shift()
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile._id + '.json'
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile.name + '.json'
     fs.cpSync(filePath, appConfigPath)
     upsertProfile(newProfile)
     //refresh table
@@ -99,18 +105,22 @@ export function addProfileFromDefault() {
 }
 
 export function getActiveProfile() {
-    return db.profiles.count({active: true}, function (err, count) {
-        if (count === 0) {
-            let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
-            upsertProfile(newProfile)
-            return newProfile
-        } else {
-            return db.profiles.findOne({active: true}, (err, data) => {
-                if (err) console.log(err)
-                return data
-            })
-        }
-    });
+    let profile = {}
+    let profileCount = 0
+    db.profiles.count({active: true}, function (err, count) {
+        profileCount = count
+    })
+    if (profileCount === 0) {
+        let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
+        upsertProfile(newProfile)
+        profile = newProfile
+    } else {
+        db.profiles.findOne({active: true}, (err, data) => {
+            if (err) console.log(err)
+            profile = data
+        })
+    }
+    return profile
 }
 
 export function setActiveProfile(profileName) {

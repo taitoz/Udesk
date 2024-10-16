@@ -435,7 +435,7 @@ ipcMain.handle('profiles:setActive', async (event, args) => {
 ipcMain.on('profiles:add', () => {
     let newProfile = addProfileFromDefault()
     // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-    let appConfig = loadAppConfigFromProfile(newProfile._id)
+    let appConfig = loadAppConfigFromProfile(newProfile.name)
     appConfig.set('servicesMenu', loadFromFile(path.join(__dirname, 'assets', 'services-default.json')))
     appConfig.set('web1cMenu', loadFromFile(path.join(__dirname, 'assets', 'web1c.json')))
     appConfig.set('theme', 'dark')
@@ -445,7 +445,7 @@ ipcMain.on('profiles:add', () => {
 ipcMain.on('profiles:delete', (event, args) => {
     const profile = getProfile(args[0])
     deleteProfile(args[0])
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile._id + '.json'
+    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile.name + '.json'
     fs.rmSync(appConfigPath)
 })
 ipcMain.on('profiles:getProfileKey', (event, args) => {
@@ -502,7 +502,7 @@ function loadAppConfigFromProfile(profileId) {
 function loadActiveProfile() {
 
     let activeProfile = getActiveProfile()
-    appConfig = loadAppConfigFromProfile(activeProfile._id) //
+    appConfig = loadAppConfigFromProfile(activeProfile.name) //
 
     nativeTheme.themeSource = appConfig.get('theme', 'dark')
 }
