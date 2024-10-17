@@ -12,13 +12,10 @@
                     <p-button icon="bx bx-collection bx-sm"
                               (click)="ipcSend('sideMenu:toggle', 'servicesMenu')" [plain]="true" [text]="true"/>
                 </li>
-                <li>
-                    <p-button icon="bx bx-server bx-sm"
-                              (click)="ipcSend('sideMenu:toggle', 'web1cMenu')" [plain]="true" [text]="true"/>
-                </li>
-                <li>
-                    <p-button icon="bx bx-film bx-sm" (click)="openLink('https://www.youtube.com/user/uchetkz/videos')" [plain]="true" [text]="true"/>
-                </li>
+<!--                <li>-->
+<!--                    <p-button icon="bx bx-server bx-sm"-->
+<!--                              (click)="ipcSend('sideMenu:toggle', 'web1cMenu')" [plain]="true" [text]="true"/>-->
+<!--                </li>-->
                 <li>
                     <p-button icon="bx bx-envelope bx-sm" (click)="callRenderer('open-link:messages')" [plain]="true" [text]="true"
                               pBadge [badgeDisabled]="false" class="p-badge-dot"/>
@@ -35,9 +32,9 @@
                 <li>
                     <p-button icon="bx bx-cog bx-sm" (click)="callRenderer('open:settings')" [plain]="true" [text]="true"/>
                 </li>
-                <li>
-                    <p-button icon="bx bx-user bx-sm" (click)="openLink('https://id.uchet.kz/account/login/')" [plain]="true" [text]="true"/>
-                </li>
+<!--                <li>-->
+<!--                    <p-button icon="bx bx-user bx-sm" (click)="openLink('https://id.uchet.kz/account/login/')" [plain]="true" [text]="true"/>-->
+<!--                </li>-->
             </ul>
         </div>
     </div>

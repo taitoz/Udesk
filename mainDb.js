@@ -3,6 +3,7 @@ import {app} from "electron";
 import fs from "fs";
 import path, {dirname} from "node:path";
 import {fileURLToPath} from "node:url";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const db = {};
@@ -11,6 +12,8 @@ db.profiles = new Datastore({filename: app.getPath('userData') + '/profilesDb.js
 //db.pageActions = new Datastore({filename:app.getPath('userData') + '/pageActionsDb.json', autoload: true})
 
 export function initDb() {
+    // C:\Users\user\AppData\Roaming\Udesk\settings.json
+    // /home/developer/.config/Udesk/settings.json
     return new Datastore({
         filename: app.getPath('userData') + '/nestDb.json', autoload: true
         , onload: function (err) {
@@ -23,113 +26,112 @@ export function initDb() {
     });
 }
 
-export function getServicesMenu(){
-    //TODO servicesMenu to profile
-    // web1cMenu to services-default
-    // services-default to profile-default
-}
-
-export function setServicesMenu(){
-
-}
-
-export function setProfileKey(profileName, key, value) {
-    const profile = getProfile(profileName)
+export async function setProfileKey(profileName, key, value) {
+    const profile = await getProfile(profileName)
     if (!profile) return
     profile.data.forEach(data => {
         if (data.key === key) {
             data.value = value
         }
     })
-    upsertProfile(profile);
+    await upsertProfile(profile);
 }
 
-export function getProfileKey(profileName, keyName) {
-    const profile = getProfile(profileName)
-    console.log(profile)
-    return profile.data.find(p => p.key === keyName).value
-}
-
-export function getProfiles() {
-    return db.profiles.getAllData()
-}
-
-export function getProfile(profileName) {
-    let res = {}
-    db.profiles.findOne({name: profileName}, (err, data) => {
-        if (err) console.log(err)
-        console.log(data)
-        res = data
-    })
+export async function getProfileKey(profileName, keyName) {
+    let res = null
+    const profile = await getProfile(profileName)
+    if (profile) {
+        res = profile.data.find(p => p.key === keyName).value
+    }
     return res
 }
 
-export function deleteProfile(profileName) {
-    db.profiles.remove({name: profileName}, {multi: true}, function (err, numRemoved) {
-        if (err) console.log(err)
-    })
-    db.profiles.persistence.compactDatafile()
+export function getProfiles() {
+    return db.profiles.getAllData();
 }
 
-export function upsertProfile(profile) {
-    // db.profiles.insert(profile)
-    db.profiles.update({name: profile.name}, profile, {upsert: true}, function (err, numAffected, affectedDocuments, upsert) {
-        if (err) console.log(err)
-        console.log(numAffected)
-    })
-    db.profiles.persistence.compactDatafile()
+export async function getProfile(profileName) {
+    return new Promise((resolve, reject) => {
+        db.profiles.findOne({name: profileName}, (err, doc) => {
+            if (err) reject(err);
+            else resolve(doc);
+        });
+    });
 }
 
-export function importProfile(filePath) {
+export async function countProfile(query) {
+    return new Promise((resolve, reject) => {
+        db.profiles.count(query, (err, count) => {
+            if (err) reject(err);
+            else resolve(count);
+        });
+    });
+}
+
+export async function deleteProfile(profileName) {
+    return new Promise((resolve, reject) => {
+        db.profiles.remove({name: profileName}, {multi: false}, function (err, numRemoved) {
+            if (err) reject(err);
+            db.profiles.persistence.compactDatafile()
+            resolve(numRemoved);
+        })
+    })
+}
+
+export async function upsertProfile(profile) {
+    return new Promise(async (resolve, reject) => {
+        // db.profiles.insert(profile)
+        let profileCount = await countProfile({name: profile.name})
+        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, function (err, numAffected, affectedDocuments, upsert) {
+            if (err) reject(err);
+            db.profiles.persistence.compactDatafile()
+            resolve(numAffected);
+        })
+    })
+}
+
+export async function importProfile(filePath) {
     const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
     let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
     newProfile.name = fileName.split(".").shift()
     let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile.name + '.json'
     fs.cpSync(filePath, appConfigPath)
-    upsertProfile(newProfile)
+    await upsertProfile(newProfile)
     //refresh table
     setActiveProfile(newProfile.name)
 }
 
-export function addProfileFromDefault() {
+export async function addProfileFromDefault() {
     let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
-    db.profiles.count({name: newProfile.name}, function (err, count) {
-        let i = 1
-        while (count !== 0) {
-            newProfile.name = newProfile.name + ' ' + i;
-            i++;
-        }
-    })
-    upsertProfile(newProfile)
+    let profileCount = await countProfile({name: newProfile.name})
+    while (profileCount > 0) {
+        newProfile.name = newProfile.name + ' ' + profileCount;
+        profileCount = await countProfile({name: newProfile.name})
+    }
+    // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
+    // newProfile.sideMenuTreeNodes = loadFromFile(path.join(__dirname, 'assets', 'web1c.json'))
+    await upsertProfile(newProfile)
     return newProfile
 }
 
-export function getActiveProfile() {
-    let profile = {}
-    let profileCount = 0
-    db.profiles.count({active: true}, function (err, count) {
-        profileCount = count
-    })
-    if (profileCount === 0) {
-        let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
-        upsertProfile(newProfile)
-        profile = newProfile
-    } else {
-        db.profiles.findOne({active: true}, (err, data) => {
-            if (err) console.log(err)
-            profile = data
-        })
-    }
-    return profile
+export async function getActiveProfile() {
+    return new Promise((resolve, reject) => {
+        db.profiles.findOne({active: true}, async (err, doc) => {
+            if (err) reject(err);
+            if (!doc) doc = await addProfileFromDefault();
+            resolve(doc)
+        });
+    });
 }
 
 export function setActiveProfile(profileName) {
     db.profiles.update({}, {$set: {active: false}}, {multi: true, upsert: false}, function (err, numRemoved) {
-    })
-    db.profiles.update({name: profileName}, {$set: {active: true}}, {
-        multi: false,
-        upsert: false
-    }, function (err, numRemoved) {
+        db.profiles.update({name: profileName}, {$set: {active: true}}, {
+            multi: false,
+            upsert: false
+        }, function (err, numRemoved) {
+            db.profiles.persistence.compactDatafile()
+        })
     })
 }
 

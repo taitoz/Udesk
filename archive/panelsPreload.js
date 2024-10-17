@@ -3,7 +3,7 @@ const {contextBridge, ipcRenderer} = require('electron/renderer')
 
 contextBridge.exposeInMainWorld('electronAPI', {
 
-    loadMenu: () => ipcRenderer.sendSync('sideBarMenu:get'),
+    loadMenu: () => ipcRenderer.sendSync('sideMenuTreeNodes:get'),
 
     onThemeToggle: (callback) => ipcRenderer.on('theme-toggle', (_event, value) => callback(value)),
     // onThemeToggle: (value) => ipcRenderer.on("theme-toggle", (_event, value) => {

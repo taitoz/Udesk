@@ -9,6 +9,7 @@
   "files": [
     "main.js",
     "mainMenus.js",
+    "mainDb.js",
     "mainPageActions.js",
     "updater.js",
     "assets/**/*",

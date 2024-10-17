@@ -25,7 +25,6 @@ import cfg from 'electron-cfg';
 
 // App updater
 import {initUpdater} from "./updater.js";
-// initUpdater()
 
 // Puppeteer
 import pie from 'puppeteer-in-electron'
@@ -51,14 +50,11 @@ import {
     deleteProfile, getActiveProfile,
     getProfile,
     getProfileKey,
-    getProfiles, importProfile, loadFromFile, setActiveProfile,
-    setProfileKey
+    getProfiles, importProfile, setActiveProfile,
+    setProfileKey, upsertProfile
 } from "./mainDb.js";
 
-
-let appConfig //
 let appCfg = cfg.create('config.json')
-loadActiveProfile()
 
 let puppeteerApp = puppeteer
 await pie.initialize(app)
@@ -171,11 +167,12 @@ function createWindow() {
 
     // Puppeteer
     pie.connect(app, puppeteerApp).then(async browser => {
-        pie.getPage(browser, mainView).then(_page => {
+        pie.getPage(browser, mainView).then(async _page => {
             page = _page
-            let url = getProfileKey(0, 'homeUrl')
+            const activeProfile = await getActiveProfile()
+            let url = await getProfileKey(activeProfile.name, 'homeUrl')
             if (url) {
-                _page.goto(url)
+                await _page.goto(url)
                 // page.setUserAgent(
                 //     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
                 // )
@@ -256,8 +253,9 @@ function resizeMain() {
 app.on('ready', function () {
     //const icon = nativeImage.createFromPath()
     try {
+        nativeTheme.themeSource = appCfg.get('theme', 'dark')
         //appLog.info(updater.buildId)
-        //initUpdater();
+        //TODO initUpdater();
         loadTranslation(app.getLocale())
         createWindow()
 
@@ -326,6 +324,7 @@ nativeTheme.on("updated", () => {
     titleBar.webContents.send('theme-toggle', nativeTheme.themeSource);
     sideBar.webContents.send('theme-toggle', nativeTheme.themeSource);
     sideMenu.webContents.send('theme-toggle', nativeTheme.themeSource);
+    appCfg.set('theme', nativeTheme.themeSource)
     // if (nativeTheme.shouldUseDarkColors) {
     //     console.log("Dark Theme Chosen by User");
     // } else {
@@ -393,11 +392,11 @@ ipcMain.on('sideMenu:toggle', (event, args) => {
 })
 ipcMain.on('settings:toggleTheme', (event, args) => {
     nativeTheme.themeSource = args[0]
-    appConfig.set('theme', args[0])
 })
 
-ipcMain.on('sideBar:logo:get', (event, args) => {
-    event.returnValue = getProfileLogoPath(args[0])
+ipcMain.on('sideBar:logo:get', async (event, args) => {
+    //event.returnValue = await getProfileLogoPath(args[0])
+    event.returnValue = path.join(app.getPath('userData'), 'settings', 'logo', `logo48b.png`)
 })
 ipcMain.handle('sideBar:logo:set', async (event, args) => {
     await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
@@ -411,49 +410,41 @@ ipcMain.handle('sideBar:logo:set', async (event, args) => {
     })
 })
 
-ipcMain.on('sideBarMenu:get', (event, args) => {
-
-    const appConfigValue = appConfig.get(args[0])
-    if (!appConfigValue) {
-        //TODO add validation
-        throw new Error('profile is corrupted')
-    }
-    event.returnValue = appConfigValue
+ipcMain.on('sideMenuTreeNodes:get', async (event, args) => {
+    const activeProfile = await getActiveProfile()
+    event.returnValue = activeProfile['sideMenuTreeNodes']
 })
-ipcMain.on('sideBarMenu:set', (event, args) => {
-    appConfig.set('servicesMenu', args[0])
+ipcMain.handle('sideMenuTreeNodes:set', async (event, args) => {
+    const activeProfile = await getActiveProfile()
+    activeProfile['sideMenuTreeNodes'] = args[0]
+    await upsertProfile(activeProfile)
 })
 
-ipcMain.on('profiles:get', (event) => {
+ipcMain.on('profiles:get', async (event) => {
     event.returnValue = getProfiles()
 })
 ipcMain.handle('profiles:setActive', async (event, args) => {
-    await setActiveProfile1(args[0])
+    await setActiveProfile(args[0])
+    //updateAppLogo(getProfileLogoPath(args[0]))
     //app.relaunch()
     //app.exit()
 })
-ipcMain.on('profiles:add', () => {
-    let newProfile = addProfileFromDefault()
-    // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-    let appConfig = loadAppConfigFromProfile(newProfile.name)
-    appConfig.set('servicesMenu', loadFromFile(path.join(__dirname, 'assets', 'services-default.json')))
-    appConfig.set('web1cMenu', loadFromFile(path.join(__dirname, 'assets', 'web1c.json')))
-    appConfig.set('theme', 'dark')
-    //refresh table
-    setActiveProfile(newProfile.name)
+ipcMain.handle('profiles:add', async () => {
+    let newProfile = await addProfileFromDefault()
+    await setActiveProfile(newProfile.name)
 })
-ipcMain.on('profiles:delete', (event, args) => {
-    const profile = getProfile(args[0])
-    deleteProfile(args[0])
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile.name + '.json'
-    fs.rmSync(appConfigPath)
+ipcMain.handle('profiles:delete', async (event, args) => {
+    //const profile = getProfile(args[0])
+    await deleteProfile(args[0])
+    // let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile.name + '.json'
+    // fs.rmSync(appConfigPath)
 })
-ipcMain.on('profiles:getProfileKey', (event, args) => {
-    const activeProfile = getActiveProfile()
+ipcMain.on('profiles:getProfileKey', async (event, args) => {
+    const activeProfile = await getActiveProfile()
     event.returnValue = activeProfile.data.find(p => p.key === args[0]).value
 })
 ipcMain.handle('profiles:setProfileKey', async (event, args) => {
-    setProfileKey(args[0], args[1], args[2])
+    await setProfileKey(args[0], args[1], args[2])
 })
 
 ipcMain.handle('file:export', async (event, args) => {
@@ -481,7 +472,7 @@ ipcMain.handle('file:import', async () => {
         })
         if (!result.canceled) {
             const filePath = result.filePaths[0];
-            importProfile(filePath)
+            await importProfile(filePath)
             return {severity: 'success', summary: 'profile imported from ' + result.filePaths[0]}
         }
     } catch (err) {
@@ -491,34 +482,13 @@ ipcMain.handle('file:import', async () => {
 });
 
 // =====================================================================================
-
-function loadAppConfigFromProfile(profileId) {
-    // C:\Users\user\AppData\Roaming\Udesk\settings.json
-    // /home/developer/.config/Udesk/settings.json
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profileId + '.json'
-    return cfg.create(appConfigPath)
-}
-
-function loadActiveProfile() {
-
-    let activeProfile = getActiveProfile()
-    appConfig = loadAppConfigFromProfile(activeProfile.name) //
-
-    nativeTheme.themeSource = appConfig.get('theme', 'dark')
-}
-
-function setActiveProfile1(profileName) {
-    setActiveProfile(profileName)
-    updateAppLogo(getProfileLogoPath(profileName)) //
-}
-
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
-function getProfileLogoPath(profileName) {
+async function getProfileLogoPath(profileName) {
     let logoName
     if (!profileName) {
-        logoName = getProfileKey(0, 'logo')
+        logoName = "logo48b.png"
     } else {
-        logoName = getProfileKey(profileName, 'logo')
+        logoName = await getProfileKey(profileName, 'logo')
     }
 
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
@@ -534,14 +504,14 @@ function updateAppLogo(logoPath) {
     appTray.setImage(logoPath)
 }
 
-function setProfileLogo(newLogoPath, profileName) {
+async function setProfileLogo(newLogoPath, profileName) {
     const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     fs.cpSync(newLogoPath, logoPath)
-    setProfileKey(profileName, 'logo', newLogoPath)
-    if (profileName === getActiveProfile().name) {
-        updateAppLogo(logoPath);
-    }
+    await setProfileKey(profileName, 'logo', newLogoPath)
+    // if (profileName === getActiveProfile().name) {
+    //     updateAppLogo(logoPath);
+    // }
 }
 
 function toggleSideMenu(args) {

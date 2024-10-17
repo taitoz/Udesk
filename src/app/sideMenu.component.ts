@@ -28,7 +28,7 @@ export class SideMenuComponent implements OnInit {
         this.route.params.subscribe({
             next: params => {
                 this.menuName = this.getMenuName(params['menuId']);
-                this.treeNodesData = this.uiService.ipcSendSync('sideBarMenu:get', params['menuId'])
+                this.treeNodesData = this.uiService.ipcSendSync('sideMenuTreeNodes:get', params['menuId'])
                 this.loadMenuItemsFromTreeNodesData();
             },
             error: error => {

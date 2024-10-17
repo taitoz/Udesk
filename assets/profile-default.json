@@ -8,11 +8,160 @@
     },
     {
       "key": "homeUrl",
-      "value": ""
+      "value": "http://localhost:9091/transmission/web/"
     },
     {
       "key": "lang",
       "value": "ru"
+    }
+  ],
+  "sideMenuTreeNodes": [
+    {
+      "data": {
+        "id": 1,
+        "key": "Подписка",
+        "value": "https://uchet.kz/lp/5prichin/",
+        "icon": "bx bx-home-alt"
+      },
+      "children": [],
+      "parent": null,
+      "expanded": true
+    },
+    {
+      "data": {
+        "id": 2,
+        "key": "Бухгалтерия",
+        "value": "https://buh.uchet.kz/",
+        "icon": "bx bx-film"
+      },
+      "children": [],
+      "parent": null,
+      "expanded": true
+    },
+    {
+      "data": {
+        "id": 3,
+        "key": "Онлайн касса",
+        "value": "https://ukassa.kz/",
+        "icon": "bx bx-server"
+      },
+      "children": [],
+      "parent": null,
+      "expanded": true
+    },
+    {
+      "data": {
+        "id": 4,
+        "key": "ЭДО",
+        "value": "https://edo.uchet.kz/",
+        "pageActions": []
+      },
+      "children": [],
+      "parent": null
+    },
+    {
+      "data": {
+        "id": 5,
+        "key": "Обучение",
+        "value": "https://profitraining.kz/",
+        "pageActions": []
+      },
+      "children": [
+        {
+          "data": {
+            "id": 1717342885020,
+            "key": "Вебинары",
+            "value": "https://uchet.kz/webinar/",
+            "pageActions": []
+          },
+          "children": [
+            {
+              "data": {
+                "id": 1717343016317,
+                "key": "Архив",
+                "value": "https://uchet.kz/webinar/archive/",
+                "pageActions": []
+              },
+              "children": [],
+              "parent": null
+            }
+          ],
+          "parent": null,
+          "expanded": true
+        },
+        {
+          "data": {
+            "id": 1717342935600,
+            "key": "Экзаменационные модули",
+            "value": "https://profitraining.kz/modules.php",
+            "pageActions": []
+          },
+          "children": [],
+          "parent": null
+        }
+      ],
+      "parent": null,
+      "expanded": true
+    },
+    {
+      "data": {
+        "id": 6,
+        "key": "Проверка контрагента",
+        "value": "https://pk.uchet.kz/",
+        "pageActions": []
+      },
+      "children": [],
+      "parent": null
+    },
+    {
+      "data": {
+        "id": 7,
+        "key": "ПОБ",
+        "value": "https://pob.uchet.kz/",
+        "pageActions": []
+      },
+      "children": [],
+      "parent": null
+    },
+    {
+      "data": {
+        "id": 8,
+        "key": "Dashboard",
+        "value": "https://dashboard.uchet.kz/",
+        "pageActions": []
+      },
+      "children": [],
+      "parent": null
+    },
+    {
+      "data": {
+        "id": 9,
+        "key": "Аудит",
+        "value": "https://audit.uchet.kz/",
+        "pageActions": []
+      },
+      "children": [],
+      "parent": null
+    },
+    {
+      "data": {
+        "id": 10,
+        "key": "Аутсорсинг",
+        "value": "https://uchet.kz/fran/our-fran.html",
+        "pageActions": []
+      },
+      "children": [],
+      "parent": null
+    },
+    {
+      "data": {
+        "id": 11,
+        "key": "Арсенал бухгалтера",
+        "value": "https://ab.uchet.kz/",
+        "pageActions": []
+      },
+      "children": [],
+      "parent": null
     }
   ]
 }

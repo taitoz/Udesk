@@ -62,7 +62,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
 
-        this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
+        this.servicesMenuData = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
         this.loadProfiles()
 
         this.cols = [
@@ -100,7 +100,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.loadProfiles()
         }
         if (this.editingRow.hasOwnProperty('pageActions')) {
-            this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
+            this.servicesMenuData = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
         }
         this.editingRow = null;
     }
@@ -143,8 +143,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     addProfile() {
-        this.uiService.ipcSend('profiles:add')
-        this.loadProfiles()
+        this.uiService.ipcInvoke('profiles:add').then(() => {
+            this.loadProfiles()
+        })
     }
 
     deleteProfile(profileName: string) {
@@ -159,9 +160,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'Нет',
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
-                this.uiService.ipcSend('profiles:delete', profileName)
-                this.loadProfiles()
-                this.setActiveProfile(this.activeProfileName)
+                this.uiService.ipcInvoke('profiles:delete', profileName).then(() => {
+                    this.loadProfiles()
+                    this.setActiveProfile(this.activeProfileName)
+                })
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {
@@ -188,7 +190,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     setActiveProfile(profileName: string) {
         this.uiService.ipcInvoke('profiles:setActive', profileName).then(() => {
-            this.servicesMenuData = this.uiService.ipcSendSync('sideBarMenu:get', 'servicesMenu')
+            this.servicesMenuData = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
             this.activeProfileName = profileName
             //this.refreshTable()
             this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName.toString()})
@@ -207,9 +209,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     servicesMenuDataSave() {
         this.servicesMenuData.forEach(node => this.removeTreeParent(node));
         //this.uiService.saveToSessionStorage(this.treeNodesData);
-        this.uiService.ipcSend('sideBarMenu:set', this.servicesMenuData)
+        this.uiService.ipcInvoke('sideMenuTreeNodes:set', this.servicesMenuData).then(() =>{
+        })
         // if (this.electronService.isElectronApp) {
-        //     this.electronService.ipcRenderer.send('sideBarMenu:set', this.treeNodesData);
+        //     this.electronService.ipcRenderer.send('sideMenuTreeNodes:set', this.treeNodesData);
         // }
 
         this.servicesMenuData = [...this.servicesMenuData];
