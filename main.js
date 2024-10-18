@@ -169,7 +169,7 @@ function createWindow() {
     pie.connect(app, puppeteerApp).then(async browser => {
         pie.getPage(browser, mainView).then(async _page => {
             page = _page
-            const activeProfile = await getActiveProfile()
+            const activeProfile = await getActiveProfile(true)
             let url = await getProfileKey(activeProfile.name, 'homeUrl')
             if (url) {
                 await _page.goto(url)
@@ -424,14 +424,13 @@ ipcMain.on('profiles:get', async (event) => {
     event.returnValue = getProfiles()
 })
 ipcMain.handle('profiles:setActive', async (event, args) => {
-    await setActiveProfile(args[0])
+    setActiveProfile(args[0])
     //updateAppLogo(getProfileLogoPath(args[0]))
     //app.relaunch()
     //app.exit()
 })
 ipcMain.handle('profiles:add', async () => {
-    let newProfile = await addProfileFromDefault()
-    await setActiveProfile(newProfile.name)
+    await addProfileFromDefault()
 })
 ipcMain.handle('profiles:delete', async (event, args) => {
     //const profile = getProfile(args[0])
@@ -449,14 +448,13 @@ ipcMain.handle('profiles:setProfileKey', async (event, args) => {
 
 ipcMain.handle('file:export', async (event, args) => {
     try {
-        const profileName = getProfileKey(args[0], 'name')
+        const profileName = args[0]
         const result = await dialog.showSaveDialog({
             defaultPath: profileName + '.json', filters: [{name: 'JSON', extensions: ['json']}]
         })
         if (!result.canceled) {
-            let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + args[0] + '.json'
-            const fileContent = fs.readFileSync(appConfigPath, 'utf-8')
-            fs.writeFileSync(result.filePath, fileContent, 'utf-8')
+            let profile = await getProfile(args[0])
+            fs.writeFileSync(result.filePath, JSON.stringify(profile), 'utf-8')
             return {severity: 'success', summary: 'profile exported to ' + result.filePath}
         }
     } catch (err) {

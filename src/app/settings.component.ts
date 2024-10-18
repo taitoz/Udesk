@@ -46,7 +46,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}]
 
     //profiles: { _id: string; name: string; data: { key: string, value: string }[] }[]
-    profilesFlat: { name: string; id: string; key: string; value: string; }[] = []
+    profilesFlat: { name: string; key: string; value: string; }[] = []
     activeProfileName: string
     showTable = true
 
@@ -87,7 +87,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     saveEdit() {
         if (this.editingRow.hasOwnProperty('name')) {
-            this.setProfileKey(this.editingRow.id, this.editingRow.key, this.editingRow.value).then()
+            this.setProfileKey(this.editingRow.name, this.editingRow.key, this.editingRow.value).then()
         }
         if (this.editingRow.hasOwnProperty('pageActions')) {
             this.servicesMenuDataSave()
@@ -160,9 +160,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'Нет',
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
+                // let index = this.profilesFlat.findIndex(item => item.name === profileName)
+                // console.log(index)
                 this.uiService.ipcInvoke('profiles:delete', profileName).then(() => {
                     this.loadProfiles()
-                    this.setActiveProfile(this.activeProfileName)
+                    this.setActiveProfile(this.profilesFlat[0].name)
                 })
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
@@ -173,15 +175,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     loadProfiles() {
         let profiles: {
-            _id: string;
             name: string;
             data: { key: string; value: string; }[];
         }[] = this.uiService.ipcSendSync('profiles:get')
-        this.activeProfileName = profiles[0].name;
         this.profilesFlat = []
-        profiles.forEach(((profile: { _id: string; name: string; data: { key: string, value: string }[] }) => {
+        profiles.forEach(((profile: { active: boolean; name: string; data: { key: string, value: string }[] }) => {
+                if (profile.active) this.activeProfileName = profile.name
+                this.profilesFlat.push({name: profile.name, key: 'name', value: profile.name})
                 profile.data.forEach(data => {
-                    this.profilesFlat.push({name: profile.name, id: profile._id, key: data.key, value: data.value})
+                    this.profilesFlat.push({name: profile.name, key: data.key, value: data.value})
                 })
             })
         )
@@ -209,7 +211,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     servicesMenuDataSave() {
         this.servicesMenuData.forEach(node => this.removeTreeParent(node));
         //this.uiService.saveToSessionStorage(this.treeNodesData);
-        this.uiService.ipcInvoke('sideMenuTreeNodes:set', this.servicesMenuData).then(() =>{
+        this.uiService.ipcInvoke('sideMenuTreeNodes:set', this.servicesMenuData).then(() => {
         })
         // if (this.electronService.isElectronApp) {
         //     this.electronService.ipcRenderer.send('sideMenuTreeNodes:set', this.treeNodesData);
@@ -244,7 +246,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteItem(selectedNode: TreeNode) {
-        console.log(this.servicesMenuData)
+        // console.log(this.servicesMenuData)
         if (this.servicesMenuData.length === 1 && selectedNode.parent === null) {
             this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
             return;
@@ -256,7 +258,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'Нет',
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
-                console.log(selectedNode)
+                // console.log(selectedNode)
                 this.deleteNodeByData(selectedNode.data, this.servicesMenuData);
                 this.servicesMenuData = [...this.servicesMenuData];
                 this.servicesMenuDataSave()

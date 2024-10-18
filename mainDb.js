@@ -29,12 +29,30 @@ export function initDb() {
 export async function setProfileKey(profileName, key, value) {
     const profile = await getProfile(profileName)
     if (!profile) return
-    profile.data.forEach(data => {
-        if (data.key === key) {
-            data.value = value
+    console.log(profileName, key, value)
+    if (key === 'name') {
+        await renameProfile(profileName, value)
+    } else {
+        profile.data.forEach(data => {
+            if (data.key === key) {
+                data.value = value
+            }
+        })
+        await upsertProfile(profile)
+    }
+}
+
+export async function renameProfile(oldProfileName, newProfileName) {
+    return new Promise(async (resolve, reject) => {
+        let profileCount = await countProfile({name: newProfileName})
+        if (profileCount > 0) {
+            reject('Already exists')
         }
+        db.profiles.update({name: oldProfileName}, {$set: {name: newProfileName}}, function (err, numAffected, affectedDocuments, upsert) {
+            db.profiles.persistence.compactDatafile()
+            resolve(numAffected)
+        })
     })
-    await upsertProfile(profile);
 }
 
 export async function getProfileKey(profileName, keyName) {
@@ -94,31 +112,34 @@ export async function importProfile(filePath) {
     const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
     let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
     newProfile.name = fileName.split(".").shift()
-    let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile.name + '.json'
-    fs.cpSync(filePath, appConfigPath)
+    // let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile.name + '.json'
+    // fs.cpSync(filePath, appConfigPath)
     await upsertProfile(newProfile)
     //refresh table
     setActiveProfile(newProfile.name)
 }
 
 export async function addProfileFromDefault() {
-    let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
-    let profileCount = await countProfile({name: newProfile.name})
-    while (profileCount > 0) {
-        newProfile.name = newProfile.name + ' ' + profileCount;
-        profileCount = await countProfile({name: newProfile.name})
-    }
-    // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-    // newProfile.sideMenuTreeNodes = loadFromFile(path.join(__dirname, 'assets', 'web1c.json'))
-    await upsertProfile(newProfile)
-    return newProfile
+    return new Promise(async (resolve, reject) => {
+        let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
+        let profileCount = await countProfile({name: newProfile.name})
+        while (profileCount > 0) {
+            newProfile.name = newProfile.name + ' ' + profileCount;
+            profileCount = await countProfile({name: newProfile.name})
+        }
+        // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
+        // newProfile.sideMenuTreeNodes = loadFromFile(path.join(__dirname, 'assets', 'web1c.json'))
+        await upsertProfile(newProfile)
+        setActiveProfile(newProfile.name)
+        resolve(newProfile)
+    })
 }
 
-export async function getActiveProfile() {
+export async function getActiveProfile(init) {
     return new Promise((resolve, reject) => {
         db.profiles.findOne({active: true}, async (err, doc) => {
             if (err) reject(err);
-            if (!doc) doc = await addProfileFromDefault();
+            if (!doc && init) doc = await addProfileFromDefault();
             resolve(doc)
         });
     });
