@@ -142,8 +142,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
         })
     }
 
-    addProfile() {
-        this.uiService.ipcInvoke('profiles:add').then(() => {
+    async addProfile() {
+        await this.uiService.ipcInvoke('profiles:add').then(() => {
             this.loadProfiles()
         })
     }
@@ -159,10 +159,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             acceptLabel: 'Да',
             rejectLabel: 'Нет',
             icon: 'bx bx-exclamation-triangle',
-            accept: () => {
+            accept: async () => {
                 // let index = this.profilesFlat.findIndex(item => item.name === profileName)
                 // console.log(index)
-                this.uiService.ipcInvoke('profiles:delete', profileName).then(() => {
+                await this.uiService.ipcInvoke('profiles:delete', profileName).then(() => {
                     this.loadProfiles()
                     this.setActiveProfile(this.profilesFlat[0].name)
                 })
@@ -175,12 +175,22 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     loadProfiles() {
         let profiles: {
+            active: boolean;
             name: string;
             data: { key: string; value: string; }[];
+            sideMenuTreeNodes: {}[];
         }[] = this.uiService.ipcSendSync('profiles:get')
         this.profilesFlat = []
-        profiles.forEach(((profile: { active: boolean; name: string; data: { key: string, value: string }[] }) => {
-                if (profile.active) this.activeProfileName = profile.name
+        profiles.forEach(((profile: {
+                active: boolean;
+                name: string;
+                data: { key: string, value: string }[],
+                sideMenuTreeNodes: {}[];
+            }) => {
+                if (profile.active) {
+                    this.activeProfileName = profile.name
+                    this.servicesMenuData = profile.sideMenuTreeNodes
+                }
                 this.profilesFlat.push({name: profile.name, key: 'name', value: profile.name})
                 profile.data.forEach(data => {
                     this.profilesFlat.push({name: profile.name, key: data.key, value: data.value})
@@ -195,7 +205,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.servicesMenuData = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
             this.activeProfileName = profileName
             //this.refreshTable()
-            this.messageService.add({severity: 'info', summary: 'Profile selected', detail: profileName.toString()})
+            this.messageService.add({severity: 'success', summary: 'Profile selected', detail: profileName.toString()})
         })
     }
 

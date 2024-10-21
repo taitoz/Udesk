@@ -8,8 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const db = {};
 db.profiles = new Datastore({filename: app.getPath('userData') + '/profilesDb.json', autoload: true});
-//db.services = new Datastore({filename:app.getPath('userData') + '/servicesDb.json', autoload: true})
-//db.pageActions = new Datastore({filename:app.getPath('userData') + '/pageActionsDb.json', autoload: true})
+db.pageActions = new Datastore({filename:app.getPath('userData') + '/pageActionsDb.json', autoload: true})
 
 export function initDb() {
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
@@ -29,7 +28,6 @@ export function initDb() {
 export async function setProfileKey(profileName, key, value) {
     const profile = await getProfile(profileName)
     if (!profile) return
-    console.log(profileName, key, value)
     if (key === 'name') {
         await renameProfile(profileName, value)
     } else {
@@ -109,11 +107,9 @@ export async function upsertProfile(profile) {
 }
 
 export async function importProfile(filePath) {
-    const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
-    let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
-    newProfile.name = fileName.split(".").shift()
-    // let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + newProfile.name + '.json'
-    // fs.cpSync(filePath, appConfigPath)
+    //const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
+    //newProfile.name = fileName.split(".").shift()
+    let newProfile = loadFromFile(filePath)
     await upsertProfile(newProfile)
     //refresh table
     setActiveProfile(newProfile.name)

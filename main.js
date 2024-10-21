@@ -295,7 +295,7 @@ app.on('ready', function () {
             appTray.addListener("right-click", showContextMenu);
         }
     } catch (error) {
-        console.log(error)
+        console.error(error)
     }
     //mainWindow.setMenu(Menu.buildFromTemplate(getMenu(mainWindow, app.getLocale())))
 })
@@ -361,7 +361,7 @@ ipcMain.handle('load-url', (event, args) => {
             })
         }
     } catch (error) {
-        if (error.code !== 'ERR_ABORTED') console.log(error.message)
+        if (error.code !== 'ERR_ABORTED') console.error(error.message)
     }
 
     // mainView.webContents.loadURL(args[0]).catch(error => {
@@ -395,8 +395,12 @@ ipcMain.on('settings:toggleTheme', (event, args) => {
 })
 
 ipcMain.on('sideBar:logo:get', async (event, args) => {
-    //event.returnValue = await getProfileLogoPath(args[0])
+    // if (args[0]) {
+    console.log("triggered " + args[0])
+    event.returnValue = await getProfileLogoPath(args[0])
+
     event.returnValue = path.join(app.getPath('userData'), 'settings', 'logo', `logo48b.png`)
+    // }
 })
 ipcMain.handle('sideBar:logo:set', async (event, args) => {
     await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
@@ -425,7 +429,8 @@ ipcMain.on('profiles:get', async (event) => {
 })
 ipcMain.handle('profiles:setActive', async (event, args) => {
     setActiveProfile(args[0])
-    //updateAppLogo(getProfileLogoPath(args[0]))
+    const logoPath = await getProfileLogoPath(args[0])
+    updateAppLogo(logoPath)
     //app.relaunch()
     //app.exit()
 })
@@ -453,7 +458,8 @@ ipcMain.handle('file:export', async (event, args) => {
             defaultPath: profileName + '.json', filters: [{name: 'JSON', extensions: ['json']}]
         })
         if (!result.canceled) {
-            let profile = await getProfile(args[0])
+            let profile = await getProfile(profileName)
+            delete profile['_id']
             fs.writeFileSync(result.filePath, JSON.stringify(profile), 'utf-8')
             return {severity: 'success', summary: 'profile exported to ' + result.filePath}
         }
@@ -482,14 +488,12 @@ ipcMain.handle('file:import', async () => {
 // =====================================================================================
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
 async function getProfileLogoPath(profileName) {
-    let logoName
-    if (!profileName) {
-        logoName = "logo48b.png"
-    } else {
+    let logoName = "logo48b.png"
+    if (profileName) {
         logoName = await getProfileKey(profileName, 'logo')
     }
-
-    const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
+    //const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
+    const logoPath = app.getPath('userData') + '/settings' + '/logo' + '/' + logoName
     if (!fs.existsSync(logoPath)) {
         fs.cpSync(path.join(__dirname, 'assets', `logo48b.png`), logoPath)
     }
@@ -506,10 +510,11 @@ async function setProfileLogo(newLogoPath, profileName) {
     const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     fs.cpSync(newLogoPath, logoPath)
-    await setProfileKey(profileName, 'logo', newLogoPath)
-    // if (profileName === getActiveProfile().name) {
-    //     updateAppLogo(logoPath);
-    // }
+    await setProfileKey(profileName, 'logo', logoName)
+    const activeProfile = await getActiveProfile()
+    if (profileName === activeProfile.name) {
+        updateAppLogo(logoPath);
+    }
 }
 
 function toggleSideMenu(args) {
