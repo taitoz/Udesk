@@ -32,7 +32,7 @@ export const canDeactivateGuard: CanDeactivateFn<any> = (
 export class SettingsComponent implements OnInit, OnDestroy {
 
     activeIndex = 0
-    servicesMenuData: TreeNode[] | undefined
+    sideMenuTreeNodes: TreeNode[] | undefined
     cols: any[] | undefined
     selectedNode: TreeNode
     //selectedNodes: TreeNode[] | undefined
@@ -45,8 +45,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
     theme = 'dark'
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}]
 
-    //profiles: { _id: string; name: string; data: { key: string, value: string }[] }[]
-    profilesFlat: { name: string; key: string; value: string; }[] = []
+    profiles: {
+        active: boolean;
+        name: string;
+        logo: string,
+        homeUrl: string,
+        lang: string,
+        sideMenuTreeNodes: TreeNode[]
+    }[]
     activeProfileName: string
     showTable = true
 
@@ -62,7 +68,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
 
-        this.servicesMenuData = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
+        this.sideMenuTreeNodes = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
         this.loadProfiles()
 
         this.cols = [
@@ -87,7 +93,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     saveEdit() {
         if (this.editingRow.hasOwnProperty('name')) {
-            this.setProfileKey(this.editingRow.name, this.editingRow.key, this.editingRow.value).then()
+            this.uiService.ipcInvoke('profile:update', this.editingRow).then(() => {
+                this.loadProfiles()
+                this.editingRow = null;
+            })
         }
         if (this.editingRow.hasOwnProperty('pageActions')) {
             this.servicesMenuDataSave()
@@ -97,10 +106,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     cancelEdit() {
         if (this.editingRow.hasOwnProperty('name')) {
-            this.loadProfiles()
+            //this.loadProfiles()
         }
         if (this.editingRow.hasOwnProperty('pageActions')) {
-            this.servicesMenuData = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
+            this.sideMenuTreeNodes = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
         }
         this.editingRow = null;
     }
@@ -135,13 +144,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges()
     }
 
-    async setProfileKey(profileName: string, keyName: string, value: string) {
-        await this.uiService.ipcInvoke('profiles:setProfileKey', profileName, keyName, value).then(() => {
-            this.loadProfiles()
-            this.editingRow = null;
-        })
-    }
-
     async addProfile() {
         await this.uiService.ipcInvoke('profiles:add').then(() => {
             this.loadProfiles()
@@ -164,7 +166,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
                 // console.log(index)
                 await this.uiService.ipcInvoke('profiles:delete', profileName).then(() => {
                     this.loadProfiles()
-                    this.setActiveProfile(this.profilesFlat[0].name)
+                    this.setActiveProfile(this.profiles[0].name)
                 })
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
@@ -174,35 +176,19 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     loadProfiles() {
-        let profiles: {
-            active: boolean;
-            name: string;
-            data: { key: string; value: string; }[];
-            sideMenuTreeNodes: {}[];
-        }[] = this.uiService.ipcSendSync('profiles:get')
-        this.profilesFlat = []
-        profiles.forEach(((profile: {
-                active: boolean;
-                name: string;
-                data: { key: string, value: string }[],
-                sideMenuTreeNodes: {}[];
-            }) => {
-                if (profile.active) {
-                    this.activeProfileName = profile.name
-                    this.servicesMenuData = profile.sideMenuTreeNodes
-                }
-                this.profilesFlat.push({name: profile.name, key: 'name', value: profile.name})
-                profile.data.forEach(data => {
-                    this.profilesFlat.push({name: profile.name, key: data.key, value: data.value})
-                })
-            })
-        )
+        this.profiles = this.uiService.ipcSendSync('profiles:get')
+        this.profiles.forEach(profile => {
+            if (profile.active) {
+                this.activeProfileName = profile.name
+                this.sideMenuTreeNodes = profile.sideMenuTreeNodes
+            }
+        })
         this.refreshTable()
     }
 
     setActiveProfile(profileName: string) {
         this.uiService.ipcInvoke('profiles:setActive', profileName).then(() => {
-            this.servicesMenuData = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
+            this.sideMenuTreeNodes = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
             this.activeProfileName = profileName
             //this.refreshTable()
             this.messageService.add({severity: 'success', summary: 'Profile selected', detail: profileName.toString()})
@@ -219,15 +205,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     servicesMenuDataSave() {
-        this.servicesMenuData.forEach(node => this.removeTreeParent(node));
+        this.sideMenuTreeNodes.forEach(node => this.removeTreeParent(node));
         //this.uiService.saveToSessionStorage(this.treeNodesData);
-        this.uiService.ipcInvoke('sideMenuTreeNodes:set', this.servicesMenuData).then(() => {
+        this.uiService.ipcInvoke('sideMenuTreeNodes:set', this.sideMenuTreeNodes).then(() => {
         })
         // if (this.electronService.isElectronApp) {
         //     this.electronService.ipcRenderer.send('sideMenuTreeNodes:set', this.treeNodesData);
         // }
 
-        this.servicesMenuData = [...this.servicesMenuData];
+        this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
         //this.messageService.add({severity: 'success', summary: 'Сохранено'});
     }
 
@@ -257,7 +243,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     deleteItem(selectedNode: TreeNode) {
         // console.log(this.servicesMenuData)
-        if (this.servicesMenuData.length === 1 && selectedNode.parent === null) {
+        if (this.sideMenuTreeNodes.length === 1 && selectedNode.parent === null) {
             this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
             return;
         }
@@ -269,8 +255,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
                 // console.log(selectedNode)
-                this.deleteNodeByData(selectedNode.data, this.servicesMenuData);
-                this.servicesMenuData = [...this.servicesMenuData];
+                this.deleteNodeByData(selectedNode.data, this.sideMenuTreeNodes);
+                this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
                 this.servicesMenuDataSave()
                 this.selectedNode = null
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
@@ -304,7 +290,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     addItem(selectedNodeData: any, asChild: boolean) {
         console.log(selectedNodeData)
-        let node = this.getNodeByData(selectedNodeData, this.servicesMenuData);
+        let node = this.getNodeByData(selectedNodeData, this.sideMenuTreeNodes);
         const newId = Date.now();
         if (asChild) {
             node.children.push(this.newNode(newId));
@@ -313,11 +299,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
             if (node.parent) {
                 node.parent.children.push(this.newNode(newId));
             } else {
-                this.servicesMenuData.push(this.newNode(newId));
+                this.sideMenuTreeNodes.push(this.newNode(newId));
             }
         }
         //this.selectedNode = newHeaderNode;
-        this.servicesMenuData = [...this.servicesMenuData];
+        this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
         this.servicesMenuDataSave()
         // this.messageService.add({severity: 'success', summary: this.selectedNode.data[key]});
     }

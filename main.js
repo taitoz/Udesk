@@ -24,12 +24,20 @@ import appLog from 'electron-log'
 import cfg from 'electron-cfg';
 
 // App updater
-import {initUpdater} from "./updater.js";
 
 // Puppeteer
 import pie from 'puppeteer-in-electron'
 import puppeteer from 'puppeteer-extra'
 import {executePageActions} from "./mainPageActions.js";
+import {
+    addProfileFromDefault,
+    deleteProfile,
+    getActiveProfile,
+    getProfile,
+    getProfiles, getSideMenuTreeNodes,
+    importProfile,
+    setActiveProfile, setSideMenuTreeNodes, upsertProfile
+} from "./mainDb.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -44,15 +52,6 @@ app.commandLine.appendSwitch('--disable-background-timer-throttling')
 app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows')
 app.commandLine.appendSwitch('--disable-renderer-backgrounding')
 const singleInstanceLock = app.requestSingleInstanceLock()
-
-import {
-    addProfileFromDefault,
-    deleteProfile, getActiveProfile,
-    getProfile,
-    getProfileKey,
-    getProfiles, importProfile, setActiveProfile,
-    setProfileKey, upsertProfile
-} from "./mainDb.js";
 
 let appCfg = cfg.create('config.json')
 
@@ -170,7 +169,7 @@ function createWindow() {
         pie.getPage(browser, mainView).then(async _page => {
             page = _page
             const activeProfile = await getActiveProfile(true)
-            let url = await getProfileKey(activeProfile.name, 'homeUrl')
+            let url = activeProfile['homeUrl']
             if (url) {
                 await _page.goto(url)
                 // page.setUserAgent(
@@ -253,6 +252,7 @@ function resizeMain() {
 app.on('ready', function () {
     //const icon = nativeImage.createFromPath()
     try {
+        appCfg.set('userDataPath', app.getPath('userData'))
         nativeTheme.themeSource = appCfg.get('theme', 'dark')
         //appLog.info(updater.buildId)
         //TODO initUpdater();
@@ -398,8 +398,7 @@ ipcMain.on('sideBar:logo:get', async (event, args) => {
     // if (args[0]) {
     console.log("triggered " + args[0])
     event.returnValue = await getProfileLogoPath(args[0])
-
-    event.returnValue = path.join(app.getPath('userData'), 'settings', 'logo', `logo48b.png`)
+    //event.returnValue = path.join(app.getPath('userData'), 'settings', 'logo', `logo48b.png`)
     // }
 })
 ipcMain.handle('sideBar:logo:set', async (event, args) => {
@@ -415,22 +414,22 @@ ipcMain.handle('sideBar:logo:set', async (event, args) => {
 })
 
 ipcMain.on('sideMenuTreeNodes:get', async (event, args) => {
-    const activeProfile = await getActiveProfile()
-    event.returnValue = activeProfile['sideMenuTreeNodes']
+    event.returnValue = await getSideMenuTreeNodes()
 })
 ipcMain.handle('sideMenuTreeNodes:set', async (event, args) => {
-    const activeProfile = await getActiveProfile()
-    activeProfile['sideMenuTreeNodes'] = args[0]
-    await upsertProfile(activeProfile)
+    const sideMenuTreeNodes = args[0]
+    await setSideMenuTreeNodes(sideMenuTreeNodes)
 })
 
 ipcMain.on('profiles:get', async (event) => {
     event.returnValue = getProfiles()
 })
 ipcMain.handle('profiles:setActive', async (event, args) => {
-    setActiveProfile(args[0])
-    const logoPath = await getProfileLogoPath(args[0])
-    updateAppLogo(logoPath)
+    const profileName = args[0]
+    setActiveProfile(profileName)
+    await getProfileLogoPath(profileName).then(logoPath => {
+        updateAppLogo(logoPath)
+    })
     //app.relaunch()
     //app.exit()
 })
@@ -438,17 +437,17 @@ ipcMain.handle('profiles:add', async () => {
     await addProfileFromDefault()
 })
 ipcMain.handle('profiles:delete', async (event, args) => {
-    //const profile = getProfile(args[0])
-    await deleteProfile(args[0])
+    const profileName = args[0]
+    await deleteProfile(profileName)
     // let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile.name + '.json'
     // fs.rmSync(appConfigPath)
 })
-ipcMain.on('profiles:getProfileKey', async (event, args) => {
-    const activeProfile = await getActiveProfile()
-    event.returnValue = activeProfile.data.find(p => p.key === args[0]).value
+ipcMain.on('profiles:getActive', async (event, args) => {
+    event.returnValue = await getActiveProfile()
 })
-ipcMain.handle('profiles:setProfileKey', async (event, args) => {
-    await setProfileKey(args[0], args[1], args[2])
+ipcMain.handle('profile:update', async (event, args) => {
+    const profile = args[0]
+    await upsertProfile(profile)
 })
 
 ipcMain.handle('file:export', async (event, args) => {
@@ -488,12 +487,14 @@ ipcMain.handle('file:import', async () => {
 // =====================================================================================
 // https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
 async function getProfileLogoPath(profileName) {
+    let profile = await getProfile(profileName)
     let logoName = "logo48b.png"
-    if (profileName) {
-        logoName = await getProfileKey(profileName, 'logo')
+    if (profile) {
+        logoName = profile['logo']
     }
-    //const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
-    const logoPath = app.getPath('userData') + '/settings' + '/logo' + '/' + logoName
+    console.log('logoName: ' + logoName)
+    const logoPath = path.join(appCfg.get('userDataPath'), 'settings', 'logo', logoName)
+    console.log('logoPath: ' + logoPath)
     if (!fs.existsSync(logoPath)) {
         fs.cpSync(path.join(__dirname, 'assets', `logo48b.png`), logoPath)
     }
@@ -502,6 +503,7 @@ async function getProfileLogoPath(profileName) {
 
 function updateAppLogo(logoPath) {
     sideBar.webContents.send('logo-update', logoPath)
+    console.log('logoPath ' + logoPath)
     mainWindow.setIcon(logoPath)
     appTray.setImage(logoPath)
 }
@@ -510,7 +512,11 @@ async function setProfileLogo(newLogoPath, profileName) {
     const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
     const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
     fs.cpSync(newLogoPath, logoPath)
-    await setProfileKey(profileName, 'logo', logoName)
+
+    const profile = await getProfile(profileName)
+    profile['logo'] = logoName
+    await upsertProfile(profileName)
+
     const activeProfile = await getActiveProfile()
     if (profileName === activeProfile.name) {
         updateAppLogo(logoPath);

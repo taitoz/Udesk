@@ -27,7 +27,7 @@
                 <span>Профиль</span>
             </ng-template>
             <div class="tableContainer">
-                <p-table *ngIf="showTable" [value]="profilesFlat"
+                <p-table *ngIf="showTable" [value]="profiles"
                          styleClass="p-datatable-striped"
                          rowGroupMode="rowspan"
                          groupRowsBy="name"
@@ -38,6 +38,33 @@
                             <td *ngIf="rowgroup" [attr.rowspan]="rowspan">
                                 <div class="flex flex-column gap-2">
                                     <span class="font-bold ml-2 truncate-text">{{ profile.name }}</span>
+                                    <input *ngIf="editingRow"
+                                           pInputText type="text"
+                                           [(ngModel)]="profile.name"
+                                           [ngStyle]="{'width': '100%'}"
+                                           (keydown.space)="$event.stopPropagation()"
+                                           (keydown.enter)="saveEdit()"
+                                           (keydown.escape)="cancelEdit()">
+                                    <div class="flex align-items-center justify-content-center gap-2">
+                                        <button *ngIf="!editingRow"
+                                                pButton type="button"
+                                                icon="bx bx-pencil"
+                                                class="p-button-rounded p-button-text"
+                                                (click)="startEdit(profile)">
+                                        </button>
+                                        <button *ngIf="editingRow"
+                                                pButton type="button"
+                                                icon="bx bx-check"
+                                                class="p-button-rounded p-button-text p-button-success mr-2"
+                                                (click)="saveEdit()">
+                                        </button>
+                                        <button *ngIf="editingRow"
+                                                pButton type="button"
+                                                icon="bx bx-x"
+                                                class="p-button-rounded p-button-text p-button-danger"
+                                                (click)="cancelEdit()">
+                                        </button>
+                                    </div>
                                     <div class="flex flex-row">
                                         <div class="p-toolbar-group-start">
                                             <button pButton type="button"
@@ -66,31 +93,29 @@
                                 </div>
                             </td>
                             <td class="profileKey">
-                                {{ profile.key }}
-                            </td>
-                            <td *ngIf="(profile.key === 'lang')">
-                                <p-dropdown placeholder="Select"
-                                            [options]="['ru', 'en']"
-                                            [(ngModel)]="profile.value"/>
-                            </td>
-                            <td *ngIf="(profile.key === 'logo')">
                                 <img [alt]="profile.logo" ngSrc="{{getProfileLogo(profile)}}" height="32" width="32"
                                      style="vertical-align: middle" pTooltip="profile logo"
                                 />
+                                <div class="flex align-items-center justify-content-center gap-2">
+                                    <button *ngIf="!editingRow"
+                                            pButton type="button"
+                                            icon="bx bx-pencil"
+                                            class="p-button-rounded p-button-text"
+                                            (click)="setProfileLogo(profile)">
+                                    </button>
+                                </div>
                             </td>
-                            <td *ngIf="(!['logo', 'lang'].includes(profile.key))">
-                            <span *ngIf="!editingRow" class="truncate-text">
-                                {{ profile.value }}
+                            <td class="profileKey">
+                                <span *ngIf="!editingRow" class="truncate-text">
+                                {{ profile.homeUrl }}
                             </span>
                                 <input *ngIf="editingRow"
                                        pInputText type="text"
-                                       [(ngModel)]="profile.value"
+                                       [(ngModel)]="profile.homeUrl"
                                        [ngStyle]="{'width': '100%'}"
                                        (keydown.space)="$event.stopPropagation()"
                                        (keydown.enter)="saveEdit()"
                                        (keydown.escape)="cancelEdit()">
-                            </td>
-                            <td *ngIf="(['name', 'homeUrl'].includes(profile.key))" style="width:10%">
                                 <div class="flex align-items-center justify-content-center gap-2">
                                     <button *ngIf="!editingRow"
                                             pButton type="button"
@@ -112,15 +137,10 @@
                                     </button>
                                 </div>
                             </td>
-                            <td *ngIf="(['logo'].includes(profile.key))" style="width:10%">
-                                <div class="flex align-items-center justify-content-center gap-2">
-                                    <button *ngIf="!editingRow"
-                                            pButton type="button"
-                                            icon="bx bx-pencil"
-                                            class="p-button-rounded p-button-text"
-                                            (click)="setProfileLogo(profile)">
-                                    </button>
-                                </div>
+                            <td class="profileKey">
+                                <p-dropdown placeholder="Select"
+                                            [options]="['ru', 'en']"
+                                            [(ngModel)]="profile.lang"/>
                             </td>
                         </tr>
                     </ng-template>
@@ -149,7 +169,7 @@
                 <span>Сервисы</span>
             </ng-template>
             <div class="tableContainer">
-                <p-treeTable #tt *ngIf="showTable" [value]="servicesMenuData"
+                <p-treeTable #tt *ngIf="showTable" [value]="sideMenuTreeNodes"
                              [columns]="cols"
                              [scrollable]="true"
                              scrollHeight="flex"

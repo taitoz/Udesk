@@ -1,26 +1,16 @@
 {
   "active": true,
   "name": "default",
-  "data": [
-    {
-      "key": "logo",
-      "value": "logo48b.png"
-    },
-    {
-      "key": "homeUrl",
-      "value": "http://localhost:9091/transmission/web/"
-    },
-    {
-      "key": "lang",
-      "value": "ru"
-    }
-  ],
+  "logo": "logo48b.png",
+  "homeUrl": "http://localhost",
+  "lang": "ru",
   "sideMenuTreeNodes": [
     {
       "data": {
         "id": 1,
         "key": "Подписка",
         "value": "https://uchet.kz/lp/5prichin/",
+        "pageActions": [],
         "icon": "bx bx-home-alt"
       },
       "children": [],
@@ -32,7 +22,7 @@
         "id": 2,
         "key": "Бухгалтерия",
         "value": "https://buh.uchet.kz/",
-        "icon": "bx bx-film"
+        "pageActions": []
       },
       "children": [],
       "parent": null,
@@ -43,7 +33,7 @@
         "id": 3,
         "key": "Онлайн касса",
         "value": "https://ukassa.kz/",
-        "icon": "bx bx-server"
+        "pageActions": []
       },
       "children": [],
       "parent": null,

@@ -30,12 +30,12 @@ export class SideBarComponent implements OnInit {
     }
 
     openLink(url: string) {
-        //TODO add pageActions
         this.uiService.ipcInvoke('load-url', url).then()
     }
 
     getActiveProfileHomeUrl() {
-        return this.uiService.ipcSendSync('profiles:getProfileKey', 0, 'homeUrl')
+        const activeProfile = this.uiService.ipcSendSync('profiles:getActive')
+        return activeProfile['homeUrl']
     }
 
     ipcSend(channel: string, data: string) {

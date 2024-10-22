@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const db = {};
 db.profiles = new Datastore({filename: app.getPath('userData') + '/profilesDb.json', autoload: true});
-db.pageActions = new Datastore({filename:app.getPath('userData') + '/pageActionsDb.json', autoload: true})
+db.pageActions = new Datastore({filename: app.getPath('userData') + '/pageActionsDb.json', autoload: true})
 
 export function initDb() {
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
@@ -25,22 +25,30 @@ export function initDb() {
     });
 }
 
+export async function upsertProfile(profile) {
+    return new Promise(async (resolve, reject) => {
+        // db.profiles.insert(profile)
+        let profileCount = await countProfile({name: profile.name})
+        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, function (err, numAffected, affectedDocuments, upsert) {
+            if (err) reject(err);
+            db.profiles.persistence.compactDatafile()
+            resolve(numAffected);
+        })
+    })
+}
+
 export async function setProfileKey(profileName, key, value) {
     const profile = await getProfile(profileName)
     if (!profile) return
     if (key === 'name') {
         await renameProfile(profileName, value)
     } else {
-        profile.data.forEach(data => {
-            if (data.key === key) {
-                data.value = value
-            }
-        })
+        profile[key] = value
         await upsertProfile(profile)
     }
 }
 
-export async function renameProfile(oldProfileName, newProfileName) {
+async function renameProfile(oldProfileName, newProfileName) {
     return new Promise(async (resolve, reject) => {
         let profileCount = await countProfile({name: newProfileName})
         if (profileCount > 0) {
@@ -51,15 +59,6 @@ export async function renameProfile(oldProfileName, newProfileName) {
             resolve(numAffected)
         })
     })
-}
-
-export async function getProfileKey(profileName, keyName) {
-    let res = null
-    const profile = await getProfile(profileName)
-    if (profile) {
-        res = profile.data.find(p => p.key === keyName).value
-    }
-    return res
 }
 
 export function getProfiles() {
@@ -75,7 +74,7 @@ export async function getProfile(profileName) {
     });
 }
 
-export async function countProfile(query) {
+async function countProfile(query) {
     return new Promise((resolve, reject) => {
         db.profiles.count(query, (err, count) => {
             if (err) reject(err);
@@ -94,17 +93,6 @@ export async function deleteProfile(profileName) {
     })
 }
 
-export async function upsertProfile(profile) {
-    return new Promise(async (resolve, reject) => {
-        // db.profiles.insert(profile)
-        let profileCount = await countProfile({name: profile.name})
-        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, function (err, numAffected, affectedDocuments, upsert) {
-            if (err) reject(err);
-            db.profiles.persistence.compactDatafile()
-            resolve(numAffected);
-        })
-    })
-}
 
 export async function importProfile(filePath) {
     //const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
@@ -131,6 +119,19 @@ export async function addProfileFromDefault() {
     })
 }
 
+export async function getSideMenuTreeNodes() {
+    return new Promise(async (resolve, reject) => {
+        const activeProfile = await getActiveProfile()
+        resolve(activeProfile['sideMenuTreeNodes'])
+    })
+}
+
+export async function setSideMenuTreeNodes(sideMenuTreeNodes) {
+    const activeProfile = await getActiveProfile()
+    activeProfile['sideMenuTreeNodes'] = sideMenuTreeNodes
+    await upsertProfile(activeProfile)
+}
+
 export async function getActiveProfile(init) {
     return new Promise((resolve, reject) => {
         db.profiles.findOne({active: true}, async (err, doc) => {
@@ -152,7 +153,7 @@ export function setActiveProfile(profileName) {
     })
 }
 
-export function loadFromFile(filePath) {
+function loadFromFile(filePath) {
     //TODO add validation
     try {
         const fileContent = fs.readFileSync(filePath, 'utf-8')
