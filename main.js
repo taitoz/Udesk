@@ -34,9 +34,10 @@ import {
     deleteProfile,
     getActiveProfile,
     getProfile,
-    getProfiles, getSideMenuTreeNodes,
+    getProfiles,
     importProfile,
-    setActiveProfile, setSideMenuTreeNodes, upsertProfile
+    setActiveProfile,
+    setProfileKey
 } from "./mainDb.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -252,7 +253,8 @@ function resizeMain() {
 app.on('ready', function () {
     //const icon = nativeImage.createFromPath()
     try {
-        appCfg.set('userDataPath', app.getPath('userData'))
+        initLogoCache()
+
         nativeTheme.themeSource = appCfg.get('theme', 'dark')
         //appLog.info(updater.buildId)
         //TODO initUpdater();
@@ -394,14 +396,11 @@ ipcMain.on('settings:toggleTheme', (event, args) => {
     nativeTheme.themeSource = args[0]
 })
 
-ipcMain.on('sideBar:logo:get', async (event, args) => {
-    // if (args[0]) {
-    console.log("triggered " + args[0])
-    event.returnValue = await getProfileLogoPath(args[0])
-    //event.returnValue = path.join(app.getPath('userData'), 'settings', 'logo', `logo48b.png`)
-    // }
+
+ipcMain.on('logoCache:getPath', async (event, args) => {
+    event.returnValue = appCfg.get('logoCachePath')
 })
-ipcMain.handle('sideBar:logo:set', async (event, args) => {
+ipcMain.handle('logoCache:set', async (event, args) => {
     await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
         title: "", properties: ['openFile'], filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif']}]
     }).then(function (response) {
@@ -413,62 +412,40 @@ ipcMain.handle('sideBar:logo:set', async (event, args) => {
     })
 })
 
-ipcMain.on('sideMenuTreeNodes:get', async (event, args) => {
-    event.returnValue = await getSideMenuTreeNodes()
-})
-ipcMain.handle('sideMenuTreeNodes:set', async (event, args) => {
-    const sideMenuTreeNodes = args[0]
-    await setSideMenuTreeNodes(sideMenuTreeNodes)
-})
-
 ipcMain.on('profiles:get', async (event) => {
     event.returnValue = getProfiles()
-})
-ipcMain.handle('profiles:setActive', async (event, args) => {
-    const profileName = args[0]
-    setActiveProfile(profileName)
-    await getProfileLogoPath(profileName).then(logoPath => {
-        updateAppLogo(logoPath)
-    })
-    //app.relaunch()
-    //app.exit()
-})
-ipcMain.handle('profiles:add', async () => {
-    await addProfileFromDefault()
-})
-ipcMain.handle('profiles:delete', async (event, args) => {
-    const profileName = args[0]
-    await deleteProfile(profileName)
-    // let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile.name + '.json'
-    // fs.rmSync(appConfigPath)
 })
 ipcMain.on('profiles:getActive', async (event, args) => {
     event.returnValue = await getActiveProfile()
 })
+
+ipcMain.handle('profiles:setActive', async (event, args) => {
+    const profileId = args[0]
+    await setActiveProfile(profileId)
+    const activeProfile = await getActiveProfile()
+    sideBar.webContents.send('activeProfile:update', activeProfile)
+    //app.relaunch()
+    //app.exit()
+})
 ipcMain.handle('profile:update', async (event, args) => {
-    const profile = args[0]
-    await upsertProfile(profile)
+    const profileId = args[0]
+    const key = args[1]
+    const value = args[2]
+    await setProfileKey(profileId, key, value)
 })
 
-ipcMain.handle('file:export', async (event, args) => {
-    try {
-        const profileName = args[0]
-        const result = await dialog.showSaveDialog({
-            defaultPath: profileName + '.json', filters: [{name: 'JSON', extensions: ['json']}]
-        })
-        if (!result.canceled) {
-            let profile = await getProfile(profileName)
-            delete profile['_id']
-            fs.writeFileSync(result.filePath, JSON.stringify(profile), 'utf-8')
-            return {severity: 'success', summary: 'profile exported to ' + result.filePath}
-        }
-    } catch (err) {
-        console.error('Error exporting file:', err)
-        return {severity: 'error', summary: err.message}
-    }
 
+ipcMain.handle('profiles:delete', async (event, args) => {
+    const profileId = args[0]
+    await deleteProfile(profileId)
+    // let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile.name + '.json'
+    // fs.rmSync(appConfigPath)
 })
-ipcMain.handle('file:import', async () => {
+ipcMain.handle('profiles:add', async () => {
+    await addProfileFromDefault()
+})
+
+ipcMain.handle('profile:import', async () => {
     try {
         const result = await dialog.showOpenDialog({
             properties: ['openFile'], filters: [{name: 'JSON Files', extensions: ['json']}]
@@ -484,42 +461,53 @@ ipcMain.handle('file:import', async () => {
     }
 });
 
+ipcMain.handle('profile:export', async (event, args) => {
+    try {
+        const profileId = args[0]
+        let profile = await getProfile(profileId)
+        const result = await dialog.showSaveDialog({
+            defaultPath: profile.name + '.json', filters: [{name: 'JSON', extensions: ['json']}]
+        })
+        if (!result.canceled) {
+            delete profile['_id']
+            fs.writeFileSync(result.filePath, JSON.stringify(profile), 'utf-8')
+            return {severity: 'success', summary: 'profile exported to ' + result.filePath}
+        }
+    } catch (err) {
+        console.error('Error exporting file:', err)
+        return {severity: 'error', summary: err.message}
+    }
+
+})
+
+
 // =====================================================================================
-// https://github.com/electron/electron/blob/main/docs/api/app.md#appgetpathname
-async function getProfileLogoPath(profileName) {
-    let profile = await getProfile(profileName)
-    let logoName = "logo48b.png"
-    if (profile) {
-        logoName = profile['logo']
-    }
-    console.log('logoName: ' + logoName)
-    const logoPath = path.join(appCfg.get('userDataPath'), 'settings', 'logo', logoName)
-    console.log('logoPath: ' + logoPath)
+function initLogoCache() {
+    appCfg.set('logoCachePath', path.join(app.getPath('userData'), 'LogoCache') + '\\')
+    copyFromAssets('Udesk_logo.png')
+    copyFromAssets('logo48b.png')
+    const appLogoPath = appCfg.get('logoCachePath') + `Udesk_logo.png`
+}
+
+function copyFromAssets(logoName){
+    const logoPath = appCfg.get('logoCachePath') + logoName
     if (!fs.existsSync(logoPath)) {
-        fs.cpSync(path.join(__dirname, 'assets', `logo48b.png`), logoPath)
+        fs.cpSync(path.join(__dirname, 'assets', logoName), logoPath)
     }
-    return logoPath
 }
 
-function updateAppLogo(logoPath) {
-    sideBar.webContents.send('logo-update', logoPath)
-    console.log('logoPath ' + logoPath)
-    mainWindow.setIcon(logoPath)
-    appTray.setImage(logoPath)
-}
-
-async function setProfileLogo(newLogoPath, profileName) {
+async function setProfileLogo(newLogoPath, profileId) {
     const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
-    const logoPath = path.join(app.getPath('userData'), 'settings', 'logo', logoName)
+    const logoPath = appCfg.get('logoCachePath') + logoName
     fs.cpSync(newLogoPath, logoPath)
 
-    const profile = await getProfile(profileName)
-    profile['logo'] = logoName
-    await upsertProfile(profileName)
+    await setProfileKey(profileId, 'logo', logoName)
 
     const activeProfile = await getActiveProfile()
-    if (profileName === activeProfile.name) {
-        updateAppLogo(logoPath);
+    if (profileId === activeProfile._id) {
+        sideBar.webContents.send('activeProfile:update', activeProfile)
+        // mainWindow.setIcon(logoPath)
+        // appTray.setImage(logoPath)
     }
 }
 

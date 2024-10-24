@@ -8,7 +8,7 @@ import {ElectronService} from "ngx-electronyzer";
 export class UiService {
 
     @Output() themeChange: EventEmitter<string> = new EventEmitter();
-    @Output() logoChange: EventEmitter<string> = new EventEmitter();
+    @Output() activeProfileChange: EventEmitter<string> = new EventEmitter();
 
     constructor(
         private http: HttpClient,
@@ -19,8 +19,8 @@ export class UiService {
             this.electronService.ipcRenderer.on('theme-toggle', (event, theme) => {
                 this.themeChange.emit(theme)
             })
-            this.electronService.ipcRenderer.on('logo-update', (event, logoPath) => {
-                this.logoChange.emit(logoPath)
+            this.electronService.ipcRenderer.on('activeProfile:update', (event, activeProfile) => {
+                this.activeProfileChange.emit(activeProfile)
             })
         }
     }
@@ -44,6 +44,10 @@ export class UiService {
         if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.invoke(channel, args);
         }
+    }
+
+    getLogoCachePath() : string {
+        return this.ipcSendSync('logoCache:getPath')
     }
 
     toggleTheme(document: Document, theme: string) {

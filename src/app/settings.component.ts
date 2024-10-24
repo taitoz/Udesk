@@ -31,14 +31,14 @@ export const canDeactivateGuard: CanDeactivateFn<any> = (
 
 export class SettingsComponent implements OnInit, OnDestroy {
 
-    activeIndex = 0
+    activeTabIndex = 0
     sideMenuTreeNodes: TreeNode[] | undefined
     cols: any[] | undefined
     selectedNode: TreeNode
     //selectedNodes: TreeNode[] | undefined
-    editingRow: any
+    editingTreeNode: any
+    editingProfile: any
 
-    nodeTypes: SelectItem[] | undefined
     pageActions: any[] | undefined
 
     ref: DynamicDialogRef | undefined
@@ -46,6 +46,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}]
 
     profiles: {
+        _id: string;
         active: boolean;
         name: string;
         logo: string,
@@ -53,7 +54,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
         lang: string,
         sideMenuTreeNodes: TreeNode[]
     }[]
-    activeProfileName: string
+    activeProfile: any
+    logoCachePath: string
     showTable = true
 
     constructor(
@@ -68,7 +70,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
 
-        this.sideMenuTreeNodes = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
+        this.logoCachePath = this.uiService.getLogoCachePath()
         this.loadProfiles()
 
         this.cols = [
@@ -84,56 +86,57 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     hasUnsavedChanges(): boolean {
-        return (this.editingRow)
+        return (this.editingTreeNode)
     }
 
-    startEdit(row: any) {
-        this.editingRow = row;
+    startProfileKeyEdit(profile: any) {
+        this.editingProfile = profile;
+
     }
 
-    saveEdit() {
-        if (this.editingRow.hasOwnProperty('name')) {
-            this.uiService.ipcInvoke('profile:update', this.editingRow).then(() => {
-                this.loadProfiles()
-                this.editingRow = null;
-            })
-        }
-        if (this.editingRow.hasOwnProperty('pageActions')) {
-            this.servicesMenuDataSave()
-        }
-        this.editingRow = null;
+    saveProfileKeyEdit(profileId: string, key:string, value: string) {
+        this.uiService.ipcInvoke('profile:update', profileId, key, value).then(() => {
+            this.loadProfiles()
+        })
+        this.editingProfile = null;
     }
 
-    cancelEdit() {
-        if (this.editingRow.hasOwnProperty('name')) {
-            //this.loadProfiles()
-        }
-        if (this.editingRow.hasOwnProperty('pageActions')) {
-            this.sideMenuTreeNodes = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
-        }
-        this.editingRow = null;
+    cancelProfileKeyEdit() {
+        this.loadProfiles()
+        this.editingProfile = null;
     }
 
-    exportServicesTableData(profileName: string) {
-        this.uiService.ipcInvoke('file:export', profileName).then(result => {
+    startTreeNodeEdit(row: any) {
+        this.editingTreeNode = row;
+    }
+
+    saveTreeNodeEdit() {
+        this.servicesMenuDataSave()
+        this.editingTreeNode = null;
+    }
+
+    cancelTreeNodeEdit() {
+        this.loadProfiles()
+        this.editingTreeNode = null;
+    }
+
+    exportServicesTableData(profileId: string) {
+        this.uiService.ipcInvoke('profile:export', profileId).then(result => {
             this.messageService.add(result)
         })
     }
 
-    importServicesTableData(profileName: string) {
-        this.uiService.ipcInvoke('file:import', profileName).then(result => {
+    importServicesTableData(profileId: string) {
+        this.uiService.ipcInvoke('profile:import', profileId).then(result => {
+            this.loadProfiles()
             this.messageService.add(result)
         })
     }
 
     async setProfileLogo(profile: any) {
-        await this.uiService.ipcInvoke('sideBar:logo:set', profile.name).then(() => {
+        await this.uiService.ipcInvoke('logoCache:set', profile.name).then(() => {
             this.refreshTable()
         })
-    }
-
-    getProfileLogo(profile: any) {
-        return this.uiService.ipcSendSync('sideBar:logo:get', profile.name)
     }
 
     refreshTable() {
@@ -150,7 +153,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         })
     }
 
-    deleteProfile(profileName: string) {
+    deleteProfile(profileId: string) {
         if (this.uiService.ipcSendSync('profiles:get').length === 1) {
             this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'})
             return
@@ -164,7 +167,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             accept: async () => {
                 // let index = this.profilesFlat.findIndex(item => item.name === profileName)
                 // console.log(index)
-                await this.uiService.ipcInvoke('profiles:delete', profileName).then(() => {
+                await this.uiService.ipcInvoke('profiles:delete', profileId).then(() => {
                     this.loadProfiles()
                     this.setActiveProfile(this.profiles[0].name)
                 })
@@ -179,19 +182,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.profiles = this.uiService.ipcSendSync('profiles:get')
         this.profiles.forEach(profile => {
             if (profile.active) {
-                this.activeProfileName = profile.name
+                this.activeProfile = profile
                 this.sideMenuTreeNodes = profile.sideMenuTreeNodes
             }
         })
         this.refreshTable()
     }
 
-    setActiveProfile(profileName: string) {
-        this.uiService.ipcInvoke('profiles:setActive', profileName).then(() => {
-            this.sideMenuTreeNodes = this.uiService.ipcSendSync('sideMenuTreeNodes:get')
-            this.activeProfileName = profileName
+    setActiveProfile(profileId: string) {
+        this.uiService.ipcInvoke('profiles:setActive', profileId).then(() => {
+            this.loadProfiles()
             //this.refreshTable()
-            this.messageService.add({severity: 'success', summary: 'Profile selected', detail: profileName.toString()})
+            //this.messageService.add({severity: 'success', summary: 'Profile selected', detail: profileId.toString()})
         })
     }
 
@@ -207,14 +209,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
     servicesMenuDataSave() {
         this.sideMenuTreeNodes.forEach(node => this.removeTreeParent(node));
         //this.uiService.saveToSessionStorage(this.treeNodesData);
-        this.uiService.ipcInvoke('sideMenuTreeNodes:set', this.sideMenuTreeNodes).then(() => {
+        this.uiService.ipcInvoke('profile:update', this.activeProfile._Id, 'sideMenuTreeNodes', this.sideMenuTreeNodes).then(() => {
+            this.loadProfiles()
+            //this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
+            //this.messageService.add({severity: 'success', summary: 'Сохранено'});
         })
-        // if (this.electronService.isElectronApp) {
-        //     this.electronService.ipcRenderer.send('sideMenuTreeNodes:set', this.treeNodesData);
-        // }
-
-        this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
-        //this.messageService.add({severity: 'success', summary: 'Сохранено'});
     }
 
     removeTreeParent(obj: TreeNode) {
@@ -289,7 +288,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     addItem(selectedNodeData: any, asChild: boolean) {
-        console.log(selectedNodeData)
         let node = this.getNodeByData(selectedNodeData, this.sideMenuTreeNodes);
         const newId = Date.now();
         if (asChild) {

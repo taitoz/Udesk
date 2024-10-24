@@ -29,34 +29,28 @@ export async function upsertProfile(profile) {
     return new Promise(async (resolve, reject) => {
         // db.profiles.insert(profile)
         let profileCount = await countProfile({name: profile.name})
-        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, function (err, numAffected, affectedDocuments, upsert) {
+        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, async function (err) {
             if (err) reject(err);
             db.profiles.persistence.compactDatafile()
-            resolve(numAffected);
+            const updatedDoc = await getProfile(profile._id)
+            resolve(updatedDoc);
         })
     })
 }
 
-export async function setProfileKey(profileName, key, value) {
-    const profile = await getProfile(profileName)
-    if (!profile) return
-    if (key === 'name') {
-        await renameProfile(profileName, value)
-    } else {
-        profile[key] = value
-        await upsertProfile(profile)
-    }
-}
-
-async function renameProfile(oldProfileName, newProfileName) {
+export async function setProfileKey(profileId, key, value) {
     return new Promise(async (resolve, reject) => {
-        let profileCount = await countProfile({name: newProfileName})
-        if (profileCount > 0) {
-            reject('Already exists')
+        if (key === 'name') {
+            let profileCount = await countProfile({name: value})
+            if (profileCount > 0) {
+                reject('Already exists')
+            }
         }
-        db.profiles.update({name: oldProfileName}, {$set: {name: newProfileName}}, function (err, numAffected, affectedDocuments, upsert) {
+        const updateObject = { $set: {} };
+        updateObject.$set[key] = value;
+        db.profiles.update({_id: profileId}, updateObject, {}, (err, numReplaced) => {
             db.profiles.persistence.compactDatafile()
-            resolve(numAffected)
+            resolve(numReplaced)
         })
     })
 }
@@ -65,9 +59,9 @@ export function getProfiles() {
     return db.profiles.getAllData();
 }
 
-export async function getProfile(profileName) {
+export async function getProfile(profileId) {
     return new Promise((resolve, reject) => {
-        db.profiles.findOne({name: profileName}, (err, doc) => {
+        db.profiles.findOne({_id: profileId}, (err, doc) => {
             if (err) reject(err);
             else resolve(doc);
         });
@@ -83,9 +77,9 @@ async function countProfile(query) {
     });
 }
 
-export async function deleteProfile(profileName) {
+export async function deleteProfile(profileId) {
     return new Promise((resolve, reject) => {
-        db.profiles.remove({name: profileName}, {multi: false}, function (err, numRemoved) {
+        db.profiles.remove({_id: profileId}, {multi: false}, function (err, numRemoved) {
             if (err) reject(err);
             db.profiles.persistence.compactDatafile()
             resolve(numRemoved);
@@ -97,39 +91,28 @@ export async function deleteProfile(profileName) {
 export async function importProfile(filePath) {
     //const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
     //newProfile.name = fileName.split(".").shift()
-    let newProfile = loadFromFile(filePath)
-    await upsertProfile(newProfile)
+    const profile = loadFromFile(filePath)
+    const updatedProfile = await upsertProfile(profile)
     //refresh table
-    setActiveProfile(newProfile.name)
+    await setActiveProfile(updatedProfile._id)
 }
 
 export async function addProfileFromDefault() {
     return new Promise(async (resolve, reject) => {
         let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
+        //TODO regex exclude digits
         let profileCount = await countProfile({name: newProfile.name})
         while (profileCount > 0) {
-            newProfile.name = newProfile.name + ' ' + profileCount;
+            newProfile.name = newProfile.name + '_' + profileCount;
             profileCount = await countProfile({name: newProfile.name})
         }
         // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
         // newProfile.sideMenuTreeNodes = loadFromFile(path.join(__dirname, 'assets', 'web1c.json'))
-        await upsertProfile(newProfile)
-        setActiveProfile(newProfile.name)
+        const updatedProfile = await upsertProfile(newProfile)
+        console.log(updatedProfile)
+        await setActiveProfile(updatedProfile._id)
         resolve(newProfile)
     })
-}
-
-export async function getSideMenuTreeNodes() {
-    return new Promise(async (resolve, reject) => {
-        const activeProfile = await getActiveProfile()
-        resolve(activeProfile['sideMenuTreeNodes'])
-    })
-}
-
-export async function setSideMenuTreeNodes(sideMenuTreeNodes) {
-    const activeProfile = await getActiveProfile()
-    activeProfile['sideMenuTreeNodes'] = sideMenuTreeNodes
-    await upsertProfile(activeProfile)
 }
 
 export async function getActiveProfile(init) {
@@ -142,13 +125,18 @@ export async function getActiveProfile(init) {
     });
 }
 
-export function setActiveProfile(profileName) {
-    db.profiles.update({}, {$set: {active: false}}, {multi: true, upsert: false}, function (err, numRemoved) {
-        db.profiles.update({name: profileName}, {$set: {active: true}}, {
-            multi: false,
-            upsert: false
-        }, function (err, numRemoved) {
-            db.profiles.persistence.compactDatafile()
+export async function setActiveProfile(profileId) {
+    return new Promise((resolve, reject) => {
+        db.profiles.update({}, {$set: {active: false}}, {multi: true, upsert: false}, function (err, numAffected) {
+            if (err) reject(err);
+            db.profiles.update({_id: profileId}, {$set: {active: true}}, {
+                multi: false,
+                upsert: false
+            }, function (err, numAffected) {
+                if (err) reject(err);
+                db.profiles.persistence.compactDatafile()
+                resolve(numAffected);
+            })
         })
     })
 }

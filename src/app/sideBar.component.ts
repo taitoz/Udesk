@@ -9,7 +9,8 @@ import {UiService} from './ui.service';
 })
 export class SideBarComponent implements OnInit {
 
-    appLogoPath: string;
+    activeProfile: any
+    logoCachePath: string
 
     constructor(
         private uiService: UiService,
@@ -19,13 +20,15 @@ export class SideBarComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.appLogoPath = this.uiService.ipcSendSync('sideBar:logo:get')
+
+        this.activeProfile = this.uiService.ipcSendSync('profiles:getActive')
+        this.logoCachePath = this.uiService.getLogoCachePath()
 
         this.uiService.themeChange.subscribe(theme => {
             this.uiService.toggleTheme(this.document, theme)
         });
-        this.uiService.logoChange.subscribe(logoPath => {
-            this.logoUpdate(logoPath)
+        this.uiService.activeProfileChange.subscribe(activeProfile => {
+            this.onActiveProfileUpdate(activeProfile)
         })
     }
 
@@ -34,8 +37,7 @@ export class SideBarComponent implements OnInit {
     }
 
     getActiveProfileHomeUrl() {
-        const activeProfile = this.uiService.ipcSendSync('profiles:getActive')
-        return activeProfile['homeUrl']
+        return this.activeProfile['homeUrl']
     }
 
     ipcSend(channel: string, data: string) {
@@ -46,8 +48,8 @@ export class SideBarComponent implements OnInit {
         this.uiService.ipcInvoke(channel).then()
     }
 
-    logoUpdate(logoPath: string) {
-        this.appLogoPath = logoPath
+    onActiveProfileUpdate(activeProfile: any) {
+        this.activeProfile = activeProfile
         this.cdr.detectChanges()
     }
 }
