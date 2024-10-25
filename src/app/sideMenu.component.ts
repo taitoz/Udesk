@@ -1,4 +1,4 @@
-import {Component, Inject, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, Inject, OnInit, ViewChild} from '@angular/core';
 import {MenuItem, TreeNode} from 'primeng/api';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
@@ -13,6 +13,7 @@ import {switchMap} from "rxjs";
 
 export class SideMenuComponent implements OnInit {
 
+    activeProfile: any
     treeNodesData: TreeNode[];
     menuItems: MenuItem[] = [];
     menuName: string = '';
@@ -23,13 +24,12 @@ export class SideMenuComponent implements OnInit {
         private uiService: UiService,
         private route: ActivatedRoute,
         private router: Router,
-        @Inject(DOCUMENT) private document: Document
+        @Inject(DOCUMENT) private document: Document,
+        private cdr: ChangeDetectorRef
     ) {
         this.route.params.subscribe({
             next: params => {
                 this.menuName = this.getMenuName(params['menuId']);
-                this.treeNodesData = this.uiService.ipcSendSync('sideMenuTreeNodes:get', params['menuId'])
-                this.loadMenuItemsFromTreeNodesData();
             },
             error: error => {
                 console.log(error)
@@ -51,8 +51,15 @@ export class SideMenuComponent implements OnInit {
 
     ngOnInit() {
 
+        this.activeProfile = this.uiService.ipcSendSync('profiles:getActive')
+        this.treeNodesData = this.activeProfile['sideMenuTreeNodes']
+        this.loadMenuItemsFromTreeNodesData();
+
         this.uiService.themeChange.subscribe(theme => {
             this.uiService.toggleTheme(this.document, theme)
+        })
+        this.uiService.activeProfileChange.subscribe(activeProfile => {
+            this.onActiveProfileUpdate(activeProfile)
         })
 
         //this.treeNodesData = this.uiService.loadSideMenuData('services');
@@ -61,6 +68,11 @@ export class SideMenuComponent implements OnInit {
         // this.uiService.appNameChange.subscribe(appName => {
         //     this.appName = appName;
         // });
+    }
+
+    onActiveProfileUpdate(activeProfile: any) {
+        this.activeProfile = activeProfile
+        this.cdr.detectChanges()
     }
 
     getMenuName(menuId:string){

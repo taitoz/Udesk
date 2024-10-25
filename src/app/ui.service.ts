@@ -47,7 +47,7 @@ export class UiService {
     }
 
     getLogoCachePath() : string {
-        return this.ipcSendSync('logoCache:getPath')
+        return this.ipcSendSync('profile:logo:getCachePath')
     }
 
     toggleTheme(document: Document, theme: string) {

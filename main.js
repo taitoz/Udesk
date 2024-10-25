@@ -37,7 +37,7 @@ import {
     getProfiles,
     importProfile,
     setActiveProfile,
-    setProfileKey
+    upsertProfile
 } from "./mainDb.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -397,15 +397,30 @@ ipcMain.on('settings:toggleTheme', (event, args) => {
 })
 
 
-ipcMain.on('logoCache:getPath', async (event, args) => {
+ipcMain.on('profile:logo:getCachePath', async (event) => {
     event.returnValue = appCfg.get('logoCachePath')
 })
-ipcMain.handle('logoCache:set', async (event, args) => {
+ipcMain.handle('profile:logo:set', async (event, args) => {
     await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
         title: "", properties: ['openFile'], filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif']}]
-    }).then(function (response) {
+    }).then(async function (response) {
         if (!response.canceled) {
-            setProfileLogo(response.filePaths[0], args[0])
+            const newLogoPath = response.filePaths[0]
+            const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
+            const logoCachePath = appCfg.get('logoCachePath') + logoName
+            fs.cpSync(newLogoPath, logoCachePath)
+
+            const profileId = args[0]
+            const profile = await getProfile(profileId)
+            profile.logo = logoName
+            await upsertProfile(profile)
+
+            const activeProfile = await getActiveProfile()
+            if (profileId === activeProfile._id) {
+                sideBar.webContents.send('activeProfile:update', activeProfile)
+                // mainWindow.setIcon(logoPath)
+                // appTray.setImage(logoPath)
+            }
         } else {
             //console.log("no file selected");
         }
@@ -415,7 +430,7 @@ ipcMain.handle('logoCache:set', async (event, args) => {
 ipcMain.on('profiles:get', async (event) => {
     event.returnValue = getProfiles()
 })
-ipcMain.on('profiles:getActive', async (event, args) => {
+ipcMain.on('profiles:getActive', async (event) => {
     event.returnValue = await getActiveProfile()
 })
 
@@ -428,21 +443,21 @@ ipcMain.handle('profiles:setActive', async (event, args) => {
     //app.exit()
 })
 ipcMain.handle('profile:update', async (event, args) => {
-    const profileId = args[0]
-    const key = args[1]
-    const value = args[2]
-    await setProfileKey(profileId, key, value)
+    const profile = args[0]
+    await upsertProfile(profile)
 })
 
 
 ipcMain.handle('profiles:delete', async (event, args) => {
     const profileId = args[0]
     await deleteProfile(profileId)
+    // TODO delete logo
     // let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile.name + '.json'
     // fs.rmSync(appConfigPath)
 })
 ipcMain.handle('profiles:add', async () => {
-    await addProfileFromDefault()
+    const updatedProfile = await addProfileFromDefault()
+    await setActiveProfile(updatedProfile._id)
 })
 
 ipcMain.handle('profile:import', async () => {
@@ -464,7 +479,7 @@ ipcMain.handle('profile:import', async () => {
 ipcMain.handle('profile:export', async (event, args) => {
     try {
         const profileId = args[0]
-        let profile = await getProfile(profileId)
+        const profile = await getProfile(profileId)
         const result = await dialog.showSaveDialog({
             defaultPath: profile.name + '.json', filters: [{name: 'JSON', extensions: ['json']}]
         })
@@ -496,20 +511,6 @@ function copyFromAssets(logoName){
     }
 }
 
-async function setProfileLogo(newLogoPath, profileId) {
-    const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
-    const logoPath = appCfg.get('logoCachePath') + logoName
-    fs.cpSync(newLogoPath, logoPath)
-
-    await setProfileKey(profileId, 'logo', logoName)
-
-    const activeProfile = await getActiveProfile()
-    if (profileId === activeProfile._id) {
-        sideBar.webContents.send('activeProfile:update', activeProfile)
-        // mainWindow.setIcon(logoPath)
-        // appTray.setImage(logoPath)
-    }
-}
 
 function toggleSideMenu(args) {
     sideMenuWidth = sideMenu.getBounds().width

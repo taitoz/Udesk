@@ -89,16 +89,34 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return (this.editingTreeNode)
     }
 
-    startProfileKeyEdit(profile: any) {
-        this.editingProfile = profile;
-
+    loadProfiles() {
+        this.profiles = this.uiService.ipcSendSync('profiles:get')
+        this.profiles.forEach(profile => {
+            if (profile.active) {
+                this.activeProfile = profile
+                this.sideMenuTreeNodes = profile.sideMenuTreeNodes
+            }
+        })
+        this.refreshTable()
     }
 
-    saveProfileKeyEdit(profileId: string, key:string, value: string) {
-        this.uiService.ipcInvoke('profile:update', profileId, key, value).then(() => {
+    startProfileKeyEdit(profile: any) {
+        profile.sideMenuTreeNodes.forEach((node: TreeNode<any>) => this.removeTreeParent(node));
+        delete profile['_id']
+        this.editingProfile = profile;
+    }
+
+    saveProfileKeyEdit() {
+        this.uiService.ipcInvoke('profile:update', this.editingProfile).then(() => {
             this.loadProfiles()
         })
         this.editingProfile = null;
+    }
+    async setProfileLogo(profileId: string) {
+        await this.uiService.ipcInvoke('profile:logo:set', profileId).then(() => {
+            this.loadProfiles()
+            this.editingProfile = null;
+        })
     }
 
     cancelProfileKeyEdit() {
@@ -120,22 +138,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.editingTreeNode = null;
     }
 
-    exportServicesTableData(profileId: string) {
+    exportProfile(profileId: string) {
         this.uiService.ipcInvoke('profile:export', profileId).then(result => {
             this.messageService.add(result)
         })
     }
 
-    importServicesTableData(profileId: string) {
-        this.uiService.ipcInvoke('profile:import', profileId).then(result => {
+    importProfile() {
+        this.uiService.ipcInvoke('profile:import').then(result => {
             this.loadProfiles()
             this.messageService.add(result)
-        })
-    }
-
-    async setProfileLogo(profile: any) {
-        await this.uiService.ipcInvoke('logoCache:set', profile.name).then(() => {
-            this.refreshTable()
         })
     }
 
@@ -154,7 +166,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteProfile(profileId: string) {
-        if (this.uiService.ipcSendSync('profiles:get').length === 1) {
+        if (this.profiles.length === 1) {
             this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'})
             return
         }
@@ -169,24 +181,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
                 // console.log(index)
                 await this.uiService.ipcInvoke('profiles:delete', profileId).then(() => {
                     this.loadProfiles()
-                    this.setActiveProfile(this.profiles[0].name)
+                    this.setActiveProfile(this.profiles[0]._id)
                 })
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {
             }
         });
-    }
-
-    loadProfiles() {
-        this.profiles = this.uiService.ipcSendSync('profiles:get')
-        this.profiles.forEach(profile => {
-            if (profile.active) {
-                this.activeProfile = profile
-                this.sideMenuTreeNodes = profile.sideMenuTreeNodes
-            }
-        })
-        this.refreshTable()
     }
 
     setActiveProfile(profileId: string) {
@@ -209,7 +210,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     servicesMenuDataSave() {
         this.sideMenuTreeNodes.forEach(node => this.removeTreeParent(node));
         //this.uiService.saveToSessionStorage(this.treeNodesData);
-        this.uiService.ipcInvoke('profile:update', this.activeProfile._Id, 'sideMenuTreeNodes', this.sideMenuTreeNodes).then(() => {
+        this.activeProfile.sideMenuTreeNodes = this.sideMenuTreeNodes;
+        this.uiService.ipcInvoke('profile:update', this.activeProfile).then(() => {
             this.loadProfiles()
             //this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
             //this.messageService.add({severity: 'success', summary: 'Сохранено'});

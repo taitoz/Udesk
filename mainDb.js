@@ -25,19 +25,6 @@ export function initDb() {
     });
 }
 
-export async function upsertProfile(profile) {
-    return new Promise(async (resolve, reject) => {
-        // db.profiles.insert(profile)
-        let profileCount = await countProfile({name: profile.name})
-        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, async function (err) {
-            if (err) reject(err);
-            db.profiles.persistence.compactDatafile()
-            const updatedDoc = await getProfile(profile._id)
-            resolve(updatedDoc);
-        })
-    })
-}
-
 export async function setProfileKey(profileId, key, value) {
     return new Promise(async (resolve, reject) => {
         if (key === 'name') {
@@ -51,6 +38,22 @@ export async function setProfileKey(profileId, key, value) {
         db.profiles.update({_id: profileId}, updateObject, {}, (err, numReplaced) => {
             db.profiles.persistence.compactDatafile()
             resolve(numReplaced)
+        })
+    })
+}
+
+//TODO rename bug
+export async function upsertProfile(profile) {
+    return new Promise(async (resolve, reject) => {
+        // db.profiles.insert(profile)
+        let profileCount = await countProfile({name: profile.name})
+        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, function (err) {
+            if (err) reject(err);
+            db.profiles.persistence.compactDatafile()
+            db.profiles.findOne({name: profile.name}, (err, doc) => {
+                if (err) reject(err);
+                resolve(doc);
+            });
         })
     })
 }
@@ -100,18 +103,23 @@ export async function importProfile(filePath) {
 export async function addProfileFromDefault() {
     return new Promise(async (resolve, reject) => {
         let newProfile = loadFromFile(path.join(__dirname, 'assets', 'profile-default.json'))
-        //TODO regex exclude digits
-        let profileCount = await countProfile({name: newProfile.name})
-        while (profileCount > 0) {
-            newProfile.name = newProfile.name + '_' + profileCount;
-            profileCount = await countProfile({name: newProfile.name})
-        }
+        const initialProfileName = newProfile.name
         // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
-        // newProfile.sideMenuTreeNodes = loadFromFile(path.join(__dirname, 'assets', 'web1c.json'))
-        const updatedProfile = await upsertProfile(newProfile)
-        console.log(updatedProfile)
-        await setActiveProfile(updatedProfile._id)
-        resolve(newProfile)
+        let count = 1;
+        function checkAndInsert() {
+            db.profiles.findOne({ name: newProfile.name }, async (err, existingProfile) => {
+                if (err) reject(err);
+                if (existingProfile) {
+                    newProfile.name = `${initialProfileName} (${count})`;
+                    count++;
+                    checkAndInsert(); // Recursive call to check again
+                } else {
+                    const updatedProfile = await upsertProfile(newProfile)
+                    resolve(updatedProfile)
+                }
+            });
+        }
+        checkAndInsert();
     })
 }
 
@@ -125,9 +133,10 @@ export async function getActiveProfile(init) {
     });
 }
 
+//TODO emit event
 export async function setActiveProfile(profileId) {
     return new Promise((resolve, reject) => {
-        db.profiles.update({}, {$set: {active: false}}, {multi: true, upsert: false}, function (err, numAffected) {
+        db.profiles.update({}, {$set: {active: false}}, {multi: true, upsert: false}, function (err) {
             if (err) reject(err);
             db.profiles.update({_id: profileId}, {$set: {active: true}}, {
                 multi: false,

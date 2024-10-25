@@ -37,6 +37,7 @@
                             <th>Image</th>
                             <th>homeUrl</th>
                             <th>lang</th>
+                            <th></th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-profile>
@@ -51,25 +52,8 @@
                                            [(ngModel)]="profile.name"
                                            [ngStyle]="{'width': '100%'}"
                                            (keydown.space)="$event.stopPropagation()"
-                                           (keydown.enter)="saveProfileKeyEdit(profile._id, 'name', profile.name)"
+                                           (keydown.enter)="saveProfileKeyEdit()"
                                            (keydown.escape)="cancelProfileKeyEdit()">
-                                    <div class="flex align-items-center justify-content-center gap-2">
-                                        <button *ngIf="!editingProfile" pButton type="button"
-                                                icon="bx bx-pencil"
-                                                class="p-button-rounded p-button-text"
-                                                (click)="startProfileKeyEdit(profile)">
-                                        </button>
-                                        <button *ngIf="editingProfile" pButton type="button"
-                                                icon="bx bx-check"
-                                                class="p-button-rounded p-button-text p-button-success mr-2"
-                                                (click)="saveProfileKeyEdit(profile._id, 'name', profile.name)">
-                                        </button>
-                                        <button *ngIf="editingProfile" pButton type="button"
-                                                icon="bx bx-x"
-                                                class="p-button-rounded p-button-text p-button-danger"
-                                                (click)="cancelProfileKeyEdit()">
-                                        </button>
-                                    </div>
                                     <div class="flex flex-row">
                                         <div class="p-toolbar-group-start">
                                             <button pButton type="button"
@@ -87,7 +71,7 @@
                                             <button pButton type="button"
                                                     pTooltip="export" tooltipPosition="top"
                                                     icon="bx bxs-file-export"
-                                                    (click)="exportServicesTableData(profile._id)"
+                                                    (click)="exportProfile(profile._id)"
                                                     class="p-button-text p-button-info" [outlined]="true">
                                             </button>
                                         </div>
@@ -98,14 +82,16 @@
                                 </div>
                             </td>
                             <td class="">
-                                <img [alt]="profile.logo" ngSrc="{{logoCachePath + profile.logo}}" height="32" width="32"
+                                <img [alt]="profile.logo" ngSrc="{{logoCachePath + profile.logo}}" height="32"
+                                     width="32"
                                      style="vertical-align: middle" pTooltip="profile logo"
                                 />
                                 <div class="flex align-items-center justify-content-center gap-2">
-                                    <button pButton type="button"
+                                    <button *ngIf="editingProfile && editingProfile._id === profile._id"
+                                            pButton type="button"
                                             icon="bx bx-pencil"
                                             class="p-button-rounded p-button-text"
-                                            (click)="setProfileLogo(profile)">
+                                            (click)="setProfileLogo(profile._id)">
                                     </button>
                                 </div>
                             </td>
@@ -115,33 +101,41 @@
                                 </span>
                                 <input *ngIf="editingProfile"
                                        pInputText type="text"
-                                       [(ngModel)]="editingProfile.homeUrl"
+                                       [(ngModel)]="profile.homeUrl"
                                        [ngStyle]="{'width': '100%'}"
                                        (keydown.space)="$event.stopPropagation()"
-                                       (keydown.enter)="saveProfileKeyEdit(editingProfile._id, 'homeUrl', editingProfile.homeUrl)"
+                                       (keydown.enter)="saveProfileKeyEdit()"
                                        (keydown.escape)="cancelProfileKeyEdit()">
-                                <div class="flex align-items-center justify-content-center gap-2">
-                                    <button *ngIf="!editingProfile" pButton type="button"
-                                            icon="bx bx-pencil"
-                                            class="p-button-rounded p-button-text"
-                                            (click)="startProfileKeyEdit(profile)">
-                                    </button>
-                                    <button *ngIf="editingProfile" pButton type="button"
-                                            icon="bx bx-check"
-                                            class="p-button-rounded p-button-text p-button-success mr-2"
-                                            (click)="saveProfileKeyEdit(editingProfile._id, 'homeUrl', editingProfile.homeUrl)">
-                                    </button>
-                                    <button *ngIf="editingProfile" pButton type="button"
-                                            icon="bx bx-x"
-                                            class="p-button-rounded p-button-text p-button-danger"
-                                            (click)="cancelProfileKeyEdit()">
-                                    </button>
-                                </div>
                             </td>
                             <td class="">
                                 <p-dropdown placeholder="Select"
                                             [options]="['ru', 'en']"
                                             [(ngModel)]="profile.lang"/>
+                            </td>
+                            <td style="width:10%">
+                                <div class="flex align-items-center justify-content-center gap-2">
+                                    <button *ngIf="!editingProfile || editingProfile._id !== profile._id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-pencil"
+                                            class="p-button-rounded p-button-text"
+                                            (click)="startProfileKeyEdit(profile)">
+                                    </button>
+                                    <button *ngIf="editingProfile && editingProfile._id === profile._id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-check"
+                                            class="p-button-rounded p-button-text p-button-success mr-2"
+                                            (click)="saveProfileKeyEdit()">
+                                    </button>
+                                    <button *ngIf="editingProfile && editingProfile._id === profile._id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-x"
+                                            class="p-button-rounded p-button-text p-button-danger"
+                                            (click)="cancelProfileKeyEdit()">
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </ng-template>
@@ -157,7 +151,7 @@
                                 <button pButton type="button" icon="bx bxs-file-import" class="p-button-text"
                                         pTooltip="Import" label="Import"
                                         tooltipPosition="top"
-                                        (click)="importServicesTableData(0)"></button>
+                                        (click)="importProfile()"></button>
                             </div>
                         </div>
                     </ng-template>
@@ -183,7 +177,7 @@
                                 <div class="p-input-icon-left">
                                     <i class="pi pi-search"></i>
                                     <input type="text" pInputText placeholder="Поиск"
-                                           (input)="tt.filterGlobal($event.target.value, 'contains')"/>
+                                           (input)="tt.filterGlobal($event.target['value'], 'contains')"/>
                                 </div>
                             </ng-template>
                         </p-toolbar>
@@ -204,13 +198,14 @@
                             <td *ngFor="let col of columns; let i = index"
                                 [ngClass]="{'p-toggler-column': i === 0}">
                                 <p-treeTableToggler [rowNode]="rowNode" *ngIf="i === 0"></p-treeTableToggler>
-                                <span *ngIf="!editingTreeNode || editingTreeNode.id !== rowData.id" class="truncate-text">
+                                <span *ngIf="!editingTreeNode || editingTreeNode.id !== rowData.id"
+                                      class="truncate-text">
                                 {{ rowData[col.field] }}
                             </span>
                                 <input *ngIf="editingTreeNode && editingTreeNode.id === rowData.id"
                                        pInputText type="text"
                                        [(ngModel)]="rowData[col.field]"
-                                       [ngStyle]="{'width': i == 0 ? '70%': '100%'}"
+                                       [ngStyle]="{'width': i === 0 ? '70%': '100%'}"
                                        (keydown.space)="$event.stopPropagation()"
                                        (keydown.enter)="saveTreeNodeEdit()"
                                        (keydown.escape)="cancelTreeNodeEdit()">
@@ -293,10 +288,9 @@
 <p-toast position="top-right"
          [life]="4000"
          [showTransformOptions]="'translateY(100%)'"
+         [showTransformOptions]="'translateX(100%)'"
          [showTransitionOptions]="'300ms'"
-         [hideTransitionOptions]="'300ms'"
-         [showTransformOptions]="'translateX(100%)'">
-
+         [hideTransitionOptions]="'300ms'">
 </p-toast>
 <p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="10000"></p-confirmDialog>
 
