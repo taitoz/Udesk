@@ -40,7 +40,7 @@ export function addResponseHandlers(page, pageActions) {
 }
 
 export async function executePageActions(page, pageActions) {
-    console.log('executePageActions')
+    //console.log('executePageActions')
     for (const pageAction of pageActions) {
         switch (pageAction.action) {
             case 'waitElement': {

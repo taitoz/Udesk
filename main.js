@@ -61,6 +61,7 @@ let puppeteerApp = puppeteer
 await pie.initialize(app)
 let page
 
+//TODO to appCfg
 const appIcon = nativeImage.createFromPath(
     path.join(__dirname, 'assets', `Udesk_logo.png`)
 )
@@ -75,6 +76,7 @@ let titleBar
 let mainView
 let settingsView
 
+//TODO to appCfg
 let sideBarWidth = 70
 let sideMenuWidth = 0
 let titleBarHeight = 32
@@ -169,18 +171,11 @@ function createWindow() {
     // Puppeteer
     pie.connect(app, puppeteerApp).then(async browser => {
         pie.getPage(browser, mainView).then(async _page => {
-            page = _page
+            page =_page
             const activeProfile = await getActiveProfile(true)
             let url = activeProfile['homeUrl']
             if (url) {
-                await _page.goto(url)
-                // page.setUserAgent(
-                //     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-                // )
-                // mainView.webContents.loadURL(url).catch(error => {
-                //     if (error.code === 'ERR_ABORTED') return;
-                //     throw error
-                // })
+                await loadUrl(url)
             } else {
                 toggleSettings()
             }
@@ -256,6 +251,7 @@ app.on('ready', async function () {
     try {
         initLogoCache()
         await initPageActions()
+        //TODO to appCfg
         nativeTheme.themeSource = appCfg.get('theme', 'dark')
         //appLog.info(updater.buildId)
         //TODO initUpdater();
@@ -281,6 +277,7 @@ app.on('ready', async function () {
             appTray.popUpContextMenu(trayMenu);
         };
 
+        //TODO to appCfg
         appTray.setToolTip("UDesk");
 
         if (process.platform !== "darwin") {
@@ -351,42 +348,13 @@ ipcMain.handle('load-url', async (event, args) => {
     if (mainWindow.contentView.children.includes(settingsView)) {
         mainWindow.contentView.removeChildView(settingsView)
     }
-    try {
-        if (!hasChildren) {
-            toggleSideMenu()
-        }
-        if (url) {
-            new URL(url)
-            await page.goto(url, {
-                waitUntil: "networkidle0",
-            })
 
-            const pageAction = await getPageAction(url)
-            if (pageAction) {
-                await executePageActions(page, pageAction.actions)
-            }
-
-        }
-    } catch (error) {
-        if (error.code !== 'ERR_ABORTED') console.error(error.message)
+    if (!hasChildren) {
+        toggleSideMenu()
     }
-
-    // mainView.webContents.loadURL(args[0]).catch(error => {
-    //     if (error.code === 'ERR_ABORTED') return;
-    //     throw error;
-    // });
-    // mainView.webContents.on('dom-ready', () => {
-    // mainView.webContents.executeJavaScript(`
-    //     const event = new KeyboardEvent('keydown', { key: 'Tab' });
-    //     document.activeElement.dispatchEvent(event);
-    // `);
-    // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Tab' })
-    // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'a' })
-    // if (elementExists) {
-    //     mainView.webContents.executeJavaScript(`document.querySelector('#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input').value = 'test';`).then();
-    // }
-    // })
-
+    if (url) {
+        await loadUrl(url)
+    }
 })
 
 ipcMain.handle('open:settings', () => {
@@ -495,8 +463,51 @@ ipcMain.handle('profile:export', async (event, args) => {
 
 })
 
-
+//TODO add pageActions Edit
+//lang nestdb, lang setting
+//drag and drop reordering to services tree table
+//? events to angular
 // =====================================================================================
+async function loadUrl(url) {
+    try {
+        new URL(url)
+        await page.goto(url, {
+            waitUntil: "networkidle0",
+        })
+
+        const pageAction = await getPageAction(url)
+        if (pageAction) {
+            await executePageActions(page, pageAction.actions)
+        }
+    } catch (error) {
+        if (error.code !== 'ERR_ABORTED') console.error(error.message)
+    }
+
+    // page.setUserAgent(
+    //     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    // )
+    // mainView.webContents.loadURL(url).catch(error => {
+    //     if (error.code === 'ERR_ABORTED') return;
+    //     throw error
+    // })
+
+    // mainView.webContents.loadURL(args[0]).catch(error => {
+    //     if (error.code === 'ERR_ABORTED') return;
+    //     throw error;
+    // });
+    // mainView.webContents.on('dom-ready', () => {
+    // mainView.webContents.executeJavaScript(`
+    //     const event = new KeyboardEvent('keydown', { key: 'Tab' });
+    //     document.activeElement.dispatchEvent(event);
+    // `);
+    // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Tab' })
+    // mainView.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'a' })
+    // if (elementExists) {
+    //     mainView.webContents.executeJavaScript(`document.querySelector('#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input').value = 'test';`).then();
+    // }
+    // })
+}
+
 async function initPageActions() {
     const allPageActions = getPageActions()
     if (allPageActions.length === 0) {
@@ -513,6 +524,7 @@ function initLogoCache() {
     appCfg.set('logoCachePath', path.join(app.getPath('userData'), 'LogoCache') + '\\')
     copyFromAssets('Udesk_logo.png')
     copyFromAssets('logo48b.png')
+    //TODO appLogo from appCfg
     const appLogoPath = appCfg.get('logoCachePath') + `Udesk_logo.png`
 }
 
