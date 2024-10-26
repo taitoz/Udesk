@@ -1,5 +1,5 @@
 import {ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
-import {ConfirmationService, MessageService, SelectItem, TreeNode} from 'primeng/api';
+import {ConfirmationService, MessageService, TreeNode} from 'primeng/api';
 import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
@@ -102,7 +102,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     startProfileKeyEdit(profile: any) {
         profile.sideMenuTreeNodes.forEach((node: TreeNode<any>) => this.removeTreeParent(node));
-        delete profile['_id']
+        //delete profile['_id']
         this.editingProfile = profile;
     }
 
@@ -112,11 +112,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
         })
         this.editingProfile = null;
     }
-    async setProfileLogo(profileId: string) {
-        await this.uiService.ipcInvoke('profile:logo:set', profileId).then(() => {
-            this.loadProfiles()
-            this.editingProfile = null;
-        })
+
+    async setProfileLogo() {
+        this.editingProfile.logo = await this.uiService.ipcInvoke('profile:logo:set');
     }
 
     cancelProfileKeyEdit() {

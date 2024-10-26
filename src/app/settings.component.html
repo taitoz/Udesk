@@ -24,7 +24,7 @@
 
         <p-tabPanel>
             <ng-template pTemplate="header">
-                <span>Профиль</span>
+                <span>Профили</span>
             </ng-template>
             <div class="tableContainer">
                 <p-table *ngIf="showTable" [value]="profiles"
@@ -91,7 +91,7 @@
                                             pButton type="button"
                                             icon="bx bx-pencil"
                                             class="p-button-rounded p-button-text"
-                                            (click)="setProfileLogo(profile._id)">
+                                            (click)="setProfileLogo()">
                                     </button>
                                 </div>
                             </td>
@@ -265,7 +265,7 @@
 
         <p-tabPanel>
             <ng-template pTemplate="header">
-                <span>Общие</span>
+                <span>Основные</span>
             </ng-template>
             <h2>Параметры</h2>
 

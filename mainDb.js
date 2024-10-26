@@ -33,7 +33,7 @@ export async function setProfileKey(profileId, key, value) {
                 reject('Already exists')
             }
         }
-        const updateObject = { $set: {} };
+        const updateObject = {$set: {}};
         updateObject.$set[key] = value;
         db.profiles.update({_id: profileId}, updateObject, {}, (err, numReplaced) => {
             db.profiles.persistence.compactDatafile()
@@ -42,24 +42,21 @@ export async function setProfileKey(profileId, key, value) {
     })
 }
 
-//TODO rename bug
-export async function upsertProfile(profile) {
-    return new Promise(async (resolve, reject) => {
-        // db.profiles.insert(profile)
-        let profileCount = await countProfile({name: profile.name})
-        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, function (err) {
-            if (err) reject(err);
-            db.profiles.persistence.compactDatafile()
-            db.profiles.findOne({name: profile.name}, (err, doc) => {
-                if (err) reject(err);
-                resolve(doc);
-            });
-        })
-    })
+export function getPageActions() {
+    return db.pageActions.getAllData();
 }
 
 export function getProfiles() {
     return db.profiles.getAllData();
+}
+
+export async function getPageAction(url) {
+    return new Promise((resolve, reject) => {
+        db.pageActions.findOne({url: url}, (err, doc) => {
+            if (err) reject(err);
+            else resolve(doc);
+        });
+    });
 }
 
 export async function getProfile(profileId) {
@@ -67,6 +64,15 @@ export async function getProfile(profileId) {
         db.profiles.findOne({_id: profileId}, (err, doc) => {
             if (err) reject(err);
             else resolve(doc);
+        });
+    });
+}
+
+async function countPageActions(query) {
+    return new Promise((resolve, reject) => {
+        db.pageActions.count(query, (err, count) => {
+            if (err) reject(err);
+            else resolve(count);
         });
     });
 }
@@ -90,14 +96,60 @@ export async function deleteProfile(profileId) {
     })
 }
 
+export async function updateProfile(profile) {
+    return new Promise(async (resolve, reject) => {
+        db.profiles.update({_id: profile._id}, profile, function (err, numAffected) {
+            if (err) reject(err);
+            db.profiles.persistence.compactDatafile()
+            resolve(numAffected)
+        })
+    })
+}
+
+export async function upsertPageAction(pageAction) {
+    return new Promise(async (resolve, reject) => {
+        let pageActionsCount = await countPageActions({url: pageAction.url})
+        db.pageActions.update({url: pageAction.url}, pageAction, {upsert: (pageActionsCount === 0)}, function (err) {
+            if (err) reject(err);
+            db.pageActions.persistence.compactDatafile()
+            db.pageActions.findOne({url: pageAction.url}, (err, doc) => {
+                if (err) reject(err);
+                resolve(doc);
+            });
+        })
+    })
+}
+
+export async function upsertProfileByName(profile) {
+    return new Promise(async (resolve, reject) => {
+        // db.profiles.insert(profile)
+        let profileCount = await countProfile({name: profile.name})
+        db.profiles.update({name: profile.name}, profile, {upsert: (profileCount === 0)}, function (err) {
+            if (err) reject(err);
+            db.profiles.persistence.compactDatafile()
+            db.profiles.findOne({name: profile.name}, (err, doc) => {
+                if (err) reject(err);
+                resolve(doc);
+            });
+        })
+    })
+}
 
 export async function importProfile(filePath) {
     //const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
     //newProfile.name = fileName.split(".").shift()
     const profile = loadFromFile(filePath)
-    const updatedProfile = await upsertProfile(profile)
+    const updatedProfile = await upsertProfileByName(profile)
     //refresh table
     await setActiveProfile(updatedProfile._id)
+}
+
+export async function addDefaultPageActions() {
+
+    const defaultPageActions = loadFromFile(path.join(__dirname, 'assets', 'pageActions-default.json'))
+    defaultPageActions.forEach(pageAction => {
+        upsertPageAction(pageAction)
+    })
 }
 
 export async function addProfileFromDefault() {
@@ -106,19 +158,21 @@ export async function addProfileFromDefault() {
         const initialProfileName = newProfile.name
         // let date = new Date(newFromFile.id).toISOString().slice(0, 19).replace('T', ' ')
         let count = 1;
+
         function checkAndInsert() {
-            db.profiles.findOne({ name: newProfile.name }, async (err, existingProfile) => {
+            db.profiles.findOne({name: newProfile.name}, async (err, existingProfile) => {
                 if (err) reject(err);
                 if (existingProfile) {
                     newProfile.name = `${initialProfileName} (${count})`;
                     count++;
                     checkAndInsert(); // Recursive call to check again
                 } else {
-                    const updatedProfile = await upsertProfile(newProfile)
+                    const updatedProfile = await upsertProfileByName(newProfile)
                     resolve(updatedProfile)
                 }
             });
         }
+
         checkAndInsert();
     })
 }
@@ -133,7 +187,6 @@ export async function getActiveProfile(init) {
     });
 }
 
-//TODO emit event
 export async function setActiveProfile(profileId) {
     return new Promise((resolve, reject) => {
         db.profiles.update({}, {$set: {active: false}}, {multi: true, upsert: false}, function (err) {

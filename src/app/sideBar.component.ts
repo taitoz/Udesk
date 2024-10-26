@@ -33,7 +33,7 @@ export class SideBarComponent implements OnInit {
     }
 
     openLink(url: string) {
-        this.uiService.ipcInvoke('load-url', url).then()
+        this.uiService.ipcInvoke('load-url', url, false).then()
     }
 
     getActiveProfileHomeUrl() {

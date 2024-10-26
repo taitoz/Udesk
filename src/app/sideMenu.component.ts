@@ -78,7 +78,7 @@ export class SideMenuComponent implements OnInit {
     getMenuName(menuId:string){
         switch (menuId){
             case 'servicesMenu': return 'Сервисы'
-            case 'web1cMenu': return 'Облачная 1С'
+            case 'servicesMenu2': return 'servicesMenu2'
         }
     }
 
@@ -95,8 +95,7 @@ export class SideMenuComponent implements OnInit {
             value: treeNode.data.value,
             command: () => {
                 // console.log(treeNode.data.value);
-                this.uiService.ipcInvoke('load-url', treeNode.data.value, !(treeNode.children.length > 0),
-                    treeNode.data.pageActions).then()
+                this.uiService.ipcInvoke('load-url', treeNode.data.value, (treeNode.children.length > 0)).then()
             },
             // icon: (treeNode.data.icon) ? treeNode.data.icon : 'bx bx-circle-off',
             // badge: treeNode.data.id +' ',

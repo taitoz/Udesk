@@ -1,0 +1,38 @@
+[
+  {
+    "key": "CPE_Router",
+    "url": "https://192.168.1.1/index.html",
+    "actions": [
+      {
+        "action": "typeToInput", "selector": "input.textfield:nth-child(2)", "value": "admin"
+      },
+      {
+        "action": "typeToInput", "selector": "input.textfield:nth-child(5)", "value": "admin"
+      },
+      {
+        "action": "clickElement", "selector": "#btnSignIn"
+      }
+    ]
+  },
+  {
+    "key": "Asus_Router",
+    "url": "http://192.168.1.2/Main_Login.asp",
+    "actions": [
+      {
+        "action": "typeToInput",
+        "selector": "#login_username",
+        "value": "taitoz"
+      },
+      {
+        "action": "typeToInput",
+        "selector": "#login_filed > div.password_gap > input",
+        "value": "jlnxgi"
+      },
+      {
+        "action": "clickElement",
+        "selector": "#login_filed > div.button"
+      }
+    ]
+  }
+]
+

@@ -30,14 +30,15 @@ import pie from 'puppeteer-in-electron'
 import puppeteer from 'puppeteer-extra'
 import {executePageActions} from "./mainPageActions.js";
 import {
+    addDefaultPageActions,
     addProfileFromDefault,
     deleteProfile,
-    getActiveProfile,
+    getActiveProfile, getPageAction, getPageActions,
     getProfile,
     getProfiles,
     importProfile,
     setActiveProfile,
-    upsertProfile
+    updateProfile
 } from "./mainDb.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -250,11 +251,11 @@ function resizeMain() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', function () {
+app.on('ready', async function () {
     //const icon = nativeImage.createFromPath()
     try {
         initLogoCache()
-
+        await initPageActions()
         nativeTheme.themeSource = appCfg.get('theme', 'dark')
         //appLog.info(updater.buildId)
         //TODO initUpdater();
@@ -343,24 +344,28 @@ ipcMain.handle('reload', () => {
     mainView.webContents.reload()
 })
 
-ipcMain.handle('load-url', (event, args) => {
+ipcMain.handle('load-url', async (event, args) => {
     //dialog.showErrorBox('loadService', arg)
+    const url = args[0]
+    const hasChildren = args[1]
     if (mainWindow.contentView.children.includes(settingsView)) {
         mainWindow.contentView.removeChildView(settingsView)
     }
     try {
-        if (args[1]) {
+        if (!hasChildren) {
             toggleSideMenu()
         }
-        if (args[0]) {
-            new URL(args[0])
-            page.goto(args[0], {
+        if (url) {
+            new URL(url)
+            await page.goto(url, {
                 waitUntil: "networkidle0",
-            }).then(async () => {
-                if (args[2] && args[2].length > 0) {
-                    await executePageActions(page, args[2])
-                }
             })
+
+            const pageAction = await getPageAction(url)
+            if (pageAction) {
+                await executePageActions(page, pageAction.actions)
+            }
+
         }
     } catch (error) {
         if (error.code !== 'ERR_ABORTED') console.error(error.message)
@@ -400,31 +405,19 @@ ipcMain.on('settings:toggleTheme', (event, args) => {
 ipcMain.on('profile:logo:getCachePath', async (event) => {
     event.returnValue = appCfg.get('logoCachePath')
 })
-ipcMain.handle('profile:logo:set', async (event, args) => {
-    await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+ipcMain.handle('profile:logo:set', async () => {
+    const result = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
         title: "", properties: ['openFile'], filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif']}]
-    }).then(async function (response) {
-        if (!response.canceled) {
-            const newLogoPath = response.filePaths[0]
-            const logoName = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
-            const logoCachePath = appCfg.get('logoCachePath') + logoName
-            fs.cpSync(newLogoPath, logoCachePath)
-
-            const profileId = args[0]
-            const profile = await getProfile(profileId)
-            profile.logo = logoName
-            await upsertProfile(profile)
-
-            const activeProfile = await getActiveProfile()
-            if (profileId === activeProfile._id) {
-                sideBar.webContents.send('activeProfile:update', activeProfile)
-                // mainWindow.setIcon(logoPath)
-                // appTray.setImage(logoPath)
-            }
-        } else {
-            //console.log("no file selected");
-        }
     })
+    if (!result.canceled) {
+        const newLogoPath = result.filePaths[0]
+        result['logoName'] = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
+        const logoCachePath = appCfg.get('logoCachePath') + result['logoName']
+        fs.cpSync(newLogoPath, logoCachePath)
+    } else {
+        //console.log("no file selected");
+    }
+    return result['logoName']
 })
 
 ipcMain.on('profiles:get', async (event) => {
@@ -437,16 +430,21 @@ ipcMain.on('profiles:getActive', async (event) => {
 ipcMain.handle('profiles:setActive', async (event, args) => {
     const profileId = args[0]
     await setActiveProfile(profileId)
-    const activeProfile = await getActiveProfile()
-    sideBar.webContents.send('activeProfile:update', activeProfile)
+    await activeProfileUpdate()
     //app.relaunch()
     //app.exit()
 })
+
 ipcMain.handle('profile:update', async (event, args) => {
     const profile = args[0]
-    await upsertProfile(profile)
+    await updateProfile(profile)
+    const activeProfile = await getActiveProfile()
+    if (profile._id === activeProfile._id) {
+        sideBar.webContents.send('activeProfile:update', activeProfile)
+        // mainWindow.setIcon(logoPath)
+        // appTray.setImage(logoPath)
+    }
 })
-
 
 ipcMain.handle('profiles:delete', async (event, args) => {
     const profileId = args[0]
@@ -458,6 +456,7 @@ ipcMain.handle('profiles:delete', async (event, args) => {
 ipcMain.handle('profiles:add', async () => {
     const updatedProfile = await addProfileFromDefault()
     await setActiveProfile(updatedProfile._id)
+    await activeProfileUpdate()
 })
 
 ipcMain.handle('profile:import', async () => {
@@ -468,6 +467,7 @@ ipcMain.handle('profile:import', async () => {
         if (!result.canceled) {
             const filePath = result.filePaths[0];
             await importProfile(filePath)
+            await activeProfileUpdate()
             return {severity: 'success', summary: 'profile imported from ' + result.filePaths[0]}
         }
     } catch (err) {
@@ -497,6 +497,18 @@ ipcMain.handle('profile:export', async (event, args) => {
 
 
 // =====================================================================================
+async function initPageActions() {
+    const allPageActions = getPageActions()
+    if (allPageActions.length === 0) {
+        await addDefaultPageActions()
+    }
+}
+
+async function activeProfileUpdate() {
+    const activeProfile = await getActiveProfile()
+    sideBar.webContents.send('activeProfile:update', activeProfile)
+}
+
 function initLogoCache() {
     appCfg.set('logoCachePath', path.join(app.getPath('userData'), 'LogoCache') + '\\')
     copyFromAssets('Udesk_logo.png')
@@ -504,7 +516,7 @@ function initLogoCache() {
     const appLogoPath = appCfg.get('logoCachePath') + `Udesk_logo.png`
 }
 
-function copyFromAssets(logoName){
+function copyFromAssets(logoName) {
     const logoPath = appCfg.get('logoCachePath') + logoName
     if (!fs.existsSync(logoPath)) {
         fs.cpSync(path.join(__dirname, 'assets', logoName), logoPath)
