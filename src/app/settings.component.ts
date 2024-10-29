@@ -6,6 +6,7 @@ import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
 import {ActivatedRouteSnapshot, CanDeactivateFn, RouterStateSnapshot, UrlTree} from "@angular/router";
 import {Observable} from "rxjs";
+import path from "node:path";
 
 
 export const canDeactivateGuard: CanDeactivateFn<any> = (
@@ -39,8 +40,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     editingTreeNode: any
     editingProfile: any
 
-    pageActions: any[] | undefined
-
     ref: DynamicDialogRef | undefined
     theme = 'dark'
     themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}]
@@ -55,7 +54,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         sideMenuTreeNodes: TreeNode[]
     }[]
     activeProfile: any
-    logoCachePath: string
     showTable = true
 
     constructor(
@@ -70,7 +68,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
 
-        this.logoCachePath = this.uiService.getLogoCachePath()
         this.loadProfiles()
 
         this.cols = [
@@ -200,7 +197,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     onSelect(event: any) {
         if (event.node != null) {
             this.selectedNode = event.node
-            this.pageActions = event.node.data.pageActions;
             // this.messageService.add({severity: 'info', summary: 'Node Selected', detail: this.selectedNode.data.key});
         }
     }
@@ -311,6 +307,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.uiService.toggleTheme(this.document, this.theme)
         this.uiService.ipcSend('settings:toggleTheme', this.theme)
         //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
+    }
+
+    getLogoPath(profile: any){
+        return  this.uiService.getLogoPath(profile)
     }
 
     showDialog() {

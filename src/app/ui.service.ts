@@ -3,12 +3,15 @@ import {EventEmitter, Injectable, Output} from '@angular/core';
 import {TreeNode} from 'primeng/api';
 import {SessionStorageService} from 'angular-web-storage';
 import {ElectronService} from "ngx-electronyzer";
+import path from "node:path";
 
 @Injectable()
 export class UiService {
 
     @Output() themeChange: EventEmitter<string> = new EventEmitter();
     @Output() activeProfileChange: EventEmitter<string> = new EventEmitter();
+
+    logoCachePath: string
 
     constructor(
         private http: HttpClient,
@@ -23,6 +26,8 @@ export class UiService {
                 this.activeProfileChange.emit(activeProfile)
             })
         }
+
+        this.logoCachePath = this.getLogoCachePath()
     }
 
     //awaits return value
@@ -48,6 +53,10 @@ export class UiService {
 
     getLogoCachePath() : string {
         return this.ipcSendSync('profile:logo:getCachePath')
+    }
+
+    getLogoPath(profile: any){
+       return path.join(this.logoCachePath, profile.logo)
     }
 
     toggleTheme(document: Document, theme: string) {

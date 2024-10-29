@@ -50,9 +50,9 @@ export function getProfiles() {
     return db.profiles.getAllData();
 }
 
-export async function getPageAction(url) {
+export async function getPageAction(domain) {
     return new Promise((resolve, reject) => {
-        db.pageActions.findOne({url: url}, (err, doc) => {
+        db.pageActions.findOne({domain: domain}, (err, doc) => {
             if (err) reject(err);
             else resolve(doc);
         });
@@ -108,11 +108,11 @@ export async function updateProfile(profile) {
 
 export async function upsertPageAction(pageAction) {
     return new Promise(async (resolve, reject) => {
-        let pageActionsCount = await countPageActions({url: pageAction.url})
-        db.pageActions.update({url: pageAction.url}, pageAction, {upsert: (pageActionsCount === 0)}, function (err) {
+        let pageActionsCount = await countPageActions({domain: pageAction.domain})
+        db.pageActions.update({domain: pageAction.domain}, pageAction, {upsert: (pageActionsCount === 0)}, function (err) {
             if (err) reject(err);
             db.pageActions.persistence.compactDatafile()
-            db.pageActions.findOne({url: pageAction.url}, (err, doc) => {
+            db.pageActions.findOne({domain: pageAction.domain}, (err, doc) => {
                 if (err) reject(err);
                 resolve(doc);
             });

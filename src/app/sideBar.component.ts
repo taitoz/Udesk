@@ -52,4 +52,8 @@ export class SideBarComponent implements OnInit {
         this.activeProfile = activeProfile
         this.cdr.detectChanges()
     }
+
+    getLogoPath(profile: any){
+        return  this.uiService.getLogoPath(profile)
+    }
 }

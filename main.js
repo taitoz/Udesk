@@ -468,14 +468,19 @@ ipcMain.handle('profile:export', async (event, args) => {
 //drag and drop reordering to services tree table
 //? events to angular
 // =====================================================================================
-async function loadUrl(url) {
+async function loadUrl(urlStr) {
     try {
-        new URL(url)
-        await page.goto(url, {
+        const url =new URL(urlStr)
+        await page.goto(urlStr, {
             waitUntil: "networkidle0",
         })
 
-        const pageAction = await getPageAction(url)
+        let domain = url.hostname
+        if (domain.startsWith('www.')) {
+            domain = domain.substring(4);
+        }
+        console.log(domain)
+        const pageAction = await getPageAction(domain)
         if (pageAction) {
             await executePageActions(page, pageAction.actions)
         }
@@ -521,7 +526,7 @@ async function activeProfileUpdate() {
 }
 
 function initLogoCache() {
-    appCfg.set('logoCachePath', path.join(app.getPath('userData'), 'LogoCache') + '\\')
+    appCfg.set('logoCachePath', path.join(app.getPath('userData'), 'LogoCache'))
     copyFromAssets('Udesk_logo.png')
     copyFromAssets('logo48b.png')
     //TODO appLogo from appCfg
@@ -529,7 +534,7 @@ function initLogoCache() {
 }
 
 function copyFromAssets(logoName) {
-    const logoPath = appCfg.get('logoCachePath') + logoName
+    const logoPath = path.join(appCfg.get('logoCachePath'), logoName)
     if (!fs.existsSync(logoPath)) {
         fs.cpSync(path.join(__dirname, 'assets', logoName), logoPath)
     }
