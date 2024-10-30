@@ -136,12 +136,20 @@ export async function upsertProfileByName(profile) {
 }
 
 export async function importProfile(filePath) {
-    //const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
-    //newProfile.name = fileName.split(".").shift()
-    const profile = loadFromFile(filePath)
-    const updatedProfile = await upsertProfileByName(profile)
-    //refresh table
-    await setActiveProfile(updatedProfile._id)
+    return new Promise(async (resolve, reject) => {
+        //const fileName = (filePath.includes('/')) ? filePath.split("/").pop() : filePath.split("\\").pop()
+        //newProfile.name = fileName.split(".").shift()
+        const profile = loadFromFile(filePath)
+        if (profile.error) {
+            resolve({severity: 'error', summary: profile.error});
+        } else {
+            const updatedProfile = await upsertProfileByName(profile)
+            await setActiveProfile(updatedProfile._id)
+            resolve({severity: 'success', summary: 'profile ' + profile.name + ' successfully imported'})
+        }
+    })
+
+
 }
 
 export async function addDefaultPageActions() {
@@ -204,11 +212,10 @@ export async function setActiveProfile(profileId) {
 }
 
 function loadFromFile(filePath) {
-    //TODO add validation
     try {
         const fileContent = fs.readFileSync(filePath, 'utf-8')
         return JSON.parse(fileContent)
     } catch (e) {
-        return {severity: 'error', message: e.message}
+        return {error: e.message}
     }
 }

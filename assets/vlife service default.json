@@ -1,57 +1,37 @@
 {
   "data": {
-    "id": 1730186120361,
-    "key": "authorization",
+    "id": 1730186184279,
+    "key": "Dev",
     "value": ""
   },
   "children": [
     {
       "data": {
-        "id": 1730186377859,
-        "key": "Gitlab",
-        "value": "https://git.vlife.kz/vlife/authorization-service"
+        "id": 1730186231903,
+        "key": "logs",
+        "value": "https://kibana-elk-services.vlife.kz/app/dashboards#/view/03d3f900-b445-11ed-a40a-03ba882ea97e?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-1d,to:now))&_a=(description:'',filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'06fdfab0-b443-11ed-a40a-03ba882ea97e',key:kubernetes.container_name,negate:!f,params:(query:authorization-service),type:phrase),query:(match_phrase:(kubernetes.container_name:authorization-service))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'06fdfab0-b443-11ed-a40a-03ba882ea97e',key:kubernetes.namespace_name,negate:!f,params:(query:dev),type:phrase),query:(match_phrase:(kubernetes.namespace_name:dev)))),fullScreenMode:!f,options:(hidePanelTitles:!f,useMargins:!t),query:(language:kuery,query:''),timeRestore:!f,title:'Dashboard%20Logs',viewMode:view)"
       },
       "children": [],
       "parent": null
     },
     {
       "data": {
-        "id": 1730186184279,
-        "key": "Test",
-        "value": ""
+        "id": 1730118119531,
+        "key": "actuator",
+        "value": "https://dev-api.vlife.kz/authorization/actuator/prometheus",
+        "pageActions": []
       },
-      "children": [
-        {
-          "data": {
-            "id": 1730186231903,
-            "key": "logs",
-            "value": "https://kibana-elk-pr-logging.vlife.kz/app/dashboards#/view/03d3f900-b445-11ed-a40a-03ba882ea97e?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-1d,to:now))&_a=(description:'',filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'06fdfab0-b443-11ed-a40a-03ba882ea97e',key:kubernetes.container_name,negate:!f,params:(query:authorization),type:phrase),query:(match_phrase:(kubernetes.container_name:authorization)))),fullScreenMode:!f,options:(hidePanelTitles:!f,useMargins:!t),query:(language:kuery,query:''),timeRestore:!f,title:'Dashboard%20Logs',viewMode:view)",
-          },
-          "children": [],
-          "parent": null
-        },
-        {
-          "data": {
-            "id": 1730118119531,
-            "key": "actuator",
-            "value": "https://test-api.vlife.kz/authorization/actuator/prometheus",
-            "pageActions": []
-          },
-          "children": [],
-          "parent": null
-        },
-        {
-          "data": {
-            "id": 1730186288508,
-            "key": "swagger",
-            "value": "https://test-api.vlife.kz/authorization/swagger-ui/index.html"
-          },
-          "children": [],
-          "parent": null
-        }
-      ],
-      "parent": null,
-      "expanded": true
+      "children": [],
+      "parent": null
+    },
+    {
+      "data": {
+        "id": 1730186288508,
+        "key": "swagger",
+        "value": "https://dev-api.vlife.kz/authorization/swagger-ui/index.html"
+      },
+      "children": [],
+      "parent": null
     }
   ],
   "parent": null,

@@ -171,7 +171,7 @@ function createWindow() {
     // Puppeteer
     pie.connect(app, puppeteerApp).then(async browser => {
         pie.getPage(browser, mainView).then(async _page => {
-            page =_page
+            page = _page
             const activeProfile = await getActiveProfile(true)
             let url = activeProfile['homeUrl']
             if (url) {
@@ -428,19 +428,14 @@ ipcMain.handle('profiles:add', async () => {
 })
 
 ipcMain.handle('profile:import', async () => {
-    try {
-        const result = await dialog.showOpenDialog({
-            properties: ['openFile'], filters: [{name: 'JSON Files', extensions: ['json']}]
-        })
-        if (!result.canceled) {
-            const filePath = result.filePaths[0];
-            await importProfile(filePath)
-            await activeProfileUpdate()
-            return {severity: 'success', summary: 'profile imported from ' + result.filePaths[0]}
-        }
-    } catch (err) {
-        console.error('Error reading or parsing JSON file:', err)
-        return {severity: 'error', summary: err.message}
+    const result = await dialog.showOpenDialog({
+        properties: ['openFile'], filters: [{name: 'JSON Files', extensions: ['json']}]
+    })
+    if (!result.canceled) {
+        const filePath = result.filePaths[0];
+        const importResultMessage = await importProfile(filePath)
+        await activeProfileUpdate()
+        return importResultMessage
     }
 });
 
@@ -470,7 +465,7 @@ ipcMain.handle('profile:export', async (event, args) => {
 // =====================================================================================
 async function loadUrl(urlStr) {
     try {
-        const url =new URL(urlStr)
+        const url = new URL(urlStr)
         await page.goto(urlStr, {
             waitUntil: "networkidle0",
         })
