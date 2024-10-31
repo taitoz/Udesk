@@ -470,12 +470,7 @@ async function loadUrl(urlStr) {
             waitUntil: "networkidle0",
         })
 
-        let domain = url.hostname
-        if (domain.startsWith('www.')) {
-            domain = domain.substring(4);
-        }
-        console.log(domain)
-        const pageAction = await getPageAction(domain)
+        const pageAction = await getPageAction(url)
         if (pageAction) {
             await executePageActions(page, pageAction.actions)
         }

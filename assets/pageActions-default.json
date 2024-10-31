@@ -90,6 +90,63 @@
         "selector": "#ldapmain > form > button"
       }
     ]
+  },
+  {
+    "domain": "test-keycloak.vlife.kz",
+    "actions": [
+      {
+        "action": "typeToInput",
+        "selector": "#username",
+        "value": "keycloak"
+      },
+      {
+        "action": "typeToInput",
+        "selector": "#password",
+        "value": "bXKI7BkMSb84Lj$81bD2cL@$@Vl%a9"
+      },
+      {
+        "action": "clickElement",
+        "selector": "#kc-login"
+      }
+    ]
+  },
+  {
+    "domain": "dev-keycloak.vlife.kz",
+    "actions": [
+      {
+        "action": "typeToInput",
+        "selector": "#username",
+        "value": "keycloak"
+      },
+      {
+        "action": "typeToInput",
+        "selector": "#password",
+        "value": "jWxK0r2iNDtxsgfeCuRJMdpvxhNk6P5YOS"
+      },
+      {
+        "action": "clickElement",
+        "selector": "#kc-login"
+      }
+    ]
+  },
+  {
+    "domain": "prod-keycloak.vlife.kz",
+    "actions": [
+      {
+        "action": "typeToInput",
+        "selector": "#username",
+        "value": "r.brons@vlife.kz"
+      },
+      {
+        "action": "typeToInput",
+        "selector": "#password",
+        "value": "rubf3*(dbe9BX*473fr"
+      },
+      {
+        "action": "clickElement",
+        "selector": "#kc-login"
+      }
+    ]
   }
 ]
 

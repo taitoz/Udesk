@@ -50,11 +50,21 @@ export function getProfiles() {
     return db.profiles.getAllData();
 }
 
-export async function getPageAction(domain) {
+export async function getPageAction(url) {
     return new Promise((resolve, reject) => {
-        db.pageActions.findOne({domain: domain}, (err, doc) => {
+        let domain = url.hostname
+        if (domain.startsWith('www.')) {
+            domain = domain.substring(4);
+        }
+        db.pageActions.findOne({url: url}, (err, doc) => {
             if (err) reject(err);
-            else resolve(doc);
+            if (doc) {
+                resolve(doc);
+            } else {
+                db.pageActions.findOne({domain: domain}, (err, doc) => {
+                    resolve(doc);
+                })
+            }
         });
     });
 }

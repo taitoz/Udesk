@@ -56,6 +56,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
     activeProfile: any
     showTable = true
 
+    pageActions: {
+        _id: string;
+        domain: string;
+        url: string;
+        actions: any[]
+    }[]
+
     constructor(
         private uiService: UiService,
         private messageService: MessageService,

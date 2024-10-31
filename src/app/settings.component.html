@@ -265,6 +265,97 @@
 
         <p-tabPanel>
             <ng-template pTemplate="header">
+                <span>Page Actions</span>
+            </ng-template>
+            <div class="tableContainer">
+                <p-table *ngIf="showTable" [value]="pageActions"
+                         styleClass="p-datatable-striped"
+                         [scrollable]="true"
+                         scrollHeight="flex">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Domain</th>
+                            <th>Url</th>
+                            <th>Actions</th>
+                            <th></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-pageAction>
+                        <tr>
+                            <td class="">
+                                <span *ngIf="!editingProfile" class="font-bold ml-2 truncate-text">
+                                    {{ pageAction.domain }}
+                                </span>
+                                <input *ngIf="editingProfile"
+                                       pInputText type="text"
+                                       [(ngModel)]="pageAction.domain"
+                                       [ngStyle]="{'width': '100%'}"
+                                       (keydown.space)="$event.stopPropagation()"
+                                       (keydown.enter)="saveProfileKeyEdit()"
+                                       (keydown.escape)="cancelProfileKeyEdit()">
+
+                            </td>
+                            <td class="">
+                                <span *ngIf="!editingProfile" class="truncate-text">
+                                    {{ pageAction.url }}
+                                </span>
+                                <input *ngIf="editingProfile"
+                                       pInputText type="text"
+                                       [(ngModel)]="pageAction.url"
+                                       [ngStyle]="{'width': '100%'}"
+                                       (keydown.space)="$event.stopPropagation()"
+                                       (keydown.enter)="saveProfileKeyEdit()"
+                                       (keydown.escape)="cancelProfileKeyEdit()">
+                            </td>
+                            <td style="width:10%">
+                                <div class="flex align-items-center justify-content-center gap-2">
+                                    <button *ngIf="!editingProfile || editingProfile._id !== pageAction._id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-pencil"
+                                            class="p-button-rounded p-button-text"
+                                            (click)="startProfileKeyEdit(pageAction)">
+                                    </button>
+                                    <button *ngIf="editingProfile && editingProfile._id === pageAction._id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-check"
+                                            class="p-button-rounded p-button-text p-button-success mr-2"
+                                            (click)="saveProfileKeyEdit()">
+                                    </button>
+                                    <button *ngIf="editingProfile && editingProfile._id === pageAction._id"
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-x"
+                                            class="p-button-rounded p-button-text p-button-danger"
+                                            (click)="cancelProfileKeyEdit()">
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="summary">
+                        <div class="p-toolbar-group-start">
+                            <div style="text-align:left">
+                                <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
+                                        pTooltip="Add" label="Add"
+                                        tooltipPosition="top"
+                                        (click)="addProfile()"></button>
+                            </div>
+                            <div style="text-align:left">
+                                <button pButton type="button" icon="bx bxs-file-import" class="p-button-text"
+                                        pTooltip="Import" label="Import"
+                                        tooltipPosition="top"
+                                        (click)="importProfile()"></button>
+                            </div>
+                        </div>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabPanel>
+
+        <p-tabPanel>
+            <ng-template pTemplate="header">
                 <span>Основные</span>
             </ng-template>
             <h2>Параметры</h2>
