@@ -7,6 +7,9 @@ import {UiService} from "./ui.service";
     styleUrl: './titleBar.component.css'
 })
 export class TitleBarComponent {
+
+    showLoading = false
+
     constructor(
         private uiService: UiService
     ) {

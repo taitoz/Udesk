@@ -1,24 +1,27 @@
-<div class="surface-f flex justify-content-between align-items-center relative lg:static h32"> <!--border-bottom-1-->
+<div class="card flex flex-column" >
+    <div class="surface-f flex justify-content-between align-items-center relative lg:static h32"> <!--border-bottom-1-->
 
-    <!--<div class="flex align-items-center">-->
-    <a pRipple=""
-       class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
+        <!--<div class="flex align-items-center">-->
+        <a pRipple=""
+           class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
                        hover:surface-100 text-gray-300 hover:text-white transition-duration-150 transition-colors h32"
-       (click)="callRenderer('back')"
-    >
-        <i class="bx bx-left-arrow-alt bx-sm mr-2 lg:mr-0 text-base"></i>
-    </a>
-    <a pRipple=""
-       class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
+           (click)="callRenderer('back')"
+        >
+            <i class="bx bx-left-arrow-alt bx-sm mr-2 lg:mr-0 text-base"></i>
+        </a>
+        <a pRipple=""
+           class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
                        hover:surface-100 text-gray-300 hover:text-white transition-duration-150 transition-colors h32"
-       (click)="callRenderer('reload')"
-    >
-        <i class="bx bx-refresh bx-sm mr-2 lg:mr-0 text-base"></i>
-    </a>
-    <!--</div>-->
-    <div class="draggable flex-grow-1">
-        <wbr>
+           (click)="callRenderer('reload')"
+        >
+            <i class="bx bx-refresh bx-sm mr-2 lg:mr-0 text-base"></i>
+        </a>
+        <!--</div>-->
+        <div class="draggable flex-grow-1">
+            <wbr>
+        </div>
     </div>
-
+    <p-progressBar *ngIf="showLoading" mode="indeterminate" class="loading"/>
 </div>
+
 

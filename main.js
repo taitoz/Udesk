@@ -79,7 +79,7 @@ let settingsView
 //TODO to appCfg
 let sideBarWidth = 70
 let sideMenuWidth = 0
-let titleBarHeight = 32
+let titleBarHeight = 34
 
 function createWindow() {
     if (mainWindow) return
@@ -112,10 +112,11 @@ function createWindow() {
     mainWindow.contentView.addChildView(titleBar, 0)
     titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
     loadPrimeComponent(titleBar, 'titleBar')
-    titleBar.webContents.on('context-menu', (event) => {
-        event.preventDefault()
-        Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup()
-    })
+    // titleBar.webContents.on('context-menu', (event) => {
+    //     event.preventDefault()
+    //     Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup()
+    // })
+    titleBar.webContents.openDevTools({mode: 'detach'});
 
     sideBar = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.contentView.addChildView(sideBar, 1)
@@ -201,6 +202,7 @@ function createWindow() {
 
     mainView.webContents.on('did-start-navigation', function () {
         //mainView.hide()
+        //TODO progress showLoading
         //mainView.setBounds({x: sidebarWidth, y: 0, width: 0, height: 0})
     })
     mainView.webContents.on('did-navigate', function () {
