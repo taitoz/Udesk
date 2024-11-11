@@ -203,9 +203,11 @@ function createWindow() {
     mainView.webContents.on('did-start-navigation', function () {
         //mainView.hide()
         //TODO progress showLoading
+        //titleBar.webContents.send('showLoading', true)
         //mainView.setBounds({x: sidebarWidth, y: 0, width: 0, height: 0})
     })
     mainView.webContents.on('did-navigate', function () {
+        //titleBar.webContents.send('showLoading', false)
         //mainView.show()
         //mainView.setBounds({x: sidebarWidth, y: 0, width: mainWindow.getBounds().width - sidebarWidth, height: mainWindow.getBounds().height})
     })
@@ -468,6 +470,7 @@ ipcMain.handle('profile:export', async (event, args) => {
 async function loadUrl(urlStr) {
     try {
         const url = new URL(urlStr)
+        titleBar.webContents.send('showLoading', true)
         await page.goto(urlStr, {
             waitUntil: "networkidle0",
         })
@@ -476,6 +479,7 @@ async function loadUrl(urlStr) {
         if (pageAction) {
             await executePageActions(page, pageAction.actions)
         }
+        titleBar.webContents.send('showLoading', false)
     } catch (error) {
         if (error.code !== 'ERR_ABORTED') console.error(error.message)
     }

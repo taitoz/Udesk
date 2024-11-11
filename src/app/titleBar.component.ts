@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {UiService} from "./ui.service";
 
 @Component({
@@ -6,13 +6,21 @@ import {UiService} from "./ui.service";
     templateUrl: './titleBar.component.html',
     styleUrl: './titleBar.component.css'
 })
-export class TitleBarComponent {
+export class TitleBarComponent implements OnInit{
 
     showLoading = false
 
     constructor(
-        private uiService: UiService
+        private uiService: UiService,
+        private cdr: ChangeDetectorRef
     ) {
+    }
+
+    ngOnInit() {
+        this.uiService.showLoading.subscribe(show => {
+            this.showLoading = show
+            this.cdr.detectChanges()
+        })
     }
 
     callRenderer(channel: string) {

@@ -8,6 +8,7 @@ import path from "node:path";
 @Injectable()
 export class UiService {
 
+    @Output() showLoading = new EventEmitter<boolean>();
     @Output() themeChange: EventEmitter<string> = new EventEmitter();
     @Output() activeProfileChange: EventEmitter<string> = new EventEmitter();
 
@@ -19,10 +20,13 @@ export class UiService {
         private electronService: ElectronService
     ) {
         if (this.electronService.isElectronApp) {
-            this.electronService.ipcRenderer.on('theme-toggle', (event, theme) => {
+            this.electronService.ipcRenderer.on('showLoading', (event: any, show: boolean) => {
+                this.showLoading.emit(show)
+            })
+            this.electronService.ipcRenderer.on('theme-toggle', (event: any, theme: string) => {
                 this.themeChange.emit(theme)
             })
-            this.electronService.ipcRenderer.on('activeProfile:update', (event, activeProfile) => {
+            this.electronService.ipcRenderer.on('activeProfile:update', (event: any, activeProfile: string) => {
                 this.activeProfileChange.emit(activeProfile)
             })
         }
