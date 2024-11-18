@@ -7,6 +7,7 @@ import {SelectButtonChangeEvent} from "primeng/selectbutton";
 import {ActivatedRouteSnapshot, CanDeactivateFn, RouterStateSnapshot, UrlTree} from "@angular/router";
 import {Observable} from "rxjs";
 import path from "node:path";
+import {PageActionEditDialogComponent} from "./page-action-edit-dialog/page-action-edit-dialog.component";
 
 
 export const canDeactivateGuard: CanDeactivateFn<any> = (
@@ -59,7 +60,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     pageActions: {
         _id: string;
         domain: string;
-        url: string;
         actions: any[]
     }[]
 
@@ -76,6 +76,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     ngOnInit() {
 
         this.loadProfiles()
+        this.loadPageActions()
 
         this.cols = [
             {header: 'Name', field: 'key'},
@@ -91,6 +92,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     hasUnsavedChanges(): boolean {
         return (this.editingTreeNode)
+    }
+
+    loadPageActions() {
+        this.pageActions = this.uiService.ipcSendSync('pageActions:get')
+        this.refreshTable()
     }
 
     loadProfiles() {
@@ -316,24 +322,25 @@ export class SettingsComponent implements OnInit, OnDestroy {
         //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
     }
 
-    getLogoPath(profile: any){
-        return  this.uiService.getLogoPath(profile)
+    getLogoPath(profile: any) {
+        return this.uiService.getLogoPath(profile)
     }
 
-    showDialog() {
-        /*    this.ref = this.dialogService.open(AppIndexComponent, {
-              header: 'header',
-              height: '90%',
-              width: '90%',
-              footer: 'footer',
-              // contentStyle: {"max-height": "500px", "overflow": "auto"},
-              baseZIndex: 10000
-            });
-            this.ref.onClose.subscribe((product: string) => {
-              if (product) {
-                this.messageService.add({severity: 'info', summary: 'Product Selected', detail: product});
-              }
-            });*/
+    showPageActionsDialog(actions: any[]) {
+        this.ref = this.dialogService.open(PageActionEditDialogComponent, {
+            header: 'Edit page actions',
+            height: '90%',
+            width: '90%',
+            footer: 'footer',
+            // contentStyle: {"max-height": "500px", "overflow": "auto"},
+            baseZIndex: 10000,
+            data: actions
+        });
+        // this.ref.onClose.subscribe((product: string) => {
+        //   if (product) {
+        //     this.messageService.add({severity: 'info', summary: 'Product Selected', detail: product});
+        //   }
+        // });
     }
 
     onAppNameChange(newName: string) {

@@ -275,9 +275,7 @@
                     <ng-template pTemplate="header">
                         <tr>
                             <th>Domain</th>
-                            <th>Url</th>
                             <th>Actions</th>
-                            <th></th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-pageAction>
@@ -295,40 +293,13 @@
                                        (keydown.escape)="cancelProfileKeyEdit()">
 
                             </td>
-                            <td class="">
-                                <span *ngIf="!editingProfile" class="truncate-text">
-                                    {{ pageAction.url }}
-                                </span>
-                                <input *ngIf="editingProfile"
-                                       pInputText type="text"
-                                       [(ngModel)]="pageAction.url"
-                                       [ngStyle]="{'width': '100%'}"
-                                       (keydown.space)="$event.stopPropagation()"
-                                       (keydown.enter)="saveProfileKeyEdit()"
-                                       (keydown.escape)="cancelProfileKeyEdit()">
-                            </td>
                             <td style="width:10%">
                                 <div class="flex align-items-center justify-content-center gap-2">
-                                    <button *ngIf="!editingProfile || editingProfile._id !== pageAction._id"
-                                            pButton
+                                    <button pButton
                                             type="button"
                                             icon="bx bx-pencil"
                                             class="p-button-rounded p-button-text"
-                                            (click)="startProfileKeyEdit(pageAction)">
-                                    </button>
-                                    <button *ngIf="editingProfile && editingProfile._id === pageAction._id"
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-check"
-                                            class="p-button-rounded p-button-text p-button-success mr-2"
-                                            (click)="saveProfileKeyEdit()">
-                                    </button>
-                                    <button *ngIf="editingProfile && editingProfile._id === pageAction._id"
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-x"
-                                            class="p-button-rounded p-button-text p-button-danger"
-                                            (click)="cancelProfileKeyEdit()">
+                                            (click)="showPageActionsDialog(pageAction.actions)">
                                     </button>
                                 </div>
                             </td>

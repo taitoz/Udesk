@@ -116,7 +116,7 @@ function createWindow() {
     //     event.preventDefault()
     //     Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup()
     // })
-    titleBar.webContents.openDevTools({mode: 'detach'});
+    //titleBar.webContents.openDevTools({mode: 'detach'});
 
     sideBar = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     mainWindow.contentView.addChildView(sideBar, 1)
@@ -201,15 +201,10 @@ function createWindow() {
     })
 
     mainView.webContents.on('did-start-navigation', function () {
-        //mainView.hide()
-        //TODO progress showLoading
-        //titleBar.webContents.send('showLoading', true)
-        //mainView.setBounds({x: sidebarWidth, y: 0, width: 0, height: 0})
+        titleBar.webContents.send('showLoading', true)
     })
-    mainView.webContents.on('did-navigate', function () {
-        //titleBar.webContents.send('showLoading', false)
-        //mainView.show()
-        //mainView.setBounds({x: sidebarWidth, y: 0, width: mainWindow.getBounds().width - sidebarWidth, height: mainWindow.getBounds().height})
+    mainView.webContents.on('did-finish-load', function () {
+        titleBar.webContents.send('showLoading', false)
     })
 
 }
@@ -337,6 +332,10 @@ nativeTheme.on("updated", () => {
 });
 
 // =====================================================================================
+ipcMain.on('online-status-changed', (event, status) => {
+    console.log(status)
+})
+
 ipcMain.handle('back', () => {
     mainView.webContents.navigationHistory.goBack()
 })
@@ -390,6 +389,10 @@ ipcMain.handle('profile:logo:set', async () => {
         //console.log("no file selected");
     }
     return result['logoName']
+})
+
+ipcMain.on('pageActions:get', async (event) => {
+    event.returnValue = getPageActions()
 })
 
 ipcMain.on('profiles:get', async (event) => {
@@ -470,16 +473,17 @@ ipcMain.handle('profile:export', async (event, args) => {
 async function loadUrl(urlStr) {
     try {
         const url = new URL(urlStr)
-        titleBar.webContents.send('showLoading', true)
         await page.goto(urlStr, {
-            waitUntil: "networkidle0",
+            waitUntil: "domcontentloaded",
+            // load
+            // networkidle0
+            // networkidle2
         })
 
         const pageAction = await getPageAction(url)
         if (pageAction) {
             await executePageActions(page, pageAction.actions)
         }
-        titleBar.webContents.send('showLoading', false)
     } catch (error) {
         if (error.code !== 'ERR_ABORTED') console.error(error.message)
     }
