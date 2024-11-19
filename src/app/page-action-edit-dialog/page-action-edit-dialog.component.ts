@@ -1,8 +1,8 @@
-import {Component, OnInit, TemplateRef} from '@angular/core';
-import {ButtonDirective} from "primeng/button";
+import {Component, HostListener, OnInit, TemplateRef, ViewChild} from '@angular/core';
+import {Button, ButtonDirective} from "primeng/button";
 import {FormsModule} from "@angular/forms";
 import {InputTextModule} from "primeng/inputtext";
-import {NgIf, NgStyle} from "@angular/common";
+import {NgIf, NgStyle, NgTemplateOutlet} from "@angular/common";
 import {PrimeTemplate} from "primeng/api";
 import {TableModule} from "primeng/table";
 import {TooltipModule} from "primeng/tooltip";
@@ -21,16 +21,18 @@ import {DropdownModule} from "primeng/dropdown";
         TableModule,
         TooltipModule,
         NgStyle,
-        DropdownModule
+        DropdownModule,
+        NgTemplateOutlet,
+        Button
     ],
     templateUrl: './page-action-edit-dialog.component.html',
     styleUrl: './page-action-edit-dialog.component.scss'
 })
 export class PageActionEditDialogComponent implements OnInit {
 
-    customHeader: TemplateRef<any> | undefined;
     editingPageAction: any
     showTable = true
+    private shouldClose = false;
 
     pageActions: {
         action: string;
@@ -40,11 +42,10 @@ export class PageActionEditDialogComponent implements OnInit {
 
     pageActionOptions: string[]
 
-    constructor(public config: DynamicDialogConfig, public ref: DynamicDialogRef) {
-    }
+    @ViewChild('customHeaderTemplate') customHeaderTemplate!: TemplateRef<any>;
+    constructor(public config: DynamicDialogConfig, public ref: DynamicDialogRef) {}
 
     ngOnInit(): void {
-        this.customHeader = this.createCustomHeader();
         this.pageActions = this.config.data;
 
         this.pageActionOptions = [
@@ -55,13 +56,16 @@ export class PageActionEditDialogComponent implements OnInit {
         ]
     }
 
-    createCustomHeader(): TemplateRef<any> {
-        // Create a template reference variable for the custom header
-        // return this.customHeaderTemplate;
+    @HostListener('document:keydown', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            //this.closeDialog();
+        }
     }
 
     startPageActionEdit(pageAction: any) {
-        this.editingPageAction = pageAction;
+        this.editingPageAction = pageAction
     }
 
     savePageActionKeyEdit() {
@@ -78,11 +82,14 @@ export class PageActionEditDialogComponent implements OnInit {
 
     closeDialog() {
         if (this.editingPageAction != null) {
-            if (confirm('You have unsaved changes. Are you sure you want to close?')) {
-                this.ref.close(); // Close if user confirms
-            }
+            this.shouldClose = confirm('You have unsaved changes. Are you sure you want to close?');
         } else {
-            this.ref.close(); // Close directly if no unsaved changes
+            this.shouldClose = true;  // Если нет несохраненных изменений, сразу закрываем
+        }
+
+        // Если флаг разрешает, закрываем диалог
+        if (this.shouldClose) {
+            this.ref.close();  // Закрываем диалог
         }
     }
 }

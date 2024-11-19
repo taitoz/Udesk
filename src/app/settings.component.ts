@@ -333,6 +333,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             width: '90%',
             footer: 'footer',
             // contentStyle: {"max-height": "500px", "overflow": "auto"},
+            closable: false,
             baseZIndex: 10000,
             data: actions
         });
