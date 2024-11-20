@@ -395,6 +395,11 @@ ipcMain.on('pageActions:get', async (event) => {
     event.returnValue = getPageActions()
 })
 
+ipcMain.on('pageAction:get', async (event, args) => {
+    const url = args[0]
+    event.returnValue = await getPageAction(url)
+})
+
 ipcMain.on('profiles:get', async (event) => {
     event.returnValue = getProfiles()
 })

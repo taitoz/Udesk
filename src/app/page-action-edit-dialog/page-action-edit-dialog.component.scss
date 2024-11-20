@@ -1,32 +1,3 @@
-::ng-deep .p-dialog-header {
-  display: none !important;
-}
-
-.p-dialog-title {
-  font-weight: 600;
-  font-size: 1.25rem;
-}
-
-.p-dialog-container {
-  /* Styles to mimic p-dialog appearance */
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
-  position: relative; /* Important for positioning the header */
-}
-
-.p-dialog-container .p-dialog-header1 {
-  padding: 0.5rem 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.p-dialog-container .p-dialog-content {
-  padding: 1rem;
-}
-
-/* Style the close button as needed */
-.p-dialog-container .p-dialog-header-icon {
-  /* Add your close button styles here */
-}
+//.p-dialog-header {
+//  padding: 0.5rem 1rem;
+//}

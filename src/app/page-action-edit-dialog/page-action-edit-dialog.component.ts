@@ -1,4 +1,4 @@
-import {Component, HostListener, OnInit, TemplateRef, ViewChild} from '@angular/core';
+import {Component, OnInit, TemplateRef, ViewChild} from '@angular/core';
 import {Button, ButtonDirective} from "primeng/button";
 import {FormsModule} from "@angular/forms";
 import {InputTextModule} from "primeng/inputtext";
@@ -32,7 +32,6 @@ export class PageActionEditDialogComponent implements OnInit {
 
     editingPageAction: any
     showTable = true
-    private shouldClose = false;
 
     pageActions: {
         action: string;
@@ -43,7 +42,9 @@ export class PageActionEditDialogComponent implements OnInit {
     pageActionOptions: string[]
 
     @ViewChild('customHeaderTemplate') customHeaderTemplate!: TemplateRef<any>;
-    constructor(public config: DynamicDialogConfig, public ref: DynamicDialogRef) {}
+
+    constructor(public config: DynamicDialogConfig, public ref: DynamicDialogRef) {
+    }
 
     ngOnInit(): void {
         this.pageActions = this.config.data;
@@ -54,14 +55,6 @@ export class PageActionEditDialogComponent implements OnInit {
             'clickElement',
             'selectElement'
         ]
-    }
-
-    @HostListener('document:keydown', ['$event'])
-    handleKeyboardEvent(event: KeyboardEvent) {
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            //this.closeDialog();
-        }
     }
 
     startPageActionEdit(pageAction: any) {
@@ -82,14 +75,10 @@ export class PageActionEditDialogComponent implements OnInit {
 
     closeDialog() {
         if (this.editingPageAction != null) {
-            this.shouldClose = confirm('You have unsaved changes. Are you sure you want to close?');
-        } else {
-            this.shouldClose = true;  // Если нет несохраненных изменений, сразу закрываем
+            if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
+                return; // Prevent closing if user clicks "Cancel"
+            }
         }
-
-        // Если флаг разрешает, закрываем диалог
-        if (this.shouldClose) {
-            this.ref.close();  // Закрываем диалог
-        }
+        this.ref.close();
     }
 }

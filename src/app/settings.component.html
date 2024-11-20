@@ -212,6 +212,17 @@
                             </td>
                             <td style="width:10%">
                                 <div class="flex align-items-center justify-content-center gap-2">
+                                    <button
+                                            pButton
+                                            type="button"
+                                            icon="bx bx-pencil"
+                                            class="p-button-rounded p-button-text"
+                                            (click)="showPageActionsDialog(rowData['value'])">
+                                    </button>
+                                </div>
+                            </td>
+                            <td style="width:10%">
+                                <div class="flex align-items-center justify-content-center gap-2">
                                     <button *ngIf="!editingTreeNode || editingTreeNode.id !== rowData.id"
                                             pButton
                                             type="button"
