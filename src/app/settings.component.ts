@@ -328,20 +328,23 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     showPageActionsDialog(rowDataUrl: string) {
         if(!rowDataUrl) return
-        const url = new URL(rowDataUrl)
-        console.log(url.hostname)
-        const pageAction = this.uiService.ipcSendSync('pageAction:get', url)
-        console.log(pageAction);
-        // this.ref = this.dialogService.open(PageActionEditDialogComponent, {
-        //     header: 'Edit page actions',
-        //     height: '100%',
-        //     width: '100%',
-        //     // contentStyle: {"max-height": "500px", "overflow": "auto"},
-        //     closeOnEscape: false,
-        //     showHeader: false,
-        //     baseZIndex: 10000,
-        //     data: actions
-        // });
+        const pageActions = this.uiService.ipcSendSync('pageAction:get', rowDataUrl)
+        //console.log(action);
+        if(!pageActions){
+            //TODO create new obj
+        }
+
+
+        this.ref = this.dialogService.open(PageActionEditDialogComponent, {
+            header: 'Edit page actions',
+            height: '100%',
+            width: '100%',
+            // contentStyle: {"max-height": "500px", "overflow": "auto"},
+            closeOnEscape: false,
+            showHeader: false,
+            baseZIndex: 10000,
+            data: pageActions.actions
+        });
         // this.ref.onClose.subscribe((product: string) => {
         //   if (product) {
         //     this.messageService.add({severity: 'info', summary: 'Product Selected', detail: product});

@@ -47,6 +47,7 @@ export class PageActionEditDialogComponent implements OnInit {
     }
 
     ngOnInit(): void {
+
         this.pageActions = this.config.data;
 
         this.pageActionOptions = [
