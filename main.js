@@ -38,7 +38,7 @@ import {
     getProfiles,
     importProfile,
     setActiveProfile,
-    updateProfile
+    updateProfile, upsertPageAction
 } from "./mainDb.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -400,6 +400,7 @@ ipcMain.on('pageAction:get', async (event, args) => {
     event.returnValue = await getPageAction(url)
 })
 
+
 ipcMain.on('profiles:get', async (event) => {
     event.returnValue = getProfiles()
 })
@@ -415,8 +416,14 @@ ipcMain.handle('profiles:setActive', async (event, args) => {
     //app.exit()
 })
 
+ipcMain.handle('pageAction:update', async (event, args) => {
+    const pageAction = args[0]
+    await upsertPageAction(pageAction)
+})
+
 ipcMain.handle('profile:update', async (event, args) => {
     const profile = args[0]
+    console.log(profile)
     await updateProfile(profile)
     const activeProfile = await getActiveProfile()
     if (profile._id === activeProfile._id) {

@@ -52,7 +52,21 @@ export function getProfiles() {
 
 export async function getPageAction(url) {
     return new Promise((resolve, reject) => {
-        let domain = url.hostname
+        if (!url) {
+            resolve(null);
+            return;
+        }
+
+        let urlObj;
+        try {
+            urlObj = typeof url === 'string' ? new URL(url) : url;
+        } catch (e) {
+            console.error('Invalid URL:', url);
+            resolve(null);
+            return;
+        }
+
+        let domain = urlObj.hostname;
         if (domain.startsWith('www.')) {
             domain = domain.substring(4);
         }

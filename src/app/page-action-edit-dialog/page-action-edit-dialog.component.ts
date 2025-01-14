@@ -8,6 +8,7 @@ import {TableModule} from "primeng/table";
 import {TooltipModule} from "primeng/tooltip";
 import {DynamicDialogConfig, DynamicDialogRef} from "primeng/dynamicdialog";
 import {DropdownModule} from "primeng/dropdown";
+import {UiService} from "../ui.service";
 
 @Component({
     selector: 'app-page-action-edit-dialog',
@@ -43,12 +44,16 @@ export class PageActionEditDialogComponent implements OnInit {
 
     @ViewChild('customHeaderTemplate') customHeaderTemplate!: TemplateRef<any>;
 
-    constructor(public config: DynamicDialogConfig, public ref: DynamicDialogRef) {
+    constructor(
+        public config: DynamicDialogConfig,
+        public ref: DynamicDialogRef,
+        private uiService: UiService
+    ) {
     }
 
     ngOnInit(): void {
-
-        this.pageActions = this.config.data;
+        // Make a deep copy of the data to avoid reference issues
+        this.pageActions = JSON.parse(JSON.stringify(this.config.data));
 
         this.pageActionOptions = [
             'waitElement',
@@ -59,13 +64,19 @@ export class PageActionEditDialogComponent implements OnInit {
     }
 
     startPageActionEdit(pageAction: any) {
-        this.editingPageAction = pageAction
+        // Make a copy of the page action for editing
+        this.editingPageAction = { ...pageAction };
     }
 
-    savePageActionKeyEdit() {
-        // this.uiService.ipcInvoke('profile:update', this.editingProfile).then(() => {
-        //     this.loadProfiles()
-        // })
+    async savePageActionKeyEdit() {
+        await this.uiService.ipcInvoke('pageAction:update', this.editingPageAction);
+        // Update the local pageActions array with the edited value
+        const index = this.pageActions.findIndex(pa => pa.selector === this.editingPageAction.selector);
+        if (index !== -1) {
+            this.pageActions[index] = { ...this.editingPageAction };
+        }
+        // Return the updated data to parent
+        this.ref.close(this.pageActions);
         this.editingPageAction = null;
     }
 
@@ -77,9 +88,10 @@ export class PageActionEditDialogComponent implements OnInit {
     closeDialog() {
         if (this.editingPageAction != null) {
             if (!confirm('You have unsaved changes. Are you sure you want to close?')) {
-                return; // Prevent closing if user clicks "Cancel"
+                return;
             }
         }
-        this.ref.close();
+        // Return the updated data even when closing
+        this.ref.close(this.pageActions);
     }
 }

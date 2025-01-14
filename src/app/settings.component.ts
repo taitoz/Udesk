@@ -9,7 +9,6 @@ import {Observable} from "rxjs";
 import path from "node:path";
 import {PageActionEditDialogComponent} from "./page-action-edit-dialog/page-action-edit-dialog.component";
 
-
 export const canDeactivateGuard: CanDeactivateFn<any> = (
     component: any,
     currentRoute: ActivatedRouteSnapshot,
@@ -327,29 +326,46 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     showPageActionsDialog(rowDataUrl: string) {
-        if(!rowDataUrl) return
-        const pageActions = this.uiService.ipcSendSync('pageAction:get', rowDataUrl)
-        //console.log(action);
-        if(!pageActions){
-            //TODO create new obj
+        const domain = new URL(rowDataUrl).hostname;
+        let pageActions = this.pageActions.find(pa => pa.domain === domain);
+
+        if (!pageActions) {
+            pageActions = {
+                _id: `pa_${Date.now()}`,
+                domain: domain,
+                actions: []
+            }
         }
 
-
         this.ref = this.dialogService.open(PageActionEditDialogComponent, {
-            header: 'Edit page actions',
+            header: 'Edit page action',
             height: '100%',
             width: '100%',
-            // contentStyle: {"max-height": "500px", "overflow": "auto"},
             closeOnEscape: false,
             showHeader: false,
             baseZIndex: 10000,
             data: pageActions.actions
         });
-        // this.ref.onClose.subscribe((product: string) => {
-        //   if (product) {
-        //     this.messageService.add({severity: 'info', summary: 'Product Selected', detail: product});
-        //   }
-        // });
+
+        this.ref.onClose.subscribe((result) => {
+            if (result) {
+                // Update the local pageActions with the returned data
+                const index = this.pageActions.findIndex(pa => pa.domain === domain);
+                if (index !== -1) {
+                    this.pageActions[index].actions = result;
+                } else {
+                    this.pageActions.push({
+                        _id: `pa_${Date.now()}`,
+                        domain: domain,
+                        actions: result
+                    });
+                }
+                // Save the updated page actions
+                //this.uiService.ipcInvoke('pageAction:update', this.pageActions).then(() => {
+                    this.loadPageActions();
+                //});
+            }
+        });
     }
 
     onAppNameChange(newName: string) {
