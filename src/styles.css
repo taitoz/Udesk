@@ -7,3 +7,13 @@ body {
     background-color: var(--surface-50)!important;
 }
 
+body, html {
+    height: 100%;
+    margin: 0;
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+#main-container { /* Replace with the actual container ID or class */
+    height: 100%;
+    overflow-y: auto; /* Ensure scrolling is enabled for the container */
+}

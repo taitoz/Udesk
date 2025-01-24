@@ -72,10 +72,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     ) {
     }
 
-    ngOnInit() {
-
-        this.loadProfiles()
-        this.loadPageActions()
+    async ngOnInit() {
+        await this.loadProfiles()
+        await this.loadPageActions()
 
         this.cols = [
             {header: 'Name', field: 'key'},
@@ -93,13 +92,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return (this.editingTreeNode)
     }
 
-    loadPageActions() {
-        this.pageActions = this.uiService.ipcSendSync('pageActions:get')
+    async loadPageActions() {
+        this.pageActions = await this.uiService.ipcInvoke('pageActions:get')
         this.refreshTable()
     }
 
-    loadProfiles() {
-        this.profiles = this.uiService.ipcSendSync('profiles:get')
+    async loadProfiles() {
+        this.profiles = await this.uiService.ipcInvoke('profiles:get')
         this.profiles.forEach(profile => {
             if (profile.active) {
                 this.activeProfile = profile
@@ -344,26 +343,27 @@ export class SettingsComponent implements OnInit, OnDestroy {
             closeOnEscape: false,
             showHeader: false,
             baseZIndex: 10000,
-            data: pageActions.actions
+            data: {
+                domain: domain,
+                actions: pageActions.actions
+            }
         });
 
         this.ref.onClose.subscribe((result) => {
             if (result) {
                 // Update the local pageActions with the returned data
-                const index = this.pageActions.findIndex(pa => pa.domain === domain);
+                const index = this.pageActions.findIndex(pa => pa.domain === result.domain);
                 if (index !== -1) {
-                    this.pageActions[index].actions = result;
+                    this.pageActions[index].actions = result.actions;
                 } else {
                     this.pageActions.push({
                         _id: `pa_${Date.now()}`,
-                        domain: domain,
-                        actions: result
+                        domain: result.domain,
+                        actions: result.actions
                     });
                 }
                 // Save the updated page actions
-                //this.uiService.ipcInvoke('pageAction:update', this.pageActions).then(() => {
-                    this.loadPageActions();
-                //});
+                this.loadPageActions();
             }
         });
     }

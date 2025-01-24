@@ -36,39 +36,33 @@
                     <ng-template pTemplate="body" let-pageAction>
                         <tr>
                             <td class="">
-                        <span *ngIf="!editingPageAction" class="font-bold ml-2 truncate-text">
+                                <span *ngIf="!editingPageAction || editingPageAction._id !== pageAction._id" class="font-bold ml-2 truncate-text">
                                     {{ pageAction.action }}
                                 </span>
-                                <p-dropdown *ngIf="editingPageAction"
-                                            placeholder=""
-                                            [options]="pageActionOptions"
-                                            [(ngModel)]="pageAction.action"/>
+                                <p-dropdown *ngIf="editingPageAction && editingPageAction._id === pageAction._id"
+                                          placeholder=""
+                                          [options]="pageActionOptions"
+                                          [(ngModel)]="editingPageAction.action"/>
                             </td>
                             <td class="">
-                                <span *ngIf="!editingPageAction" class="font-bold ml-2 truncate-text">
+                                <span *ngIf="!editingPageAction || editingPageAction._id !== pageAction._id" class="font-bold ml-2 truncate-text">
                                     {{ pageAction.selector }}
                                 </span>
-                                <input *ngIf="editingPageAction"
+                                <input *ngIf="editingPageAction && editingPageAction._id === pageAction._id"
                                        pInputText type="text"
-                                       [(ngModel)]="pageAction.selector"
+                                       [(ngModel)]="editingPageAction.selector"
                                        [ngStyle]="{'width': '100%'}"
                                        (keydown.space)="$event.stopPropagation()">
-                                <!--                               (keydown.enter)="saveProfileKeyEdit()"-->
-                                <!--                               (keydown.escape)="cancelProfileKeyEdit()>"-->
-
                             </td>
                             <td class="">
-                                <span *ngIf="!editingPageAction" class="font-bold ml-2 truncate-text">
+                                <span *ngIf="!editingPageAction || editingPageAction._id !== pageAction._id" class="font-bold ml-2 truncate-text">
                                     {{ pageAction.value }}
                                 </span>
-                                <input *ngIf="editingPageAction"
+                                <input *ngIf="editingPageAction && editingPageAction._id === pageAction._id"
                                        pInputText type="text"
-                                       [(ngModel)]="pageAction.value"
+                                       [(ngModel)]="editingPageAction.value"
                                        [ngStyle]="{'width': '100%'}"
                                        (keydown.space)="$event.stopPropagation()">
-                                <!--                               (keydown.enter)="saveProfileKeyEdit()"-->
-                                <!--                               (keydown.escape)="cancelProfileKeyEdit()>"-->
-
                             </td>
                             <td style="width:10%">
                                 <div class="flex align-items-center justify-content-center gap-2">
@@ -118,5 +112,3 @@
         </div>
     </div>
 </div>
-
-

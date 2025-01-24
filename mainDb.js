@@ -7,14 +7,47 @@ import {fileURLToPath} from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const db = {};
-db.profiles = new Datastore({filename: app.getPath('userData') + '/profilesDb.json', autoload: true});
-db.pageActions = new Datastore({filename: app.getPath('userData') + '/pageActionsDb.json', autoload: true})
+db.profiles = new Datastore({
+    filename: app.getPath('userData') + '/profilesDb.json',
+    autoload: true,
+    timestampData: true
+});
+let dbReady = false;
+let dbReadyCallbacks = [];
+
+function onDbReady(callback) {
+    if (dbReady) {
+        callback();
+    } else {
+        dbReadyCallbacks.push(callback);
+    }
+}
+
+db.pageActions = new Datastore({
+    filename: app.getPath('userData') + '/pageActionsDb.json',
+    autoload: true,
+    timestampData: true,
+    onload: function (err) {
+        if (err) {
+            console.error('Failed to load the pageActions datastore:', err);
+        } else {
+            console.log('Loaded the pageActions datastore!');
+            // Configure auto-compaction
+            db.pageActions.persistence.setAutocompactionInterval(5000);
+            dbReady = true;
+            initPageActions();
+            // Execute all pending callbacks
+            dbReadyCallbacks.forEach(callback => callback());
+            dbReadyCallbacks = [];
+        }
+    }
+});
 
 export function initDb() {
     // C:\Users\user\AppData\Roaming\Udesk\settings.json
     // /home/developer/.config/Udesk/settings.json
     return new Datastore({
-        filename: app.getPath('userData') + '/nestDb.json', autoload: true
+        filename: dbPath, autoload: true
         , onload: function (err) {
             if (err) {
                 console.error('Failed to load the datastore:', err);
@@ -43,7 +76,13 @@ export async function setProfileKey(profileId, key, value) {
 }
 
 export function getPageActions() {
-    return db.pageActions.getAllData();
+    return new Promise((resolve) => {
+        onDbReady(() => {
+            const data = db.pageActions.getAllData();
+            //console.log('Retrieved page actions:', data);
+            resolve(data);
+        });
+    });
 }
 
 export function getProfiles() {
@@ -131,17 +170,40 @@ export async function updateProfile(profile) {
 }
 
 export async function upsertPageAction(pageAction) {
+    console.log('Upserting page action:', pageAction);
     return new Promise(async (resolve, reject) => {
-        let pageActionsCount = await countPageActions({domain: pageAction.domain})
-        db.pageActions.update({domain: pageAction.domain}, pageAction, {upsert: (pageActionsCount === 0)}, function (err) {
-            if (err) reject(err);
-            db.pageActions.persistence.compactDatafile()
-            db.pageActions.findOne({domain: pageAction.domain}, (err, doc) => {
-                if (err) reject(err);
-                resolve(doc);
-            });
-        })
-    })
+        try {
+            let pageActionsCount = await countPageActions({domain: pageAction.domain});
+            db.pageActions.update(
+                {domain: pageAction.domain}, 
+                pageAction, 
+                {upsert: true}, 
+                async function (err) {
+                    if (err) {
+                        console.error('Error updating page action:', err);
+                        reject(err);
+                        return;
+                    }
+                    
+                    // Force persistence
+                    await new Promise((res) => db.pageActions.persistence.compactDatafile(res));
+                    
+                    db.pageActions.findOne({domain: pageAction.domain}, (err, doc) => {
+                        if (err) {
+                            console.error('Error finding page action after update:', err);
+                            reject(err);
+                            return;
+                        }
+                        console.log('Page action upserted successfully:', doc);
+                        resolve(doc);
+                    });
+                }
+            );
+        } catch (error) {
+            console.error('Error in upsertPageAction:', error);
+            reject(error);
+        }
+    });
 }
 
 export async function upsertProfileByName(profile) {
@@ -177,11 +239,28 @@ export async function importProfile(filePath) {
 }
 
 export async function addDefaultPageActions() {
+    try {
+        // Check if we already have any page actions
+        const existingActions = await new Promise((resolve, reject) => {
+            db.pageActions.find({}, (err, docs) => {
+                if (err) reject(err);
+                else resolve(docs);
+            });
+        });
 
-    const defaultPageActions = loadFromFile(path.join(__dirname, 'assets', 'pageActions-default.json'))
-    defaultPageActions.forEach(pageAction => {
-        upsertPageAction(pageAction)
-    })
+        // Only add default actions if none exist
+        if (!existingActions || existingActions.length === 0) {
+            console.log('No existing page actions found, adding defaults');
+            const defaultPageActions = loadFromFile(path.join(__dirname, 'assets', 'pageActions-default.json'));
+            for (const pageAction of defaultPageActions) {
+                await upsertPageAction(pageAction);
+            }
+        } else {
+            console.log('Existing page actions found, skipping defaults');
+        }
+    } catch (error) {
+        console.error('Error in addDefaultPageActions:', error);
+    }
 }
 
 export async function addProfileFromDefault() {
@@ -242,4 +321,10 @@ function loadFromFile(filePath) {
     } catch (e) {
         return {error: e.message}
     }
+}
+
+function initPageActions() {
+    // Initialize page actions or load initial data here
+    // For example, add default page actions
+    addDefaultPageActions();
 }

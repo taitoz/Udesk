@@ -31,16 +31,17 @@ import {UiService} from "../ui.service";
 })
 export class PageActionEditDialogComponent implements OnInit {
 
-    editingPageAction: any
-    showTable = true
-
+    editingPageAction: any = null;
+    showTable = true;
+    domain: string;
     pageActions: {
+        _id: string;
         action: string;
         selector: string;
         value: string | null;
-    }[]
+    }[];
 
-    pageActionOptions: string[]
+    pageActionOptions: string[];
 
     @ViewChild('customHeaderTemplate') customHeaderTemplate!: TemplateRef<any>;
 
@@ -52,36 +53,56 @@ export class PageActionEditDialogComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Make a deep copy of the data to avoid reference issues
-        this.pageActions = JSON.parse(JSON.stringify(this.config.data));
+        this.domain = this.config.data.domain;
+        // Make a deep copy of the actions array and ensure each action has an _id
+        this.pageActions = JSON.parse(JSON.stringify(this.config.data.actions)).map(action => ({
+            ...action,
+            _id: action._id || `pa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        }));
 
         this.pageActionOptions = [
             'waitElement',
             'typeToInput',
             'clickElement',
             'selectElement'
-        ]
+        ];
     }
 
     startPageActionEdit(pageAction: any) {
-        // Make a copy of the page action for editing
-        this.editingPageAction = { ...pageAction };
+        // Make a deep copy of the page action for editing
+        this.editingPageAction = JSON.parse(JSON.stringify(pageAction));
     }
 
     async savePageActionKeyEdit() {
-        await this.uiService.ipcInvoke('pageAction:update', this.editingPageAction);
+        if (!this.editingPageAction) return;
+
+        console.log('Saving page action:', this.editingPageAction);
+
         // Update the local pageActions array with the edited value
-        const index = this.pageActions.findIndex(pa => pa.selector === this.editingPageAction.selector);
+        const index = this.pageActions.findIndex(pa => pa._id === this.editingPageAction._id);
         if (index !== -1) {
             this.pageActions[index] = { ...this.editingPageAction };
         }
-        // Return the updated data to parent
-        this.ref.close(this.pageActions);
+
+        // Save the entire updated pageActions array
+        const fullPageAction = {
+            domain: this.domain,
+            actions: this.pageActions.map(({ _id, ...rest }) => rest) // Remove temporary _ids before saving
+        };
+
+        try {
+            await this.uiService.ipcInvoke('pageAction:update', fullPageAction);
+            console.log('Page action saved successfully:', fullPageAction);
+            // Return the updated data to parent
+            this.ref.close(fullPageAction);
+        } catch (error) {
+            console.error('Failed to save page action:', error);
+        }
+
         this.editingPageAction = null;
     }
 
     cancelPageActionKeyEdit() {
-        //this.loadPageActions()
         this.editingPageAction = null;
     }
 
@@ -92,6 +113,6 @@ export class PageActionEditDialogComponent implements OnInit {
             }
         }
         // Return the updated data even when closing
-        this.ref.close(this.pageActions);
+        this.ref.close({ domain: this.domain, actions: this.pageActions });
     }
 }

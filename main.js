@@ -141,17 +141,12 @@ function createWindow() {
         x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
         width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
-        height: mainWindow.getBounds().height - titleBarHeight
-    })
+        height: mainWindow.getBounds().height - titleBarHeight - 1 // Ensure this calculation is correct
+    });
     mainView.webContents.on('context-menu', () => {
         Menu.buildFromTemplate(getMainViewMenu(mainView)).popup()
-    })
-    mainView.webContents.on('input-event', (event, input) => {
-        //event.preventDefault();
-        if (input.type === 'rawKeyDown' && input.key === 'F5') {
-            mainView.webContents.reload()
-        }
-    })
+    });
+    //mainView.webContents.openDevTools({mode: 'detach'}); // Enable DevTools for debugging
 
     settingsView = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
     settingsView.setBounds({
@@ -201,10 +196,15 @@ function createWindow() {
     })
 
     mainView.webContents.on('did-start-navigation', function () {
-        titleBar.webContents.send('showLoading', true)
-    })
+        titleBar.webContents.send('showLoading', true);
+        // Set a timeout to hide loading after 30 seconds
+        setTimeout(() => {
+            titleBar.webContents.send('showLoading', false);
+        }, 30000);
+    });
+    
     mainView.webContents.on('did-finish-load', function () {
-        titleBar.webContents.send('showLoading', false)
+        titleBar.webContents.send('showLoading', false);
     })
 
 }
@@ -229,8 +229,8 @@ function resizeMain() {
         x: (sideBarWidth + sideMenuWidth),
         y: titleBarHeight,
         width: newBounds.width - (sideBarWidth + sideMenuWidth),
-        height: newBounds.height
-    })
+        height: newBounds.height - titleBarHeight - 1 // Ensure this calculation is correct
+    });
 
     if (mainWindow.contentView.children.includes(settingsView)) {
         settingsView.setBounds({
@@ -391,8 +391,15 @@ ipcMain.handle('profile:logo:set', async () => {
     return result['logoName']
 })
 
-ipcMain.on('pageActions:get', async (event) => {
-    event.returnValue = getPageActions()
+ipcMain.handle('pageActions:get', async () => {
+    try {
+        const actions = await getPageActions();
+        // Ensure the data is serializable by converting it to a plain object
+        return JSON.parse(JSON.stringify(actions));
+    } catch (error) {
+        console.error('Error getting page actions:', error);
+        return [];
+    }
 })
 
 ipcMain.on('pageAction:get', async (event, args) => {
@@ -401,8 +408,14 @@ ipcMain.on('pageAction:get', async (event, args) => {
 })
 
 
-ipcMain.on('profiles:get', async (event) => {
-    event.returnValue = getProfiles()
+ipcMain.handle('profiles:get', async () => {
+    try {
+        const profiles = getProfiles();
+        return JSON.parse(JSON.stringify(profiles));
+    } catch (error) {
+        console.error('Error getting profiles:', error);
+        return [];
+    }
 })
 ipcMain.on('profiles:getActive', async (event) => {
     event.returnValue = await getActiveProfile()
