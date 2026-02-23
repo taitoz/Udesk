@@ -39,7 +39,7 @@
                                 <span *ngIf="!editingPageAction || editingPageAction._id !== pageAction._id" class="font-bold ml-2 truncate-text">
                                     {{ pageAction.action }}
                                 </span>
-                                <p-dropdown *ngIf="editingPageAction && editingPageAction._id === pageAction._id"
+                                <p-select *ngIf="editingPageAction && editingPageAction._id === pageAction._id"
                                           placeholder=""
                                           [options]="pageActionOptions"
                                           [(ngModel)]="editingPageAction.action"/>

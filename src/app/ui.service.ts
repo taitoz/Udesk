@@ -4,6 +4,7 @@ import {TreeNode} from 'primeng/api';
 import {SessionStorageService} from 'angular-web-storage';
 import {ElectronService} from "ngx-electronyzer";
 import path from "node:path";
+import './electron-api.d.ts';
 
 @Injectable()
 export class UiService {
@@ -19,38 +20,61 @@ export class UiService {
         private sessionStorage: SessionStorageService,
         private electronService: ElectronService
     ) {
-        if (this.electronService.isElectronApp) {
-            this.electronService.ipcRenderer.on('showLoading', (event: any, show: boolean) => {
-                this.showLoading.emit(show)
-            })
-            this.electronService.ipcRenderer.on('theme-toggle', (event: any, theme: string) => {
-                this.themeChange.emit(theme)
-            })
-            this.electronService.ipcRenderer.on('activeProfile:update', (event: any, activeProfile: string) => {
-                this.activeProfileChange.emit(activeProfile)
-            })
+        if (this.isElectron()) {
+            // Use window.electronAPI if available (contextIsolation: true), otherwise fall back to ipcRenderer
+            if (window.electronAPI) {
+                window.electronAPI.on('showLoading', (show: boolean) => {
+                    this.showLoading.emit(show)
+                })
+                window.electronAPI.on('theme-toggle', (theme: string) => {
+                    this.themeChange.emit(theme)
+                })
+                window.electronAPI.on('activeProfile:update', (activeProfile: string) => {
+                    this.activeProfileChange.emit(activeProfile)
+                })
+            } else if (this.electronService.isElectronApp) {
+                this.electronService.ipcRenderer.on('showLoading', (event: any, show: boolean) => {
+                    this.showLoading.emit(show)
+                })
+                this.electronService.ipcRenderer.on('theme-toggle', (event: any, theme: string) => {
+                    this.themeChange.emit(theme)
+                })
+                this.electronService.ipcRenderer.on('activeProfile:update', (event: any, activeProfile: string) => {
+                    this.activeProfileChange.emit(activeProfile)
+                })
+            }
         }
 
         this.logoCachePath = this.getLogoCachePath()
     }
 
+    private isElectron(): boolean {
+        return window.electronAPI !== undefined || this.electronService.isElectronApp;
+    }
+
     //awaits return value
     ipcSendSync(channel: string, ...args: any[]) {
-        if (this.electronService.isElectronApp) {
+        if (window.electronAPI) {
+            return window.electronAPI.sendSync(channel, ...args);
+        } else if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.sendSync(channel, args);
         }
     }
 
     //async void
     ipcSend(channel: string, ...args: any[]) {
-        if (this.electronService.isElectronApp) {
+        if (window.electronAPI) {
+            window.electronAPI.send(channel, ...args);
+        } else if (this.electronService.isElectronApp) {
             this.electronService.ipcRenderer.send(channel, args);
         }
     }
 
     //return Promise
     async ipcInvoke(channel: string, ...args: any[]) {
-        if (this.electronService.isElectronApp) {
+        if (window.electronAPI) {
+            return window.electronAPI.invoke(channel, ...args);
+        } else if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.invoke(channel, args);
         }
     }
@@ -64,29 +88,8 @@ export class UiService {
     }
 
     toggleTheme(document: Document, theme: string) {
-
-        const head = document.getElementsByTagName('head')[0];
-        let themeLink = document.getElementById('client-theme') as HTMLLinkElement;
-
-        if (themeLink === null) {
-            const style = document.createElement('link');
-            style.id = 'client-theme';
-            style.rel = 'stylesheet';
-            style.type = 'text/css';
-            style.href = 'assets/primeThemeDark.css';
-            head.appendChild(style);
-            themeLink = style;
-        }
-        switch (theme) {
-            case 'dark': {
-                themeLink.href = 'assets/primeThemeDark.css';
-                break
-            }
-            case 'light': {
-                themeLink.href = 'assets/primeThemeLight.css';
-                break
-            }
-        }
+        // PrimeNG 21 uses @media (prefers-color-scheme: dark) which is controlled
+        // by Electron's nativeTheme.themeSource - no manual class toggle needed
     }
 
     saveToSessionStorage(testData: TreeNode[]) {

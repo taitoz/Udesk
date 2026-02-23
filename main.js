@@ -371,6 +371,9 @@ ipcMain.on('sideMenu:toggle', (event, args) => {
 ipcMain.on('settings:toggleTheme', (event, args) => {
     nativeTheme.themeSource = args[0]
 })
+ipcMain.on('settings:getTheme', (event) => {
+    event.returnValue = nativeTheme.themeSource
+})
 
 
 ipcMain.on('profile:logo:getCachePath', async (event) => {

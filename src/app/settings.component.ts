@@ -24,6 +24,7 @@ export const canDeactivateGuard: CanDeactivateFn<any> = (
 
 @Component({
     selector: 'settings',
+    standalone: false,
     templateUrl: './settings.component.html',
     styleUrl: './settings.component.scss',
     encapsulation: ViewEncapsulation.Emulated,
@@ -32,7 +33,7 @@ export const canDeactivateGuard: CanDeactivateFn<any> = (
 
 export class SettingsComponent implements OnInit, OnDestroy {
 
-    activeTabIndex = 0
+    activeTabIndex = '0'
     sideMenuTreeNodes: TreeNode[] | undefined
     cols: any[] | undefined
     selectedNode: TreeNode
@@ -73,6 +74,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     async ngOnInit() {
+        // Apply initial theme
+        const currentTheme = this.uiService.ipcSendSync('settings:getTheme')
+        this.theme = currentTheme || 'dark'
+        this.uiService.toggleTheme(this.document, this.theme)
+
         await this.loadProfiles()
         await this.loadPageActions()
 

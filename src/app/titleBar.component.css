@@ -15,7 +15,7 @@
     height: 32px;
 }
 .surface-f {
-    background-color: var(--surface-f);
+    background-color: var(--p-surface-ground);
 }
 .draggable {
     -webkit-user-select: none;

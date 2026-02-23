@@ -7,6 +7,7 @@ import {switchMap} from "rxjs";
 
 @Component({
     selector: 'sideMenu',
+    standalone: false,
     templateUrl: './sideMenu.component.html',
     styleUrl: './sideMenu.component.scss'
 })
@@ -54,6 +55,10 @@ export class SideMenuComponent implements OnInit {
         this.activeProfile = this.uiService.ipcSendSync('profiles:getActive')
         this.treeNodesData = this.activeProfile['sideMenuTreeNodes']
         this.loadMenuItemsFromTreeNodesData();
+
+        // Apply initial theme
+        const currentTheme = this.uiService.ipcSendSync('settings:getTheme')
+        this.uiService.toggleTheme(this.document, currentTheme)
 
         this.uiService.themeChange.subscribe(theme => {
             this.uiService.toggleTheme(this.document, theme)

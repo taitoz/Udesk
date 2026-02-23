@@ -4,6 +4,7 @@ import {UiService} from './ui.service';
 
 @Component({
     selector: 'sideBar',
+    standalone: false,
     templateUrl: './sideBar.component.html',
     styleUrl: './sideBar.component.css'
 })
@@ -23,6 +24,10 @@ export class SideBarComponent implements OnInit {
 
         this.activeProfile = this.uiService.ipcSendSync('profiles:getActive')
         this.logoCachePath = this.uiService.getLogoCachePath()
+
+        // Apply initial theme
+        const currentTheme = this.uiService.ipcSendSync('settings:getTheme')
+        this.uiService.toggleTheme(this.document, currentTheme)
 
         this.uiService.themeChange.subscribe(theme => {
             this.uiService.toggleTheme(this.document, theme)

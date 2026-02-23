@@ -7,7 +7,7 @@ import {PrimeTemplate} from "primeng/api";
 import {TableModule} from "primeng/table";
 import {TooltipModule} from "primeng/tooltip";
 import {DynamicDialogConfig, DynamicDialogRef} from "primeng/dynamicdialog";
-import {DropdownModule} from "primeng/dropdown";
+import {SelectModule} from "primeng/select";
 import {UiService} from "../ui.service";
 
 @Component({
@@ -22,7 +22,7 @@ import {UiService} from "../ui.service";
         TableModule,
         TooltipModule,
         NgStyle,
-        DropdownModule,
+        SelectModule,
         NgTemplateOutlet,
         Button
     ],

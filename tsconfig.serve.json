@@ -2,13 +2,16 @@
   "compilerOptions": {
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
+    "outDir": "./out-tsc",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "module": "commonjs",
+    "module": "ES2015",
     "target": "es2015",
     "types": [
-      "node"
+      "node",
+      "electron"
     ],
     "lib": [
       "es2017",
