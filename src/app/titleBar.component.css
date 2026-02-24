@@ -1,21 +1,30 @@
 .card {
     width: 100%;
     height: 34px;
-    display: inline-block;
+    display: block;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 ::ng-deep .loading {
-    margin-left: 70px;
     height: 2px;
-    width: calc(100% - 70px);
+    width: 100%;
 }
 
 .h32 {
     height: 32px;
 }
-.surface-f {
-    background-color: var(--p-surface-ground);
+.titlebar-bg {
+    background-color: var(--p-content-background);
+}
+
+.titlebar-btn {
+    color: var(--p-text-muted-color);
+}
+
+.titlebar-btn:hover {
+    color: var(--p-text-color);
+    background-color: var(--p-content-hover-background);
 }
 .draggable {
     -webkit-user-select: none;

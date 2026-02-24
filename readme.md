@@ -29,7 +29,7 @@ Instead of juggling multiple browser tabs, applications, and interfaces, UDesk b
 ## Technology Stack
 
 - **Frontend**: Angular 21, PrimeNG 21, RxJS
-- **Desktop**: Electron 33
+- **Desktop**: Electron 40
 - **Automation**: Puppeteer, puppeteer-in-electron
 - **Build**: Webpack, electron-builder
 - **Language**: TypeScript 5.9

@@ -1,12 +1,12 @@
 {
   "name": "UDesk",
-  "productName": "UDesk",
-  "version": "1.3.0",
-  "description": "UDesk Application",
+  "productName": "Universal Desktop Interface",
+  "version": "2.0a",
+  "description": "universal access to multiple local and web interfaces with automation capabilities in a single unified UI",
   "author": {
-    "name": "uchet.kz",
-    "email": "dev@uchet.kz",
-    "url": "https://uchet.kz/"
+    "name": "Konstantin Pak",
+    "email": "konstantin13@gmail.com",
+    "url": "https://github.com/taitoz/"
   },
   "main": "main.js",
   "type": "module",

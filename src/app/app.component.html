@@ -1,1 +1,35 @@
-<router-outlet></router-outlet>
+<div class="app-layout">
+    <!-- Title Bar -->
+    <div class="app-titlebar">
+        <titleBar></titleBar>
+    </div>
+
+    <!-- Main Area (below titlebar) -->
+    <div class="app-main">
+        <!-- Side Bar (icon strip) -->
+        <div class="app-sidebar">
+            <sideBar></sideBar>
+        </div>
+
+        <!-- Side Menu (tree panel) + splitter + content -->
+        <div class="app-content-area">
+            <!-- Side Menu Panel -->
+            <div class="app-sidemenu" *ngIf="sideMenuVisible" [style.width.px]="sideMenuWidth">
+                <sideMenu [menuId]="sideMenuId"></sideMenu>
+            </div>
+
+            <!-- Draggable Splitter -->
+            <div class="app-splitter"
+                 *ngIf="sideMenuVisible"
+                 (mousedown)="onSplitterMouseDown($event)">
+            </div>
+
+            <!-- Content Area: settings or mainView placeholder -->
+            <div class="app-content" #contentArea>
+                <settings *ngIf="settingsVisible"></settings>
+                <!-- mainView WebContentsView is positioned over this area by Electron -->
+                <div class="mainview-placeholder" *ngIf="!settingsVisible" #mainViewPlaceholder></div>
+            </div>
+        </div>
+    </div>
+</div>

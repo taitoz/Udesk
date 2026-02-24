@@ -43,7 +43,7 @@ import Aura from '@primeuix/themes/aura';
             theme: {
                 preset: Aura,
                 options: {
-                    darkModeSelector: 'system'
+                    darkModeSelector: '.app-dark'
                 }
             }
         }),

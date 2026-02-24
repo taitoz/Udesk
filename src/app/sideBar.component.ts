@@ -1,5 +1,4 @@
-import {ChangeDetectorRef, Component, Inject, OnInit} from '@angular/core';
-import {DOCUMENT} from '@angular/common';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {UiService} from './ui.service';
 
 @Component({
@@ -15,29 +14,22 @@ export class SideBarComponent implements OnInit {
 
     constructor(
         private uiService: UiService,
-        @Inject(DOCUMENT) private document: Document,
         private cdr: ChangeDetectorRef
     ) {
     }
 
     ngOnInit(): void {
-
         this.activeProfile = this.uiService.ipcSendSync('profiles:getActive')
         this.logoCachePath = this.uiService.getLogoCachePath()
 
-        // Apply initial theme
-        const currentTheme = this.uiService.ipcSendSync('settings:getTheme')
-        this.uiService.toggleTheme(this.document, currentTheme)
-
-        this.uiService.themeChange.subscribe(theme => {
-            this.uiService.toggleTheme(this.document, theme)
-        });
         this.uiService.activeProfileChange.subscribe(activeProfile => {
             this.onActiveProfileUpdate(activeProfile)
         })
     }
 
     openLink(url: string) {
+        this.uiService.settingsToggle.emit(false);
+        this.uiService.sideMenuToggle.emit(null);
         this.uiService.ipcInvoke('load-url', url, false).then()
     }
 
@@ -45,11 +37,17 @@ export class SideBarComponent implements OnInit {
         return this.activeProfile['homeUrl']
     }
 
-    ipcSend(channel: string, data: string) {
-        this.uiService.ipcSend(channel, data)
+    toggleSideMenu(menuId: string) {
+        this.uiService.settingsToggle.emit(false);
+        this.uiService.sideMenuToggle.emit(menuId);
+    }
+
+    toggleSettings() {
+        this.uiService.settingsToggle.emit(null);
     }
 
     callRenderer(channel: string) {
+        this.uiService.settingsToggle.emit(false);
         this.uiService.ipcInvoke(channel).then()
     }
 

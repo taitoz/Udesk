@@ -13,6 +13,11 @@ export class UiService {
     @Output() themeChange: EventEmitter<string> = new EventEmitter();
     @Output() activeProfileChange: EventEmitter<string> = new EventEmitter();
 
+    // Layout events (single-renderer architecture)
+    @Output() sideMenuToggle = new EventEmitter<string>();  // menuId or null to close
+    @Output() settingsToggle = new EventEmitter<boolean>();
+    @Output() mainViewResize = new EventEmitter<{x: number, y: number, width: number, height: number}>();
+
     logoCachePath: string
 
     constructor(
@@ -88,8 +93,11 @@ export class UiService {
     }
 
     toggleTheme(document: Document, theme: string) {
-        // PrimeNG 21 uses @media (prefers-color-scheme: dark) which is controlled
-        // by Electron's nativeTheme.themeSource - no manual class toggle needed
+        if (theme === 'dark') {
+            document.documentElement.classList.add('app-dark');
+        } else {
+            document.documentElement.classList.remove('app-dark');
+        }
     }
 
     saveToSessionStorage(testData: TreeNode[]) {

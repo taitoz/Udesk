@@ -27,6 +27,7 @@ import {RippleModule} from 'primeng/ripple';
 import {SelectButtonModule} from "primeng/selectbutton";
 import {BadgeModule} from 'primeng/badge';
 import { CheckboxModule } from 'primeng/checkbox';
+import {ProgressBarModule} from 'primeng/progressbar';
 @NgModule({
     imports: [
         TabsModule,
@@ -56,7 +57,8 @@ import { CheckboxModule } from 'primeng/checkbox';
         RippleModule,
         BadgeModule,
         SelectButtonModule,
-        CheckboxModule
+        CheckboxModule,
+        ProgressBarModule
     ],
     exports: [
         TabsModule,
@@ -86,7 +88,8 @@ import { CheckboxModule } from 'primeng/checkbox';
         RippleModule,
         BadgeModule,
         SelectButtonModule,
-        CheckboxModule
+        CheckboxModule,
+        ProgressBarModule
     ],
     providers: [DialogService]
 })

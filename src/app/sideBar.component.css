@@ -18,6 +18,10 @@
 
 .card {
     width: 70px;
-    height: calc(100vh - 30px);
-    background-color: var(--p-surface-ground);
+    height: 100%;
+    background-color: var(--p-content-background);
+}
+
+.sidebar-separator {
+    border-color: var(--p-content-border-color) !important;
 }

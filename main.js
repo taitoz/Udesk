@@ -70,99 +70,47 @@ const appIcon = nativeImage.createFromPath(
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 let appTray
-let sideBar
-let sideMenu
-let titleBar
 let mainView
-let settingsView
-
-//TODO to appCfg
-let sideBarWidth = 70
-let sideMenuWidth = 0
-let titleBarHeight = 34
 
 function createWindow() {
     if (mainWindow) return
 
     const winCfg = appCfg.window()
 
+    const isDark = nativeTheme.themeSource === 'dark'
     mainWindow = new BrowserWindow({
         width: 1200, height: 720, minWidth: 1200, minHeight: 720,
-        backgroundColor: "#1c1c1c",
+        backgroundColor: isDark ? "#18181b" : "#ffffff",
         titleBarStyle: "hidden",
         icon: appIcon,
         ...(process.platform === "linux" ? {icon: appIcon} : {}),
         trafficLightPosition: {x: 16, y: 16},
         titleBarOverlay: {
-            symbolColor: "#DADBE1",
-            color: "#1e1e1e",
+            symbolColor: isDark ? "#DADBE1" : "#333333",
+            color: isDark ? "#18181b" : "#ffffff",
             height: 32,
         },
         webPreferences: {
-            //preload: path.join(__dirname, 'preload.js'),
+            nodeIntegration: true,
+            contextIsolation: false,
             sandbox: false,
         },
         ...winCfg.options(),
-        //show: false,
     });
 
     winCfg.assign(mainWindow);
 
-    titleBar = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.contentView.addChildView(titleBar, 0)
-    titleBar.setBounds({x: 0, y: 0, width: mainWindow.getBounds().width, height: titleBarHeight})
-    loadPrimeComponent(titleBar, 'titleBar')
-    // titleBar.webContents.on('context-menu', (event) => {
-    //     event.preventDefault()
-    //     Menu.buildFromTemplate(getMainViewMenu(titleBar)).popup()
-    // })
-    //titleBar.webContents.openDevTools({mode: 'detach'});
+    // Load Angular app directly in the BrowserWindow
+    const url = `file://${__dirname}/dist/index.html`;
+    mainWindow.loadURL(url)
 
-    sideBar = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.contentView.addChildView(sideBar, 1)
-    sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: mainWindow.getBounds().height})
-    loadPrimeComponent(sideBar, 'sideBar')
-    sideBar.webContents.on('context-menu', () => {
-        Menu.buildFromTemplate(getMainViewMenu(sideBar)).popup()
-    })
-
-    sideMenu = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    mainWindow.contentView.addChildView(sideMenu, 2)
-    sideMenu.setBounds({
-        x: sideBarWidth, y: titleBarHeight, width: sideMenuWidth, height: mainWindow.getBounds().height
-    })
-    sideMenu.webContents.on('context-menu', () => {
-        Menu.buildFromTemplate(getMainViewMenu(sideMenu)).popup()
-    })
-
+    // Create mainView WebContentsView for external web content
     mainView = new WebContentsView()
-    mainWindow.contentView.addChildView(mainView, 3)
-    mainView.setBounds({
-        x: (sideBarWidth + sideMenuWidth),
-        y: titleBarHeight,
-        width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
-        height: mainWindow.getBounds().height - titleBarHeight - 1 // Ensure this calculation is correct
-    });
+    mainWindow.contentView.addChildView(mainView, 1)
+    mainView.setBounds({x: 0, y: 0, width: 0, height: 0}) // Hidden until Angular tells us where
     mainView.webContents.on('context-menu', () => {
         Menu.buildFromTemplate(getMainViewMenu(mainView)).popup()
     });
-    //mainView.webContents.openDevTools({mode: 'detach'}); // Enable DevTools for debugging
-
-    settingsView = new WebContentsView({webPreferences: {nodeIntegration: true, contextIsolation: false}})
-    settingsView.setBounds({
-        x: (sideBarWidth + sideMenuWidth),
-        y: titleBarHeight,
-        width: mainWindow.getBounds().width - (sideBarWidth + sideMenuWidth),
-        height: mainWindow.getBounds().height
-    })
-    settingsView.webContents.on('context-menu', () => {
-        Menu.buildFromTemplate(getMainViewMenu(settingsView)).popup({window: settingsView.webContents})
-    })
-
-    //mainWindow.loadFile('index.html')
-    //mainView.webContents.loadFile(`index.html`).then()
-    //setTimeout(() => mainView.webContents.loadURL('https://uchet.kz/'), 1000)
-    //if (navigator.onLine) {mainWindow.loadURL(`https://uchet.kz`)} else {mainWindow.loadURL(`index.html`)}
 
     // Puppeteer
     pie.connect(app, puppeteerApp).then(async browser => {
@@ -172,22 +120,12 @@ function createWindow() {
             let url = activeProfile['homeUrl']
             if (url) {
                 await loadUrl(url)
-            } else {
-                toggleSettings()
             }
         })
     })
 
-    // catch resize event emitted on window
-    mainWindow.on('resize', function () {
-        resizeMain()
-    })
-
     // Emitted when the window is closed.
     mainWindow.on('closed', function () {
-        // Dereference the window object, usually you would store windows
-        // in an array if your app supports multi windows, this is the time
-        // when you should delete the corresponding element.
         mainWindow = null
     })
 
@@ -195,52 +133,21 @@ function createWindow() {
         mainWindow.show()
     })
 
+    // Loading indicator: send to Angular app in the main window
+    //TODO timeout to 10 sec
     mainView.webContents.on('did-start-navigation', function () {
-        titleBar.webContents.send('showLoading', true);
-        // Set a timeout to hide loading after 30 seconds
+        mainWindow.webContents.send('showLoading', true);
         setTimeout(() => {
-            titleBar.webContents.send('showLoading', false);
+            mainWindow.webContents.send('showLoading', false);
         }, 30000);
     });
-    
+
     mainView.webContents.on('did-finish-load', function () {
-        titleBar.webContents.send('showLoading', false);
+        mainWindow.webContents.send('showLoading', false);
     })
-
 }
 
-function resizeMain() {
-    let newBounds = mainWindow.getBounds()
-    // set BrowserView's bounds explicitly
-    // sideBar.setBounds({
-    //     x: 0,
-    //     y: titleBarHeight,
-    //     width: sidebarWidth,
-    //     height: newBounds.height
-    // })
-    titleBar.setBounds({x: 0, y: 0, width: newBounds.width, height: titleBarHeight})
-    sideBar.setBounds({x: 0, y: titleBarHeight, width: sideBarWidth, height: newBounds.height})
-
-    sideMenu.setBounds({
-        x: sideBarWidth, y: titleBarHeight, width: sideMenuWidth, height: newBounds.height
-    })
-
-    mainView.setBounds({
-        x: (sideBarWidth + sideMenuWidth),
-        y: titleBarHeight,
-        width: newBounds.width - (sideBarWidth + sideMenuWidth),
-        height: newBounds.height - titleBarHeight - 1 // Ensure this calculation is correct
-    });
-
-    if (mainWindow.contentView.children.includes(settingsView)) {
-        settingsView.setBounds({
-            x: (sideBarWidth + sideMenuWidth),
-            y: titleBarHeight,
-            width: newBounds.width - (sideBarWidth + sideMenuWidth),
-            height: newBounds.height
-        })
-    }
-}
+// mainView bounds are now controlled by Angular via IPC 'mainView:resize'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -320,15 +227,7 @@ app.on('activate', function () {
 // You can also put them in separate files and require them here
 // =====================================================================================
 nativeTheme.on("updated", () => {
-    titleBar.webContents.send('theme-toggle', nativeTheme.themeSource);
-    sideBar.webContents.send('theme-toggle', nativeTheme.themeSource);
-    sideMenu.webContents.send('theme-toggle', nativeTheme.themeSource);
     appCfg.set('theme', nativeTheme.themeSource)
-    // if (nativeTheme.shouldUseDarkColors) {
-    //     console.log("Dark Theme Chosen by User");
-    // } else {
-    //     console.log("Light Theme Chosen by User");
-    // }
 });
 
 // =====================================================================================
@@ -345,35 +244,39 @@ ipcMain.handle('reload', () => {
 })
 
 ipcMain.handle('load-url', async (event, args) => {
-    //dialog.showErrorBox('loadService', arg)
     const url = args[0]
-    const hasChildren = args[1]
-    if (mainWindow.contentView.children.includes(settingsView)) {
-        mainWindow.contentView.removeChildView(settingsView)
-    }
-
-    if (!hasChildren) {
-        toggleSideMenu()
-    }
     if (url) {
         await loadUrl(url)
     }
 })
 
-ipcMain.handle('open:settings', () => {
-    toggleSideMenu()
-    toggleSettings()
-})
-
-ipcMain.on('sideMenu:toggle', (event, args) => {
-    toggleSideMenu(args);
+// mainView:resize - Angular tells us where to position the mainView WebContentsView
+ipcMain.on('mainView:resize', (event, args) => {
+    if (!mainView) return
+    const bounds = args[0]
+    mainView.setBounds({
+        x: Math.round(bounds.x),
+        y: Math.round(bounds.y),
+        width: Math.round(bounds.width),
+        height: Math.round(bounds.height)
+    })
 })
 ipcMain.on('settings:toggleTheme', (event, args) => {
-    nativeTheme.themeSource = args[0]
+    const theme = args[0]
+    nativeTheme.themeSource = theme
+    if (mainWindow) {
+        mainWindow.webContents.send('theme-toggle', theme)
+        // Update titlebar overlay buttons to match theme
+        mainWindow.setTitleBarOverlay({
+            symbolColor: theme === 'dark' ? '#DADBE1' : '#333333',
+            color: theme === 'dark' ? '#18181b' : '#ffffff',
+        })
+    }
 })
 ipcMain.on('settings:getTheme', (event) => {
     event.returnValue = nativeTheme.themeSource
 })
+
 
 
 ipcMain.on('profile:logo:getCachePath', async (event) => {
@@ -443,7 +346,7 @@ ipcMain.handle('profile:update', async (event, args) => {
     await updateProfile(profile)
     const activeProfile = await getActiveProfile()
     if (profile._id === activeProfile._id) {
-        sideBar.webContents.send('activeProfile:update', activeProfile)
+        mainWindow.webContents.send('activeProfile:update', activeProfile)
         // mainWindow.setIcon(logoPath)
         // appTray.setImage(logoPath)
     }
@@ -452,7 +355,8 @@ ipcMain.handle('profile:update', async (event, args) => {
 ipcMain.handle('profiles:delete', async (event, args) => {
     const profileId = args[0]
     await deleteProfile(profileId)
-    // TODO delete logo
+
+    //TODO delete logo
     // let appConfigPath = app.getPath('userData') + '/settings/profile-id-' + profile.name + '.json'
     // fs.rmSync(appConfigPath)
 })
@@ -494,10 +398,10 @@ ipcMain.handle('profile:export', async (event, args) => {
 })
 
 //TODO add pageActions Edit
-//lang nestdb, lang setting
-//drag and drop reordering to services tree table
-//? events to angular
-// =====================================================================================
+// lang nestdb, lang setting
+// drag and drop reordering to services tree table
+// ? events to angular
+//=====================================================================================
 async function loadUrl(urlStr) {
     try {
         const url = new URL(urlStr)
@@ -550,14 +454,17 @@ async function initPageActions() {
 
 async function activeProfileUpdate() {
     const activeProfile = await getActiveProfile()
-    sideBar.webContents.send('activeProfile:update', activeProfile)
+    mainWindow.webContents.send('activeProfile:update', activeProfile)
 }
 
 function initLogoCache() {
     appCfg.set('logoCachePath', path.join(app.getPath('userData'), 'LogoCache'))
     copyFromAssets('Udesk_logo.png')
     copyFromAssets('logo48b.png')
+
     //TODO appLogo from appCfg
+    // appLogo trasp test animated
+
     const appLogoPath = appCfg.get('logoCachePath') + `Udesk_logo.png`
 }
 
@@ -569,37 +476,5 @@ function copyFromAssets(logoName) {
 }
 
 
-function toggleSideMenu(args) {
-    sideMenuWidth = sideMenu.getBounds().width
-    if (args) {
-        switch (sideMenuWidth) {
-            case 0:
-                sideMenuWidth = 230
-                loadPrimeComponent(sideMenu, 'sideMenu/' + args[0]);
-                break;
-            case 230:
-                sideMenuWidth = 0
-                break;
-        }
-    } else {
-        sideMenuWidth = 0
-    }
-    resizeMain()
-}
-
-function loadPrimeComponent(browserView, component) {
-    const url = `file://${__dirname}/dist/index.html`;
-    browserView.webContents.loadURL(url).then(() => {
-        browserView.webContents.send('loadComponent', component);
-    })
-}
-
-function toggleSettings() {
-    if (!mainWindow.contentView.children.includes(settingsView)) {
-        mainWindow.contentView.addChildView(settingsView, 4);
-        loadPrimeComponent(settingsView, 'settings')
-        resizeMain()
-    } else {
-        mainWindow.contentView.removeChildView(settingsView)
-    }
-}
+// toggleSideMenu, loadPrimeComponent, toggleSettings removed
+// Layout is now managed by Angular in the single renderer

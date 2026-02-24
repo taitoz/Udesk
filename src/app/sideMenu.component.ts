@@ -1,9 +1,7 @@
-import {ChangeDetectorRef, Component, Inject, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, ChangeDetectorRef, Component, Inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
+import {DOCUMENT} from '@angular/common';
 import {MenuItem, TreeNode} from 'primeng/api';
 import {UiService} from './ui.service';
-import {DOCUMENT} from '@angular/common';
-import {ActivatedRoute, Router} from '@angular/router';
-import {switchMap} from "rxjs";
 
 @Component({
     selector: 'sideMenu',
@@ -12,7 +10,9 @@ import {switchMap} from "rxjs";
     styleUrl: './sideMenu.component.scss'
 })
 
-export class SideMenuComponent implements OnInit {
+export class SideMenuComponent implements OnInit, OnChanges, AfterViewInit {
+
+    @Input() menuId: string = 'servicesMenu';
 
     activeProfile: any
     treeNodesData: TreeNode[];
@@ -23,56 +23,48 @@ export class SideMenuComponent implements OnInit {
 
     constructor(
         private uiService: UiService,
-        private route: ActivatedRoute,
-        private router: Router,
-        @Inject(DOCUMENT) private document: Document,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        @Inject(DOCUMENT) private document: Document
     ) {
-        this.route.params.subscribe({
-            next: params => {
-                this.menuName = this.getMenuName(params['menuId']);
-            },
-            error: error => {
-                console.log(error)
-            },
-            complete: () => {
-                console.log('Request complete');
-            }
-        });
+    }
 
-        // this.route.params.subscribe(params => {
-        //     this.menuName = this.getMenuName(params['menuId']);
-        //     this.treeNodesData = this.uiService.loadSideMenuData(params['menuId']);
-        //     this.loadMenuItemsFromTreeNodesData();
-        // }, error => {
-        //     console.log(error)
-        //     //router.navigate(['']);
-        // });
+    ngAfterViewInit() {
+        // Inject style override after PrimeNG renders
+        if (!this.document.getElementById('compact-menu-styles')) {
+            const style = this.document.createElement('style');
+            style.id = 'compact-menu-styles';
+            style.textContent = `
+                .p-panelmenu { gap: 0 !important; }
+                .p-panelmenu-panel { border: none !important; padding: 0 !important; border-radius: 0 !important; background: transparent !important; }
+                .p-panelmenu-header-content { border-radius: 0 !important; background: transparent !important; border-top: 1px solid var(--p-content-border-color) !important; border-bottom: none !important; }
+                .p-panelmenu-header-link { padding: 0.6rem 0.5rem !important; }
+                .p-panelmenu-item-link { padding: 0.6rem 0.5rem !important; }
+                .p-panelmenu-item-content { border-radius: 0 !important; border-top: 1px solid var(--p-content-border-color) !important; border-bottom: none !important; }
+                .p-panelmenu-submenu { padding-left: 0.75rem !important; }
+                .p-panelmenu-content ul { margin: 0 !important; padding-left: 0.75rem !important; list-style: none !important; }
+                .p-panelmenu ul { margin: 0 !important; }
+            `;
+            this.document.head.appendChild(style);
+        }
     }
 
     ngOnInit() {
-
         this.activeProfile = this.uiService.ipcSendSync('profiles:getActive')
         this.treeNodesData = this.activeProfile['sideMenuTreeNodes']
+        this.menuName = this.getMenuName(this.menuId);
         this.loadMenuItemsFromTreeNodesData();
 
-        // Apply initial theme
-        const currentTheme = this.uiService.ipcSendSync('settings:getTheme')
-        this.uiService.toggleTheme(this.document, currentTheme)
-
-        this.uiService.themeChange.subscribe(theme => {
-            this.uiService.toggleTheme(this.document, theme)
-        })
         this.uiService.activeProfileChange.subscribe(activeProfile => {
             this.onActiveProfileUpdate(activeProfile)
         })
+    }
 
-        //this.treeNodesData = this.uiService.loadSideMenuData('services');
-        //this.loadMenuItemsFromTreeNodesData();
-
-        // this.uiService.appNameChange.subscribe(appName => {
-        //     this.appName = appName;
-        // });
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['menuId'] && !changes['menuId'].firstChange) {
+            this.menuName = this.getMenuName(this.menuId);
+            this.menuItems = [];
+            this.loadMenuItemsFromTreeNodesData();
+        }
     }
 
     onActiveProfileUpdate(activeProfile: any) {
@@ -99,7 +91,7 @@ export class SideMenuComponent implements OnInit {
             label: treeNode.data.key,
             value: treeNode.data.value,
             command: () => {
-                // console.log(treeNode.data.value);
+                this.uiService.settingsToggle.emit(false);
                 this.uiService.ipcInvoke('load-url', treeNode.data.value, (treeNode.children.length > 0)).then()
             },
             // icon: (treeNode.data.icon) ? treeNode.data.icon : 'bx bx-circle-off',

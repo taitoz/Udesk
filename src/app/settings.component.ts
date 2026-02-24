@@ -4,23 +4,8 @@ import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
-import {ActivatedRouteSnapshot, CanDeactivateFn, RouterStateSnapshot, UrlTree} from "@angular/router";
-import {Observable} from "rxjs";
 import path from "node:path";
 import {PageActionEditDialogComponent} from "./page-action-edit-dialog/page-action-edit-dialog.component";
-
-export const canDeactivateGuard: CanDeactivateFn<any> = (
-    component: any,
-    currentRoute: ActivatedRouteSnapshot,
-    currentState: RouterStateSnapshot,
-    nextState?: RouterStateSnapshot
-): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree => {
-    // Check if there are unsaved changes
-    if (component.hasUnsavedChanges()) {
-        return confirm('You have unsaved changes. Are you sure you want to leave?');
-    }
-    return true;
-};
 
 @Component({
     selector: 'settings',
@@ -74,10 +59,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     async ngOnInit() {
-        // Apply initial theme
+        // Get current theme for the toggle button state
         const currentTheme = this.uiService.ipcSendSync('settings:getTheme')
         this.theme = currentTheme || 'dark'
-        this.uiService.toggleTheme(this.document, this.theme)
 
         await this.loadProfiles()
         await this.loadPageActions()
@@ -320,10 +304,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     toggleTheme(event: SelectButtonChangeEvent) {
-        //this.theme = event.value
         this.uiService.toggleTheme(this.document, this.theme)
         this.uiService.ipcSend('settings:toggleTheme', this.theme)
-        //this.electronService.ipcRenderer.send('settings:toggleTheme', theme);
     }
 
     getLogoPath(profile: any) {

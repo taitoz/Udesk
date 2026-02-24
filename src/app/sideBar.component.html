@@ -1,4 +1,4 @@
-<div class="card lg:block flex-shrink-0 absolute left-0 top-0 z-1 border-right-1 border-gray-600 select-none">
+<div class="card lg:block flex-shrink-0 select-none">
     <div class="flex align-items-center flex-column h-full">
         <div class="flex align-items-center justify-content-center flex-shrink-0" style="height: 60px;"><!--bg-indigo-500-->
             <img ngSrc='{{getLogoPath(activeProfile)}}' alt="" width="50" height="50">
@@ -10,7 +10,7 @@
                 </li>
                 <li>
                     <p-button icon="bx bx-collection bx-sm"
-                              (click)="ipcSend('sideMenu:toggle', 'servicesMenu')" [plain]="true" [text]="true"/>
+                              (click)="toggleSideMenu('servicesMenu')" [plain]="true" [text]="true"/>
                 </li>
 <!--                <li>-->
 <!--                    <p-button icon="bx bx-server bx-sm"-->
@@ -27,14 +27,11 @@
         </div>
 
         <div class="mt-auto">
-            <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
+            <hr class="mb-3 mx-2 border-top-1 border-none sidebar-separator">
             <ul class="list-none p-3 lg:py-3 lg:px-2 m-0">
                 <li>
-                    <p-button icon="bx bx-cog bx-sm" (click)="callRenderer('open:settings')" [plain]="true" [text]="true"/>
+                    <p-button icon="bx bx-cog bx-sm" (click)="toggleSettings()" [plain]="true" [text]="true"/>
                 </li>
-<!--                <li>-->
-<!--                    <p-button icon="bx bx-user bx-sm" (click)="openLink('https://id.uchet.kz/account/login/')" [plain]="true" [text]="true"/>-->
-<!--                </li>-->
             </ul>
         </div>
     </div>

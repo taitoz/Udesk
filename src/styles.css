@@ -7,7 +7,7 @@ html, body {
     padding: 0;
     margin: 0;
     overflow-y: auto;
-    background-color: var(--p-surface-ground);
+    background-color: var(--p-content-background);
     color: var(--p-text-color);
     font-family: var(--app-font-family);
     font-size: 14px;
@@ -22,3 +22,4 @@ html, body {
     height: 100%;
     overflow-y: auto;
 }
+

@@ -1,0 +1,58 @@
+.app-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-titlebar {
+    height: 34px;
+    flex-shrink: 0;
+}
+
+.app-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.app-sidebar {
+    width: 70px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-right: 1px solid var(--p-content-border-color);
+}
+
+.app-content-area {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.app-sidemenu {
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+
+.app-splitter {
+    width: 3px;
+    cursor: col-resize;
+    background-color: var(--p-content-border-color);
+    flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+
+.app-splitter:hover {
+    background-color: var(--p-primary-color);
+}
+
+.app-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.mainview-placeholder {
+    width: 100%;
+    height: 100%;
+}
