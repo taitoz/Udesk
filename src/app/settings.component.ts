@@ -4,8 +4,13 @@ import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
-import path from "node:path";
 import {PageActionEditDialogComponent} from "./page-action-edit-dialog/page-action-edit-dialog.component";
+
+interface TreeNodeForm {
+    id: any
+    key: string
+    value: string
+}
 
 @Component({
     selector: 'settings',
@@ -19,12 +24,11 @@ import {PageActionEditDialogComponent} from "./page-action-edit-dialog/page-acti
 export class SettingsComponent implements OnInit, OnDestroy {
 
     activeTabIndex = '0'
-    sideMenuTreeNodes: TreeNode[] | undefined
-    cols: any[] | undefined
-    selectedNode: TreeNode
-    //selectedNodes: TreeNode[] | undefined
-    editingTreeNode: any
+    sideMenuTreeNodes: TreeNode[] = []
+    selectedNode: TreeNode | null = null
     editingProfile: any
+    treeForm: TreeNodeForm = this.createEmptyTreeForm()
+    isTreeFormDirty = false
 
     ref: DynamicDialogRef | undefined
     theme = 'dark'
@@ -65,11 +69,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
         await this.loadProfiles()
         await this.loadPageActions()
-
-        this.cols = [
-            {header: 'Name', field: 'key'},
-            {header: 'Link', field: 'value'}
-        ];
     }
 
     ngOnDestroy(): void {
@@ -79,7 +78,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     hasUnsavedChanges(): boolean {
-        return (this.editingTreeNode)
+        return !!this.editingProfile || this.isTreeFormDirty
     }
 
     async loadPageActions() {
@@ -92,14 +91,23 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.profiles.forEach(profile => {
             if (profile.active) {
                 this.activeProfile = profile
-                this.sideMenuTreeNodes = profile.sideMenuTreeNodes
+                this.sideMenuTreeNodes = profile.sideMenuTreeNodes || []
+                this.applyTreeMetadata(this.sideMenuTreeNodes)
             }
         })
+        if (!this.activeProfile) {
+            this.sideMenuTreeNodes = []
+        }
         this.refreshTable()
+        if (this.selectedNode) {
+            const restored = this.findNodeById(this.selectedNode.data?.id, this.sideMenuTreeNodes)
+            this.selectedNode = restored || null
+            this.syncFormWithSelection()
+        }
     }
 
     startProfileKeyEdit(profile: any) {
-        profile.sideMenuTreeNodes.forEach((node: TreeNode<any>) => this.removeTreeParent(node));
+        profile.sideMenuTreeNodes?.forEach((node: TreeNode<any>) => this.stripTreeParents(node));
         //delete profile['_id']
         this.editingProfile = profile;
     }
@@ -118,20 +126,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     cancelProfileKeyEdit() {
         this.loadProfiles()
         this.editingProfile = null;
-    }
-
-    startTreeNodeEdit(row: any) {
-        this.editingTreeNode = row;
-    }
-
-    saveTreeNodeEdit() {
-        this.servicesMenuDataSave()
-        this.editingTreeNode = null;
-    }
-
-    cancelTreeNodeEdit() {
-        this.loadProfiles()
-        this.editingTreeNode = null;
     }
 
     exportProfile(profileId: string) {
@@ -198,30 +192,38 @@ export class SettingsComponent implements OnInit, OnDestroy {
     onSelect(event: any) {
         if (event.node != null) {
             this.selectedNode = event.node
-            // this.messageService.add({severity: 'info', summary: 'Node Selected', detail: this.selectedNode.data.key});
+            this.syncFormWithSelection()
         }
     }
 
-    servicesMenuDataSave() {
-        this.sideMenuTreeNodes.forEach(node => this.removeTreeParent(node));
-        //this.uiService.saveToSessionStorage(this.treeNodesData);
-        this.activeProfile.sideMenuTreeNodes = this.sideMenuTreeNodes;
-        this.uiService.ipcInvoke('profile:update', this.activeProfile).then(() => {
-            this.loadProfiles()
-            //this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
-            //this.messageService.add({severity: 'success', summary: 'Сохранено'});
-        })
+    onNodeUnselect() {
+        this.selectedNode = null
+        this.treeForm = this.createEmptyTreeForm()
+        this.isTreeFormDirty = false
     }
 
-    removeTreeParent(obj: TreeNode) {
-        obj.parent = null;
-        obj.children.forEach((item: TreeNode) => {
-            // item.parent = null;
+    async servicesMenuDataSave(preserveSelection = true) {
+        const selectedId = preserveSelection ? this.selectedNode?.data?.id : null
+        this.sideMenuTreeNodes.forEach(node => this.stripTreeParents(node))
+        this.activeProfile.sideMenuTreeNodes = this.sideMenuTreeNodes
+        await this.uiService.ipcInvoke('profile:update', this.activeProfile)
+        await this.loadProfiles()
+        if (selectedId) {
+            const restoredNode = this.findNodeById(selectedId, this.sideMenuTreeNodes)
+            this.selectedNode = restoredNode || null
+        }
+        this.syncFormWithSelection()
+    }
+
+    stripTreeParents(obj: TreeNode) {
+        obj.parent = null
+        obj.label = obj.data?.key ?? obj.label
+        obj.children?.forEach((item: TreeNode) => {
             try {
-                this.removeTreeParent(item);
+                this.stripTreeParents(item)
             } catch {
             }
-        });
+        })
     }
 
     deleteNodeByData(data: any, nodes: TreeNode[]) {
@@ -253,8 +255,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
                 // console.log(selectedNode)
                 this.deleteNodeByData(selectedNode.data, this.sideMenuTreeNodes);
                 this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
-                this.servicesMenuDataSave()
-                this.selectedNode = null
+                this.onNodeUnselect()
+                this.servicesMenuDataSave(false)
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
             reject: () => {
@@ -277,30 +279,48 @@ export class SettingsComponent implements OnInit, OnDestroy {
         }
     }
 
-    newNode(id: any): TreeNode<any> {
+    newNode(id: any): TreeNode {
         return {
             data: {id: id, key: 'key', value: 'value', pageActions: []},
+            label: 'key',
             children: []
         };
     }
 
     addItem(selectedNodeData: any, asChild: boolean) {
+        if (!selectedNodeData) {
+            return
+        }
         let node = this.getNodeByData(selectedNodeData, this.sideMenuTreeNodes);
         const newId = Date.now();
+        const createdNode = this.newNode(newId);
         if (asChild) {
-            node.children.push(this.newNode(newId));
+            node.children = node.children || [];
+            node.children.push(createdNode);
             node.expanded = true;
         } else {
             if (node.parent) {
-                node.parent.children.push(this.newNode(newId));
+                node.parent.children.push(createdNode);
             } else {
-                this.sideMenuTreeNodes.push(this.newNode(newId));
+                this.sideMenuTreeNodes.push(createdNode);
             }
         }
-        //this.selectedNode = newHeaderNode;
+        this.applyTreeMetadata(this.sideMenuTreeNodes)
+        this.selectedNode = createdNode
+        this.syncFormWithSelection()
         this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
         this.servicesMenuDataSave()
-        // this.messageService.add({severity: 'success', summary: this.selectedNode.data[key]});
+    }
+
+    addRootNode() {
+        const newId = Date.now()
+        const createdNode = this.newNode(newId)
+        this.sideMenuTreeNodes.push(createdNode)
+        this.applyTreeMetadata(this.sideMenuTreeNodes)
+        this.selectedNode = createdNode
+        this.syncFormWithSelection()
+        this.sideMenuTreeNodes = [...this.sideMenuTreeNodes]
+        this.servicesMenuDataSave()
     }
 
     toggleTheme(event: SelectButtonChangeEvent) {
@@ -313,7 +333,20 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     showPageActionsDialog(rowDataUrl: string) {
-        const domain = new URL(rowDataUrl).hostname;
+        if (!rowDataUrl) {
+            return
+        }
+        let domain: string;
+        try {
+            domain = new URL(rowDataUrl).hostname;
+        } catch {
+            try {
+                domain = new URL('https://' + rowDataUrl).hostname;
+            } catch {
+                this.messageService.add({severity: 'error', summary: 'Invalid URL', detail: rowDataUrl});
+                return;
+            }
+        }
         let pageActions = this.pageActions.find(pa => pa.domain === domain);
 
         if (!pageActions) {
@@ -358,6 +391,85 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     onAppNameChange(newName: string) {
 
+    }
+
+    async onTreeNodeDrop(event: any) {
+        this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
+        await this.servicesMenuDataSave();
+    }
+
+    async saveTreeForm() {
+        if (!this.selectedNode?.data || !this.isTreeFormDirty) {
+            return
+        }
+        this.selectedNode.data.key = this.treeForm.key
+        this.selectedNode.data.value = this.treeForm.value
+        this.selectedNode.label = this.treeForm.key
+        await this.servicesMenuDataSave()
+        this.isTreeFormDirty = false
+    }
+
+    cancelTreeForm() {
+        this.syncFormWithSelection()
+    }
+
+    markTreeFormDirty() {
+        if (!this.selectedNode?.data) {
+            this.isTreeFormDirty = false
+            return
+        }
+        const originalKey = this.selectedNode.data.key ?? ''
+        const originalValue = this.selectedNode.data.value ?? ''
+        this.isTreeFormDirty = originalKey !== this.treeForm.key || originalValue !== this.treeForm.value
+    }
+
+    private syncFormWithSelection() {
+        if (this.selectedNode?.data) {
+            this.treeForm = {
+                id: this.selectedNode.data.id,
+                key: this.selectedNode.data.key ?? '',
+                value: this.selectedNode.data.value ?? ''
+            }
+        } else {
+            this.treeForm = this.createEmptyTreeForm()
+        }
+        this.isTreeFormDirty = false
+    }
+
+    private createEmptyTreeForm(): TreeNodeForm {
+        return {id: null, key: '', value: ''}
+    }
+
+    private applyTreeMetadata(nodes: TreeNode[], parent: TreeNode | null = null) {
+        if (!nodes) {
+            return
+        }
+        nodes.forEach(node => {
+            node.parent = parent ?? null
+            node.label = node.data?.key ?? node.label ?? ''
+            node.children = node.children || []
+            if (node.children.length) {
+                this.applyTreeMetadata(node.children, node)
+            }
+        })
+    }
+
+    private findNodeById(id: any, nodes: TreeNode[]): TreeNode | null {
+        if (!id || !nodes) {
+            return null
+        }
+        for (const node of nodes) {
+            if (node.data?.id === id) {
+                return node
+            }
+            if (node.children) {
+                const match = this.findNodeById(id, node.children)
+                if (match) {
+                    return match
+                }
+            }
+        }
+        return null
     }
 
 }

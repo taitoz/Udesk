@@ -3,19 +3,19 @@
     <!--  <div style="padding: .5em 0 1em 0">-->
     <!--    <p-button-->
     <!--      (click)="activeIndex = 0"-->
-    <!--      styleClass="p-button-text"-->
-    <!--      label="Activate 1rd"-->
+    <!--      class="p-button-text"-->
+    <!--      pButtonLabel="Activate 1rd"-->
     <!--    ></p-button>-->
     <!--    <p-button-->
     <!--      (click)="activeIndex = 1"-->
-    <!--      styleClass="p-button-text"-->
-    <!--      label="Activate 2rd"-->
+    <!--      class="p-button-text"-->
+    <!--      pButtonLabel="Activate 2rd"-->
     <!--      [style]="{ 'margin-left': '.5em' }"-->
     <!--    ></p-button>-->
     <!--    <p-button-->
     <!--      (click)="activeIndex = 2"-->
-    <!--      styleClass="p-button-text"-->
-    <!--      label="Activate 3rd"-->
+    <!--      class="p-button-text"-->
+    <!--      pButtonLabel="Activate 3rd"-->
     <!--      [style]="{ 'margin-left': '.5em' }"-->
     <!--    ></p-button>-->
     <!--  </div>-->
@@ -24,14 +24,14 @@
         <p-tablist>
             <p-tab value="0">Профили</p-tab>
             <p-tab value="1">Сервисы</p-tab>
-            <p-tab value="2">Page Actions</p-tab>
-            <p-tab value="3">Основные</p-tab>
+            <p-tab value="2">Основные</p-tab>
         </p-tablist>
         <p-tabpanels>
             <p-tabpanel value="0">
             <div class="tableContainer">
-                <p-table *ngIf="showTable" [value]="profiles"
-                         styleClass="p-datatable-striped"
+                @if (showTable) {
+                <p-table [value]="profiles"
+                         class="p-datatable-striped"
                          [scrollable]="true"
                          scrollHeight="flex">
                     <ng-template pTemplate="header">
@@ -47,41 +47,46 @@
                         <tr>
                             <td class="">
                                 <div class="flex flex-column gap-2">
-                                    <span *ngIf="!editingProfile" class="font-bold ml-2 truncate-text">
-                                        {{ profile.name }}
-                                    </span>
-                                    <input *ngIf="editingProfile"
-                                           pInputText type="text"
-                                           [(ngModel)]="profile.name"
-                                           [ngStyle]="{'width': '100%'}"
-                                           (keydown.space)="$event.stopPropagation()"
-                                           (keydown.enter)="saveProfileKeyEdit()"
-                                           (keydown.escape)="cancelProfileKeyEdit()">
+                                    @if (!editingProfile) {
+                                        <span class="font-bold ml-2 truncate-text">
+                                            {{ profile.name }}
+                                        </span>
+                                    } @else {
+                                        <input
+                                               pInputText type="text"
+                                               [(ngModel)]="profile.name"
+                                               [ngStyle]="{'width': '100%'}"
+                                               (keydown.space)="$event.stopPropagation()"
+                                               (keydown.enter)="saveProfileKeyEdit()"
+                                               (keydown.escape)="cancelProfileKeyEdit()">
+                                    }
                                     <div class="flex flex-row">
                                         <div class="p-toolbar-group-start">
-                                            <button pButton type="button"
+                                            <p-button
                                                     pTooltip="load" tooltipPosition="top"
                                                     icon="bx bx-check"
-                                                    (click)="setActiveProfile(profile._id)"
-                                                    class="p-button-text p-button-success" [outlined]="true">
-                                            </button>
-                                            <button pButton type="button"
+                                                    severity="success" [text]="true" [outlined]="true"
+                                                    (onClick)="setActiveProfile(profile._id)">
+                                            </p-button>
+                                            <p-button
                                                     pTooltip="delete" tooltipPosition="top"
                                                     icon="bx bxs-trash"
-                                                    (click)="deleteProfile(profile._id)"
-                                                    class="p-button-text p-button-danger" [outlined]="true">
-                                            </button>
-                                            <button pButton type="button"
+                                                    severity="danger" [text]="true" [outlined]="true"
+                                                    (onClick)="deleteProfile(profile._id)">
+                                            </p-button>
+                                            <p-button
                                                     pTooltip="export" tooltipPosition="top"
                                                     icon="bx bxs-file-export"
-                                                    (click)="exportProfile(profile._id)"
-                                                    class="p-button-text p-button-info" [outlined]="true">
-                                            </button>
+                                                    severity="info" [text]="true" [outlined]="true"
+                                                    (onClick)="exportProfile(profile._id)">
+                                            </p-button>
                                         </div>
                                     </div>
-                                    <p-tag *ngIf="activeProfile._id === profile._id"
-                                           [value]="'active'"
-                                           [severity]="'success'"/>
+                                    @if (activeProfile._id === profile._id) {
+                                        <p-tag
+                                               [value]="'active'"
+                                               [severity]="'success'"/>
+                                    }
                                 </div>
                             </td>
                             <td class="">
@@ -90,25 +95,29 @@
                                      style="vertical-align: middle" pTooltip="profile logo"
                                 />
                                 <div class="flex align-items-center justify-content-center gap-2">
-                                    <button *ngIf="editingProfile && editingProfile._id === profile._id"
-                                            pButton type="button"
-                                            icon="bx bx-pencil"
-                                            class="p-button-rounded p-button-text"
-                                            (click)="setProfileLogo()">
-                                    </button>
+                                    @if (editingProfile && editingProfile._id === profile._id) {
+                                        <p-button
+                                                icon="bx bx-pencil"
+                                                [rounded]="true" [text]="true"
+                                                (onClick)="setProfileLogo()">
+                                        </p-button>
+                                    }
                                 </div>
                             </td>
                             <td class="">
-                                <span *ngIf="!editingProfile" class="truncate-text">
-                                    {{ profile.homeUrl }}
-                                </span>
-                                <input *ngIf="editingProfile"
-                                       pInputText type="text"
-                                       [(ngModel)]="profile.homeUrl"
-                                       [ngStyle]="{'width': '100%'}"
-                                       (keydown.space)="$event.stopPropagation()"
-                                       (keydown.enter)="saveProfileKeyEdit()"
-                                       (keydown.escape)="cancelProfileKeyEdit()">
+                                @if (!editingProfile) {
+                                    <span class="truncate-text">
+                                        {{ profile.homeUrl }}
+                                    </span>
+                                } @else {
+                                    <input
+                                           pInputText type="text"
+                                           [(ngModel)]="profile.homeUrl"
+                                           [ngStyle]="{'width': '100%'}"
+                                           (keydown.space)="$event.stopPropagation()"
+                                           (keydown.enter)="saveProfileKeyEdit()"
+                                           (keydown.escape)="cancelProfileKeyEdit()">
+                                }
                             </td>
                             <td class="">
                                 <p-select placeholder="Select"
@@ -117,27 +126,25 @@
                             </td>
                             <td style="width:10%">
                                 <div class="flex align-items-center justify-content-center gap-2">
-                                    <button *ngIf="!editingProfile || editingProfile._id !== profile._id"
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-pencil"
-                                            class="p-button-rounded p-button-text"
-                                            (click)="startProfileKeyEdit(profile)">
-                                    </button>
-                                    <button *ngIf="editingProfile && editingProfile._id === profile._id"
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-check"
-                                            class="p-button-rounded p-button-text p-button-success mr-2"
-                                            (click)="saveProfileKeyEdit()">
-                                    </button>
-                                    <button *ngIf="editingProfile && editingProfile._id === profile._id"
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-x"
-                                            class="p-button-rounded p-button-text p-button-danger"
-                                            (click)="cancelProfileKeyEdit()">
-                                    </button>
+                                    @if (!editingProfile || editingProfile._id !== profile._id) {
+                                        <p-button
+                                                icon="bx bx-pencil"
+                                                [rounded]="true" [text]="true"
+                                                (onClick)="startProfileKeyEdit(profile)">
+                                        </p-button>
+                                    }
+                                    @if (editingProfile && editingProfile._id === profile._id) {
+                                        <p-button
+                                                icon="bx bx-check"
+                                                severity="success" [rounded]="true" [text]="true" class="mr-2"
+                                                (onClick)="saveProfileKeyEdit()">
+                                        </p-button>
+                                        <p-button
+                                                icon="bx bx-x"
+                                                severity="danger" [rounded]="true" [text]="true"
+                                                (onClick)="cancelProfileKeyEdit()">
+                                        </p-button>
+                                    }
                                 </div>
                             </td>
                         </tr>
@@ -145,204 +152,154 @@
                     <ng-template pTemplate="summary">
                         <div class="p-toolbar-group-start">
                             <div style="text-align:left">
-                                <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
-                                        pTooltip="Add" label="Add"
-                                        tooltipPosition="top"
-                                        (click)="addProfile()"></button>
+                                <p-button
+                                        icon="bx bx-down-arrow-alt"
+                                        pTooltip="Add" tooltipPosition="top"
+                                        label="Add" [text]="true"
+                                        (onClick)="addProfile()"></p-button>
                             </div>
                             <div style="text-align:left">
-                                <button pButton type="button" icon="bx bxs-file-import" class="p-button-text"
-                                        pTooltip="Import" label="Import"
-                                        tooltipPosition="top"
-                                        (click)="importProfile()"></button>
+                                <p-button
+                                        icon="bx bxs-file-import"
+                                        pTooltip="Import" tooltipPosition="top"
+                                        label="Import" [text]="true"
+                                        (onClick)="importProfile()"></p-button>
                             </div>
                         </div>
                     </ng-template>
                 </p-table>
+                }
             </div>
             </p-tabpanel>
 
             <p-tabpanel value="1">
-            <div class="tableContainer">
-                <p-treeTable #tt *ngIf="showTable" [value]="sideMenuTreeNodes"
-                             [columns]="cols"
-                             [scrollable]="true"
-                             scrollHeight="flex"
-                             styleClass="p-treetable-gridlines p-treetable-sm"
-                             selectionMode="single" sortField="id"
-                             [(selection)]="selectedNode" dataKey="id" (onNodeSelect)="onSelect($event)">
-                    <ng-template pTemplate="caption">
-                        <p-toolbar styleClass="mb-2 gap-1">
-                            <ng-template pTemplate="left">
+            <div class="tableContainer services-tab">
+                @if (showTable) {
+                <p-splitter class="services-splitter" [panelSizes]="[40, 60]" layout="horizontal">
+                    <ng-template #panel>
+                        <div class="services-tree">
+                            <div class="services-tree-controls">
                                 <div class="p-input-icon-left">
                                     <i class="pi pi-search"></i>
                                     <input type="text" pInputText placeholder="Поиск"
-                                           (input)="tt.filterGlobal($event.target['value'], 'contains')"/>
+                                           (input)="servicesTree.filter($event.target['value'])" />
                                 </div>
-                            </ng-template>
-                        </p-toolbar>
-                    </ng-template>
-                    <ng-template pTemplate="header" let-columns>
-                        <tr>
-                            <th *ngFor="let col of columns" [ttSortableColumn]="col.field">
-                                <div class="flex flex-row gap-2 align-items-center flex-wrap">
-                                    <p>{{ col.header }}</p>
-                                    <p-treeTableSortIcon [field]="col.field"/>
+                                <div class="services-tree-actions">
+                                    <p-button
+                                            icon="bx bx-plus"
+                                            label="Add root"
+                                            [text]="true"
+                                            (onClick)="addRootNode()"></p-button>
+                                    <p-button
+                                            icon="bx bx-down-arrow-alt"
+                                            label="Add"
+                                            [text]="true"
+                                            [disabled]="!selectedNode"
+                                            (onClick)="addItem(selectedNode?.data, false)"></p-button>
+                                    <p-button
+                                            icon="bx bx-subdirectory-right"
+                                            label="Add child"
+                                            [text]="true"
+                                            [disabled]="!selectedNode"
+                                            (onClick)="addItem(selectedNode?.data, true)"></p-button>
+                                    <p-button
+                                            icon="bx bx-trash-alt"
+                                            label="Delete"
+                                            severity="danger"
+                                            [text]="true"
+                                            [disabled]="!selectedNode"
+                                            (onClick)="deleteItem(selectedNode)"></p-button>
                                 </div>
-                            </th>
-                            <th style="width:10%">
-                                <div class="flex flex-row gap-2 align-items-center flex-wrap">
-                                    <p>Edit page actions</p>
-                                </div>
-                            </th>
-                            <th style="width:10%">
-                                <div class="flex flex-row gap-2 align-items-center flex-wrap">
-                                    <p>Edit</p>
-                                </div>
-                            </th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-rowNode let-rowData="rowData" let-columns="columns">
-                        <tr [ttSelectableRow]="rowNode">
-                            <td *ngFor="let col of columns; let i = index"
-                                [ngClass]="{'p-toggler-column': i === 0}">
-                                <p-treeTableToggler [rowNode]="rowNode" *ngIf="i === 0"></p-treeTableToggler>
-                                <span *ngIf="!editingTreeNode || editingTreeNode.id !== rowData.id"
-                                      class="truncate-text">
-                                {{ rowData[col.field] }}
-                            </span>
-                                <input *ngIf="editingTreeNode && editingTreeNode.id === rowData.id"
-                                       pInputText type="text"
-                                       [(ngModel)]="rowData[col.field]"
-                                       [ngStyle]="{'width': i === 0 ? '70%': '100%'}"
-                                       (keydown.space)="$event.stopPropagation()"
-                                       (keydown.enter)="saveTreeNodeEdit()"
-                                       (keydown.escape)="cancelTreeNodeEdit()">
-                            </td>
-                            <td style="width:10%">
-                                <div class="flex align-items-center justify-content-center gap-2">
-                                    <button
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-pencil"
-                                            class="p-button-rounded p-button-text"
-                                            (click)="showPageActionsDialog(rowData['value'])">
-                                    </button>
-                                </div>
-                            </td>
-                            <td style="width:10%">
-                                <div class="flex align-items-center justify-content-center gap-2">
-                                    <button *ngIf="!editingTreeNode || editingTreeNode.id !== rowData.id"
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-pencil"
-                                            class="p-button-rounded p-button-text"
-                                            (click)="startTreeNodeEdit(rowData)">
-                                    </button>
-                                    <button *ngIf="editingTreeNode && editingTreeNode.id === rowData.id"
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-check"
-                                            class="p-button-rounded p-button-text p-button-success mr-2"
-                                            (click)="saveTreeNodeEdit()">
-                                    </button>
-                                    <button *ngIf="editingTreeNode && editingTreeNode.id === rowData.id"
-                                            pButton
-                                            type="button"
-                                            icon="bx bx-x"
-                                            class="p-button-rounded p-button-text p-button-danger"
-                                            (click)="cancelTreeNodeEdit()">
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="summary">
-                        <div style="text-align:left">
-                            <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
-                                    pTooltip="Add" label="Add"
-                                    tooltipPosition="top"
-                                    [disabled]="!selectedNode"
-                                    (click)="addItem(selectedNode.data, false)">
-                            </button>
-                            <button pButton type="button" icon="bx bx-subdirectory-right" class="p-button-text"
-                                    pTooltip="Add child" label="Add child"
-                                    tooltipPosition="top"
-                                    [disabled]="!selectedNode"
-                                    (click)="addItem(selectedNode.data, true)">
-                            </button>
-                            <button pButton type="button" icon="bx bx-trash-alt" class="p-button-text p-button-danger"
-                                    pTooltip="Удалить" label="Delete"
-                                    tooltipPosition="top"
-                                    [disabled]="!selectedNode"
-                                    (click)="deleteItem(selectedNode)">
-                            </button>
+                            </div>
+                            <div class="services-tree-list">
+                                <p-tree #servicesTree
+                                        [value]="sideMenuTreeNodes"
+                                        selectionMode="single"
+                                        [(selection)]="selectedNode"
+                                        dataKey="id"
+                                        [draggableNodes]="true"
+                                        [droppableNodes]="true"
+                                        draggableScope="servicesTree"
+                                        droppableScope="servicesTree"
+                                        (onNodeSelect)="onSelect($event)"
+                                        (onNodeUnselect)="onNodeUnselect()"
+                                        (onNodeDrop)="onTreeNodeDrop($event)">
+                                    <ng-template let-node pTemplate="default">
+                                        <div class="services-tree-node">
+                                            <span class="services-tree-node-name">{{ node.data?.key }}</span>
+                                            @if (node.data?.value) {
+                                                <small class="services-tree-node-link">{{ node.data?.value }}</small>
+                                            }
+                                        </div>
+                                    </ng-template>
+                                </p-tree>
+                            </div>
                         </div>
                     </ng-template>
-                </p-treeTable>
+                    <ng-template #panel>
+                        <div class="services-form-panel">
+                            <div class="services-form-header">
+                                <h3>Service details</h3>
+                            </div>
+                            @if (selectedNode) {
+                                <div class="services-form p-fluid">
+                                    <div class="field">
+                                        <label for="serviceName">Name</label>
+                                        <input id="serviceName"
+                                               type="text"
+                                               pInputText
+                                               [(ngModel)]="treeForm.key"
+                                               (ngModelChange)="markTreeFormDirty()"
+                                               (keydown.enter)="saveTreeForm()"
+                                               (keydown.escape)="cancelTreeForm()" />
+                                    </div>
+                                    <div class="field">
+                                        <label for="serviceLink">Link</label>
+                                        <input id="serviceLink"
+                                               type="text"
+                                               pInputText
+                                               [(ngModel)]="treeForm.value"
+                                               (ngModelChange)="markTreeFormDirty()"
+                                               (keydown.enter)="saveTreeForm()"
+                                               (keydown.escape)="cancelTreeForm()" />
+                                    </div>
+                                    <div class="services-form-actions">
+                                        <p-button
+                                                icon="bx bx-check"
+                                                label="Save"
+                                                severity="success"
+                                                [disabled]="!isTreeFormDirty"
+                                                (onClick)="saveTreeForm()"></p-button>
+                                        <p-button
+                                                icon="bx bx-x"
+                                                label="Cancel"
+                                                severity="danger"
+                                                [text]="true"
+                                                [disabled]="!isTreeFormDirty"
+                                                (onClick)="cancelTreeForm()"></p-button>
+                                    </div>
+                                    <div>
+                                        <p-button
+                                                icon="bx bx-pencil"
+                                                label="Page actions"
+                                                [text]="true"
+                                                [disabled]="!treeForm.value"
+                                                (onClick)="showPageActionsDialog(treeForm.value)"></p-button>
+                                    </div>
+                                </div>
+                            } @else {
+                                <div class="services-form-empty">
+                                    <p>Выберите сервис в дереве, чтобы редактировать его настройки.</p>
+                                </div>
+                            }
+                        </div>
+                    </ng-template>
+                </p-splitter>
+                }
             </div>
             </p-tabpanel>
 
             <p-tabpanel value="2">
-            <div class="tableContainer">
-                <p-table *ngIf="showTable" [value]="pageActions"
-                         styleClass="p-datatable-striped"
-                         [scrollable]="true"
-                         scrollHeight="flex">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th>Domain</th>
-                            <th>Actions</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-pageAction>
-                        <tr>
-                            <td class="">
-                                <span *ngIf="!editingProfile" class="font-bold ml-2 truncate-text">
-                                    {{ pageAction.domain }}
-                                </span>
-                                <input *ngIf="editingProfile"
-                                       pInputText type="text"
-                                       [(ngModel)]="pageAction.domain"
-                                       [ngStyle]="{'width': '100%'}"
-                                       (keydown.space)="$event.stopPropagation()"
-                                       (keydown.enter)="saveProfileKeyEdit()"
-                                       (keydown.escape)="cancelProfileKeyEdit()">
-
-                            </td>
-                            <td style="width:10%">
-                                <div class="flex align-items-center justify-content-center gap-2">
-                                    <button pButton
-                                            type="button"
-                                            icon="bx bx-pencil"
-                                            class="p-button-rounded p-button-text"
-                                            (click)="showPageActionsDialog(pageAction.actions)">
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="summary">
-                        <div class="p-toolbar-group-start">
-                            <div style="text-align:left">
-                                <button pButton type="button" icon="bx bx-down-arrow-alt" class="p-button-text"
-                                        pTooltip="Add" label="Add"
-                                        tooltipPosition="top"
-                                        (click)="addProfile()"></button>
-                            </div>
-                            <div style="text-align:left">
-                                <button pButton type="button" icon="bx bxs-file-import" class="p-button-text"
-                                        pTooltip="Import" label="Import"
-                                        tooltipPosition="top"
-                                        (click)="importProfile()"></button>
-                            </div>
-                        </div>
-                    </ng-template>
-                </p-table>
-            </div>
-            </p-tabpanel>
-
-            <p-tabpanel value="3">
             <h2>Параметры</h2>
 
             <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
@@ -361,13 +318,10 @@
         </p-tabpanels>
     </p-tabs>
 </div>
-<p-toast position="top-right"
-         [life]="4000"
-         [showTransformOptions]="'translateY(100%)'"
-         [showTransformOptions]="'translateX(100%)'"
-         [showTransitionOptions]="'300ms'"
-         [hideTransitionOptions]="'300ms'">
-</p-toast>
+<p-toast
+        position="top-right"
+        [life]="4000"
+></p-toast>
 <p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="10000"></p-confirmDialog>
 
 

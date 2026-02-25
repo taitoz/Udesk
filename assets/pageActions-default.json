@@ -1,6 +1,6 @@
 [
   {
-    "key": "CPE_Router",
+    "key": "Router 1",
     "domain": "192.168.1.1",
     "actions": [
       {
@@ -15,136 +15,22 @@
     ]
   },
   {
-    "key": "Asus_Router",
+    "key": "Router 2",
     "domain": "192.168.1.2",
     "actions": [
       {
         "action": "typeToInput",
         "selector": "#login_username",
-        "value": "taitoz"
+        "value": "admin"
       },
       {
         "action": "typeToInput",
         "selector": "#login_filed > div.password_gap > input",
-        "value": "jlnxgi"
+        "value": "admin"
       },
       {
         "action": "clickElement",
         "selector": "#login_filed > div.button"
-      }
-    ]
-  },
-  {
-    "domain": "kibana-elk-services.vlife.kz",
-    "actions": [
-      {
-        "action": "typeToInput",
-        "selector": "#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input",
-        "value": "k.pak"
-      },
-      {
-        "action": "typeToInput",
-        "selector": "#app-wrapper > div > div.application > div > ul > form > div:nth-child(2) > div > div > div > input",
-        "value": "Jlnxgicdl13@2410"
-      },
-      {
-        "action": "clickElement",
-        "selector": "#app-wrapper > div > div.application > div > ul > form > div:nth-child(3) > div > button"
-      }
-    ]
-  },
-  {
-    "domain": "kibana-elk-pr-logging.vlife.kz",
-    "actions": [
-      {
-        "action": "typeToInput",
-        "selector": "#app-wrapper > div > div.application > div > ul > form > div:nth-child(1) > div > div > div > input",
-        "value": "k.pak"
-      },
-      {
-        "action": "typeToInput",
-        "selector": "#app-wrapper > div > div.application > div > ul > form > div:nth-child(2) > div > div > div > input",
-        "value": "Jlnxgicdl13@2410"
-      },
-      {
-        "action": "clickElement",
-        "selector": "#app-wrapper > div > div.application > div > ul > form > div:nth-child(3) > div > button"
-      }
-    ]
-  },
-  {
-    "domain": "git.vlife.kz",
-    "actions": [
-      {
-        "action": "typeToInput",
-        "selector": "#ldapmain_username",
-        "value": "k.pak"
-      },
-      {
-        "action": "typeToInput",
-        "selector": "#ldapmain_password",
-        "value": "Jlnxgicdl13@2410"
-      },
-      {
-        "action": "clickElement",
-        "selector": "#ldapmain > form > button"
-      }
-    ]
-  },
-  {
-    "domain": "test-keycloak.vlife.kz",
-    "actions": [
-      {
-        "action": "typeToInput",
-        "selector": "#username",
-        "value": "keycloak"
-      },
-      {
-        "action": "typeToInput",
-        "selector": "#password",
-        "value": "bXKI7BkMSb84Lj$81bD2cL@$@Vl%a9"
-      },
-      {
-        "action": "clickElement",
-        "selector": "#kc-login"
-      }
-    ]
-  },
-  {
-    "domain": "dev-keycloak.vlife.kz",
-    "actions": [
-      {
-        "action": "typeToInput",
-        "selector": "#username",
-        "value": "keycloak"
-      },
-      {
-        "action": "typeToInput",
-        "selector": "#password",
-        "value": "jWxK0r2iNDtxsgfeCuRJMdpvxhNk6P5YOS"
-      },
-      {
-        "action": "clickElement",
-        "selector": "#kc-login"
-      }
-    ]
-  },
-  {
-    "domain": "prod-keycloak.vlife.kz",
-    "actions": [
-      {
-        "action": "typeToInput",
-        "selector": "#username",
-        "value": "r.brons@vlife.kz"
-      },
-      {
-        "action": "typeToInput",
-        "selector": "#password",
-        "value": "rubf3*(dbe9BX*473fr"
-      },
-      {
-        "action": "clickElement",
-        "selector": "#kc-login"
       }
     ]
   }

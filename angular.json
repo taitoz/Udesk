@@ -54,7 +54,7 @@
               "sourceMap": true,
               "namedChunks": false,
               "aot": false,
-              "extractLicenses": true,
+              "extractLicenses": false,
               "vendorChunk": false,
               "buildOptimizer": false,
               "fileReplacements": [
@@ -86,7 +86,7 @@
               "sourceMap": true,
               "namedChunks": false,
               "aot": false,
-              "extractLicenses": true,
+              "extractLicenses": false,
               "vendorChunk": false,
               "buildOptimizer": false,
               "fileReplacements": [

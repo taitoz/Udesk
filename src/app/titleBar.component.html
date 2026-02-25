@@ -1,5 +1,6 @@
-<div class="card flex flex-column" >
-    <div class="titlebar-bg flex justify-content-between align-items-center relative lg:static h32"> <!--border-bottom-1-->
+<div class="card flex flex-column">
+    <div class="titlebar-bg flex justify-content-between align-items-center relative lg:static h32">
+        <!--border-bottom-1-->
 
         <!--<div class="flex align-items-center">-->
         <a pRipple=""
@@ -21,7 +22,9 @@
             <wbr>
         </div>
     </div>
-    <p-progressBar *ngIf="showLoading" mode="indeterminate" class="loading"/>
+    @if (showLoading) {
+        <p-progressBar mode="indeterminate" class="loading"/>
+    }
 </div>
 
 

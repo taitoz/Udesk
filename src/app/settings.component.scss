@@ -11,10 +11,6 @@
   overflow: auto; /* Enable scrolling if content exceeds height */
 }
 
-::ng-deep .p-treetable-scrollable-wrapper {
-  height: 46vh;
-}
-
 .row-gap {
   margin-bottom: 20px;
 }
@@ -34,7 +30,7 @@
   //background-color: var(--surface-d);
 }
 
-::ng-deep .p-tabview-nav {
+.p-tabview-nav {
   i, span {
     vertical-align: middle;
   }
@@ -44,12 +40,94 @@
   }
 }
 
-:host ::ng-deep .p-dropdown {
+:host .p-dropdown {
   width: 9rem;
 }
 
-:host ::ng-deep input {
+:host input {
   height: 30px;
   font-size: 1rem;
   font-weight: normal;
+}
+
+.services-tab {
+  height: calc(100vh - 220px);
+  .services-splitter {
+    height: 100%;
+  }
+}
+
+.services-tree-panel,
+.services-form-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.services-form-panel {
+  padding-left: 30px;
+}
+
+.services-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+}
+
+.services-tree-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.services-tree-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.services-tree-list {
+  flex: 1;
+  overflow: auto;
+}
+
+.services-tree-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.services-tree-node-name {
+  font-weight: 600;
+}
+
+.services-tree-node-link {
+  color: var(--text-color-secondary, #9ca3af);
+}
+
+.services-form-header {
+  margin-bottom: 1rem;
+}
+
+.services-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.services-form-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.services-form-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-secondary, #9ca3af);
+  text-align: center;
+  padding: 1rem;
 }

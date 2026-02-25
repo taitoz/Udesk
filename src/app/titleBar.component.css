@@ -6,7 +6,7 @@
     box-sizing: border-box;
 }
 
-::ng-deep .loading {
+.loading {
     height: 2px;
     width: 100%;
 }

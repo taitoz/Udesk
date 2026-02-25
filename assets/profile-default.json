@@ -2,22 +2,13 @@
   "active": true,
   "name": "local",
   "logo": "Udesk_logo.png",
-  "homeUrl": "http://localhost:9091/transmission/web/",
+  "homeUrl": "http://localhost:80",
   "lang": "ru",
   "sideMenuTreeNodes": [
     {
       "data": {
-        "id": 8,
-        "key": "Transmission",
-        "value": "http://localhost:9091/transmission/web/"
-      },
-      "children": [],
-      "parent": null
-    },
-    {
-      "data": {
         "id": 1729881048071,
-        "key": "CPE_Router",
+        "key": "Router 1",
         "value": "https://192.168.1.1/index.html"
       },
       "children": [],
@@ -26,17 +17,8 @@
     {
       "data": {
         "id": 1729881527560,
-        "key": "Asus_Router",
+        "key": "Router 2",
         "value": "http://192.168.1.2/Main_Login.asp"
-      },
-      "children": [],
-      "parent": null
-    },
-    {
-      "data": {
-        "id": 1729881561100,
-        "key": "ypl",
-        "value": "https://www.yaplakal.com/"
       },
       "children": [],
       "parent": null

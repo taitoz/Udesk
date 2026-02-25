@@ -3,9 +3,11 @@ import {CardModule} from 'primeng/card';
 import {TabsModule} from 'primeng/tabs';
 import {ButtonModule} from 'primeng/button';
 import {TreeTableModule} from 'primeng/treetable';
+import {TreeModule} from 'primeng/tree';
 import {TableModule} from 'primeng/table';
 import {ToggleButtonModule} from 'primeng/togglebutton';
 import {SplitButtonModule} from 'primeng/splitbutton';
+import {SplitterModule} from 'primeng/splitter';
 import {ToastModule} from 'primeng/toast';
 import {SelectModule} from 'primeng/select';
 import {TooltipModule} from 'primeng/tooltip';
@@ -28,14 +30,17 @@ import {SelectButtonModule} from "primeng/selectbutton";
 import {BadgeModule} from 'primeng/badge';
 import { CheckboxModule } from 'primeng/checkbox';
 import {ProgressBarModule} from 'primeng/progressbar';
+import {DragDropModule} from 'primeng/dragdrop';
 @NgModule({
     imports: [
         TabsModule,
         ButtonModule,
         TreeTableModule,
+        TreeModule,
         TableModule,
         ToggleButtonModule,
         SplitButtonModule,
+        SplitterModule,
         ToastModule,
         SelectModule,
         TooltipModule,
@@ -58,15 +63,18 @@ import {ProgressBarModule} from 'primeng/progressbar';
         BadgeModule,
         SelectButtonModule,
         CheckboxModule,
-        ProgressBarModule
+        ProgressBarModule,
+        DragDropModule
     ],
     exports: [
         TabsModule,
         ButtonModule,
         TreeTableModule,
+        TreeModule,
         TableModule,
         ToggleButtonModule,
         SplitButtonModule,
+        SplitterModule,
         ToastModule,
         SelectModule,
         TooltipModule,
@@ -89,7 +97,8 @@ import {ProgressBarModule} from 'primeng/progressbar';
         BadgeModule,
         SelectButtonModule,
         CheckboxModule,
-        ProgressBarModule
+        ProgressBarModule,
+        DragDropModule
     ],
     providers: [DialogService]
 })

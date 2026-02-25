@@ -1,15 +1,15 @@
-::ng-deep .p-button.p-button-icon-only {
+.p-button.p-button-icon-only {
     width: 3.4rem;
     padding: .5rem 0;
     margin-bottom: .7rem;
 }
 
-::ng-deep .p-overlay-badge .p-badge {
+.p-overlay-badge .p-badge {
     top: 10px;
     right: 15px;
 }
 
-::ng-deep .p-button .p-badge {
+.p-button .p-badge {
     margin-left: .5rem;
     min-width: .5rem;
     height: .5rem;

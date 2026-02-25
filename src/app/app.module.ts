@@ -17,7 +17,10 @@ import {ToolbarModule} from "primeng/toolbar";
 import {FileUploadModule} from "primeng/fileupload";
 import {InputGroupModule} from "primeng/inputgroup";
 import {TagModule} from "primeng/tag";
-import {ConfirmationService, MessageService} from 'primeng/api';
+import {TreeModule} from 'primeng/tree';
+import {SplitterModule} from 'primeng/splitter';
+import {ConfirmationService, MessageService, TreeDragDropService} from 'primeng/api';
+import {DialogService} from 'primeng/dynamicdialog';
 import {providePrimeNG} from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
 
@@ -34,7 +37,9 @@ import Aura from '@primeuix/themes/aura';
         ToolbarModule,
         FileUploadModule,
         InputGroupModule,
-        TagModule], 
+        TagModule,
+        TreeModule,
+        SplitterModule], 
     providers: [
         UiService, 
         provideHttpClient(withInterceptorsFromDi()),
@@ -48,7 +53,9 @@ import Aura from '@primeuix/themes/aura';
             }
         }),
         ConfirmationService,
-        MessageService
+        MessageService,
+        DialogService,
+        TreeDragDropService
     ]
 })
 
