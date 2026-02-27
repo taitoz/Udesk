@@ -26,13 +26,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
     activeTabIndex = '0'
     sideMenuTreeNodes: TreeNode[] = []
     selectedNode: TreeNode | null = null
+    pendingDraftNode: TreeNode | null = null
+    pendingInsertParentId: any | null = null
+    pendingInsertIndex: number | null = null
     editingProfile: any
     treeForm: TreeNodeForm = this.createEmptyTreeForm()
     isTreeFormDirty = false
 
     ref: DynamicDialogRef | undefined
     theme = 'dark'
-    themeOptions: any[] = [{label: 'Темная', value: 'dark'}, {label: 'Светлая', value: 'light'}]
+    themeOptions: any[] = [{label: 'Dark', value: 'dark'}, {label: 'Light', value: 'light'}]
 
     profiles: {
         _id: string;
@@ -161,10 +164,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             return
         }
         this.confirmationService.confirm({
-            header: 'Подтверждение',
-            message: 'Удалить?',
-            acceptLabel: 'Да',
-            rejectLabel: 'Нет',
+            header: 'Confirmation',
+            message: 'Delete?',
+            acceptLabel: 'Yes',
+            rejectLabel: 'No',
             icon: 'bx bx-exclamation-triangle',
             accept: async () => {
                 // let index = this.profilesFlat.findIndex(item => item.name === profileName)
@@ -191,6 +194,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     onSelect(event: any) {
         if (event.node != null) {
+            this.clearPendingDraft()
             this.selectedNode = event.node
             this.syncFormWithSelection()
         }
@@ -198,6 +202,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     onNodeUnselect() {
         this.selectedNode = null
+        this.clearPendingDraft()
         this.treeForm = this.createEmptyTreeForm()
         this.isTreeFormDirty = false
     }
@@ -246,10 +251,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             return;
         }
         this.confirmationService.confirm({
-            header: 'Подтверждение',
-            message: 'Удалить?',
-            acceptLabel: 'Да',
-            rejectLabel: 'Нет',
+            header: 'Confirmation',
+            message: 'Delete?',
+            acceptLabel: 'Yes',
+            rejectLabel: 'No',
             icon: 'bx bx-exclamation-triangle',
             accept: () => {
                 // console.log(selectedNode)
@@ -281,46 +286,57 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     newNode(id: any): TreeNode {
         return {
-            data: {id: id, key: 'key', value: 'value', pageActions: []},
-            label: 'key',
+            data: {id: id, key: '', value: '', pageActions: []},
+            label: '',
             children: []
         };
     }
 
-    addItem(selectedNodeData: any, asChild: boolean) {
-        if (!selectedNodeData) {
-            return
-        }
-        let node = this.getNodeByData(selectedNodeData, this.sideMenuTreeNodes);
-        const newId = Date.now();
-        const createdNode = this.newNode(newId);
-        if (asChild) {
-            node.children = node.children || [];
-            node.children.push(createdNode);
-            node.expanded = true;
-        } else {
-            if (node.parent) {
-                node.parent.children.push(createdNode);
-            } else {
-                this.sideMenuTreeNodes.push(createdNode);
-            }
-        }
-        this.applyTreeMetadata(this.sideMenuTreeNodes)
-        this.selectedNode = createdNode
-        this.syncFormWithSelection()
-        this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
-        this.servicesMenuDataSave()
-    }
+    // addItem(selectedNodeData: any, asChild: boolean) {
+    //     const newId = Date.now();
+    //     const createdNode = this.newNode(newId);
+    //
+    //     if (asChild) {
+    //         if (!selectedNodeData) {
+    //             return;
+    //         }
+    //         let node = this.getNodeByData(selectedNodeData, this.sideMenuTreeNodes);
+    //         node.children = node.children || [];
+    //         node.children.push(createdNode);
+    //         node.expanded = true;
+    //     } else {
+    //         if (!selectedNodeData) {
+    //             this.sideMenuTreeNodes.push(createdNode);
+    //         } else {
+    //             let node = this.getNodeByData(selectedNodeData, this.sideMenuTreeNodes);
+    //             const siblings = node.parent ? node.parent.children : this.sideMenuTreeNodes;
+    //             const nodeIndex = siblings.findIndex(child => child === node);
+    //             const insertIndex = nodeIndex >= 0 ? nodeIndex + 1 : siblings.length;
+    //             siblings.splice(insertIndex, 0, createdNode);
+    //             createdNode.parent = node.parent ?? null;
+    //         }
+    //     }
+    //
+    //     this.applyTreeMetadata(this.sideMenuTreeNodes)
+    //     this.selectedNode = createdNode
+    //     this.syncFormWithSelection()
+    //     this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
+    //     this.servicesMenuDataSave()
+    // }
 
-    addRootNode() {
-        const newId = Date.now()
-        const createdNode = this.newNode(newId)
-        this.sideMenuTreeNodes.push(createdNode)
-        this.applyTreeMetadata(this.sideMenuTreeNodes)
-        this.selectedNode = createdNode
-        this.syncFormWithSelection()
-        this.sideMenuTreeNodes = [...this.sideMenuTreeNodes]
-        this.servicesMenuDataSave()
+    startAddService() {
+        const referenceNode = this.selectedNode ? this.findNodeById(this.selectedNode.data?.id, this.sideMenuTreeNodes) ?? this.selectedNode : null
+        const parent = referenceNode ? (referenceNode.parent ?? null) : null
+        const siblings = parent ? parent.children : this.sideMenuTreeNodes
+        const nodeIndex = referenceNode ? siblings.findIndex(node => node.data?.id === referenceNode.data?.id) : -1
+
+        this.pendingInsertParentId = parent?.data?.id ?? null
+        this.pendingInsertIndex = nodeIndex >= 0 ? nodeIndex + 1 : siblings.length
+        this.pendingDraftNode = this.newNode(Date.now())
+        this.selectedNode = this.pendingDraftNode
+        this.treeForm = this.createEmptyTreeForm()
+        this.treeForm.id = this.pendingDraftNode.data.id
+        this.isTreeFormDirty = false
     }
 
     toggleTheme(event: SelectButtonChangeEvent) {
@@ -399,7 +415,37 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     async saveTreeForm() {
+        if (this.pendingDraftNode) {
+            if (this.treeForm.key.length === 0) {
+                this.messageService.add({severity: 'error', summary: 'save cancelled, name is empty'})
+                return
+            }
+            const createdNode = this.pendingDraftNode
+            createdNode.data.key = this.treeForm.key
+            createdNode.data.value = this.treeForm.value
+            createdNode.label = this.treeForm.key
+
+            const parent = this.pendingInsertParentId ? this.findNodeById(this.pendingInsertParentId, this.sideMenuTreeNodes) : null
+            const siblings = parent ? parent.children : this.sideMenuTreeNodes
+            const desiredIndex = this.pendingInsertIndex ?? siblings.length
+            const insertIndex = Math.min(Math.max(desiredIndex, 0), siblings.length)
+            siblings.splice(insertIndex, 0, createdNode)
+            createdNode.parent = parent ?? null
+
+            this.clearPendingDraft()
+            this.applyTreeMetadata(this.sideMenuTreeNodes)
+            this.selectedNode = createdNode
+            this.syncFormWithSelection()
+            this.sideMenuTreeNodes = [...this.sideMenuTreeNodes]
+            await this.servicesMenuDataSave()
+            return
+        }
+
         if (!this.selectedNode?.data || !this.isTreeFormDirty) {
+            return
+        }
+        if (this.treeForm.key.length == 0) {
+            this.messageService.add({severity: 'error', summary: 'save cancelled, name is empty'})
             return
         }
         this.selectedNode.data.key = this.treeForm.key
@@ -409,11 +455,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.isTreeFormDirty = false
     }
 
-    cancelTreeForm() {
-        this.syncFormWithSelection()
+    cancelTreeField(field: 'key' | 'value') {
+        this.treeForm[field] = '';
+        this.markTreeFormDirty();
     }
 
     markTreeFormDirty() {
+        if (this.pendingDraftNode) {
+            this.isTreeFormDirty = (this.treeForm.key ?? '').length > 0 || (this.treeForm.value ?? '').length > 0
+            return
+        }
         if (!this.selectedNode?.data) {
             this.isTreeFormDirty = false
             return
@@ -434,6 +485,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.treeForm = this.createEmptyTreeForm()
         }
         this.isTreeFormDirty = false
+    }
+
+    private clearPendingDraft() {
+        this.pendingDraftNode = null
+        this.pendingInsertParentId = null
+        this.pendingInsertIndex = null
     }
 
     private createEmptyTreeForm(): TreeNodeForm {

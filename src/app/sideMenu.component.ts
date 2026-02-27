@@ -74,8 +74,8 @@ export class SideMenuComponent implements OnInit, OnChanges, AfterViewInit {
 
     getMenuName(menuId:string){
         switch (menuId){
-            case 'servicesMenu': return 'Сервисы'
-            case 'servicesMenu2': return 'servicesMenu2'
+            case 'servicesMenu': return 'Services'
+            case 'servicesMenu2': return 'Services Menu 2'
         }
     }
 

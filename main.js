@@ -399,7 +399,6 @@ ipcMain.handle('profile:export', async (event, args) => {
 
 //TODO add pageActions Edit
 // lang nestdb, lang setting
-// drag and drop reordering to services tree table
 // ? events to angular
 //=====================================================================================
 async function loadUrl(urlStr) {

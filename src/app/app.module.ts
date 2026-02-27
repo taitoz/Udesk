@@ -23,11 +23,13 @@ import {ConfirmationService, MessageService, TreeDragDropService} from 'primeng/
 import {DialogService} from 'primeng/dynamicdialog';
 import {providePrimeNG} from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
+import {FloatLabel} from "primeng/floatlabel";
+import {InputGroupAddon} from "primeng/inputgroupaddon";
 
 
-@NgModule({ 
+@NgModule({
     declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
-    bootstrap: [AppComponent], 
+    bootstrap: [AppComponent],
     imports: [PrimeNgModule,
         BrowserModule,
         FormsModule,
@@ -39,9 +41,9 @@ import Aura from '@primeuix/themes/aura';
         InputGroupModule,
         TagModule,
         TreeModule,
-        SplitterModule], 
+        SplitterModule, FloatLabel, InputGroupAddon],
     providers: [
-        UiService, 
+        UiService,
         provideHttpClient(withInterceptorsFromDi()),
         provideAnimationsAsync(),
         providePrimeNG({

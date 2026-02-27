@@ -44,11 +44,11 @@
   width: 9rem;
 }
 
-:host input {
-  height: 30px;
-  font-size: 1rem;
-  font-weight: normal;
-}
+//:host input {
+//  height: 30px;
+//  font-size: 1rem;
+//  font-weight: normal;
+//}
 
 .services-tab {
   height: calc(100vh - 220px);
@@ -62,10 +62,14 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  margin-right: 30px;
 }
 
 .services-form-panel {
   padding-left: 30px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .services-tree {
@@ -81,10 +85,19 @@
   gap: 0.75rem;
 }
 
-.services-tree-actions {
+.services-tree-actions,
+.services-form-actions {
+  margin-top: auto;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  background-color: color-mix(in srgb, var(--surface-card, #1f2937) 90%, transparent);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--surface-border, rgba(255,255,255,0.1)) 80%, transparent);
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .services-tree-list {
@@ -111,15 +124,20 @@
 }
 
 .services-form {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.services-form .field {
+  width: 100%;
+  max-width: 480px;
 }
 
 .services-form-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  align-self: stretch;
 }
 
 .services-form-empty {
