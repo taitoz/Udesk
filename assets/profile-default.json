@@ -3,7 +3,7 @@
   "name": "local",
   "logo": "Udesk_logo.png",
   "homeUrl": "http://localhost:80",
-  "lang": "ru",
+  "lang": "en",
   "sideMenuTreeNodes": [
     {
       "data": {

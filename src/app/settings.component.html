@@ -46,7 +46,7 @@
                             <ng-template pTemplate="body" let-profile>
                                 <tr>
                                     <td class="">
-                                        <div class="flex flex-column gap-2">
+                                        <div>
                                             @if (!editingProfile) {
                                                 <span class="font-bold ml-2 truncate-text">
                                             {{ profile.name }}
@@ -60,28 +60,28 @@
                                                         (keydown.enter)="saveProfileKeyEdit()"
                                                         (keydown.escape)="cancelProfileKeyEdit()">
                                             }
-                                            <div class="flex flex-row">
-                                                <div class="p-toolbar-group-start">
-                                                    <p-button
-                                                            pTooltip="load" tooltipPosition="top"
-                                                            icon="bx bx-check"
-                                                            severity="success" [text]="true" [outlined]="true"
-                                                            (onClick)="setActiveProfile(profile._id)">
-                                                    </p-button>
-                                                    <p-button
-                                                            pTooltip="delete" tooltipPosition="top"
-                                                            icon="bx bxs-trash"
-                                                            severity="danger" [text]="true" [outlined]="true"
-                                                            (onClick)="deleteProfile(profile._id)">
-                                                    </p-button>
-                                                    <p-button
-                                                            pTooltip="export" tooltipPosition="top"
-                                                            icon="bx bxs-file-export"
-                                                            severity="info" [text]="true" [outlined]="true"
-                                                            (onClick)="exportProfile(profile._id)">
-                                                    </p-button>
-                                                </div>
+
+                                            <div class="p-toolbar-group-start">
+                                                <p-button
+                                                        pTooltip="load" tooltipPosition="top"
+                                                        icon="bx bx-check"
+                                                        severity="success" [text]="true" [outlined]="true"
+                                                        (onClick)="setActiveProfile(profile._id)">
+                                                </p-button>
+                                                <p-button
+                                                        pTooltip="delete" tooltipPosition="top"
+                                                        icon="bx bxs-trash"
+                                                        severity="danger" [text]="true" [outlined]="true"
+                                                        (onClick)="deleteProfile(profile._id)">
+                                                </p-button>
+                                                <p-button
+                                                        pTooltip="export" tooltipPosition="top"
+                                                        icon="bx bxs-file-export"
+                                                        severity="info" [text]="true" [outlined]="true"
+                                                        (onClick)="exportProfile(profile._id)">
+                                                </p-button>
                                             </div>
+
                                             @if (activeProfile._id === profile._id) {
                                                 <p-tag
                                                         [value]="'active'"
@@ -150,21 +150,17 @@
                                 </tr>
                             </ng-template>
                             <ng-template pTemplate="summary">
-                                <div class="p-toolbar-group-start">
-                                    <div style="text-align:left">
-                                        <p-button
-                                                icon="bx bx-down-arrow-alt"
-                                                pTooltip="Add" tooltipPosition="top"
-                                                label="Add" [text]="true"
-                                                (onClick)="addProfile()"></p-button>
-                                    </div>
-                                    <div style="text-align:left">
-                                        <p-button
-                                                icon="bx bxs-file-import"
-                                                pTooltip="Import" tooltipPosition="top"
-                                                label="Import" [text]="true"
-                                                (onClick)="importProfile()"></p-button>
-                                    </div>
+                                <div class="profiles-form-actions surface-50">
+                                    <p-button
+                                            icon="bx bx-down-arrow-alt"
+                                            pTooltip="Add" tooltipPosition="top"
+                                            label="Add" [text]="true"
+                                            (onClick)="addProfile()"></p-button>
+                                    <p-button
+                                            icon="bx bxs-file-import"
+                                            pTooltip="Import" tooltipPosition="top"
+                                            label="Import" [text]="true"
+                                            (onClick)="importProfile()"></p-button>
                                 </div>
                             </ng-template>
                         </p-table>
@@ -175,35 +171,20 @@
             <p-tabpanel value="1">
                 <div class="tableContainer services-tab">
                     @if (showTable) {
-                        <p-splitter class="services-splitter" [panelSizes]="[40, 60]" layout="horizontal">
+                        <p-splitter class="services-splitter" [panelSizes]="[40, 60]" [minSizes]="[20, 40]"
+                                    layout="horizontal">
                             <ng-template #panel>
                                 <div class="services-tree">
-                                    <div class="services-tree-controls">
-                                            <div class="field">
-                                            <p-inputgroup>
-                                                <p-floatlabel>
-                                                    <label for="search">Search</label>
-                                                    <input id="search"
-                                                           type="text"
-                                                           pInputText placeholder="Search"
-                                                           (input)="servicesTree.filter($event.target['value'])"/>
-                                                </p-floatlabel>
-                                                <p-inputgroup-addon>
-                                                    <p-button icon="bx bx-search" severity="secondary" [text]="true"
-                                                              [disabled]="!isTreeFormDirty"/>
-<!--                                                              (onClick)="cancelTreeField('key')"-->
-                                                </p-inputgroup-addon>
-                                            </p-inputgroup>
-                                        </div>
-                                    </div>
                                     <div class="services-tree-list">
                                         <p-tree #servicesTree
                                                 [value]="sideMenuTreeNodes"
                                                 selectionMode="single"
                                                 [(selection)]="selectedNode"
                                                 dataKey="id"
+                                                [filter]="true" filterBy="label" filterPlaceholder="Search"
                                                 [draggableNodes]="true"
                                                 [droppableNodes]="true"
+                                                scrollHeight="flex"
                                                 draggableScope="servicesTree"
                                                 droppableScope="servicesTree"
                                                 (onNodeSelect)="onSelect($event)"
@@ -219,7 +200,7 @@
                                             </ng-template>
                                         </p-tree>
                                     </div>
-                                    <div class="services-tree-actions">
+                                    <div class="services-tree-actions surface-50">
                                         <p-button
                                                 icon="bx bx-plus"
                                                 label="Add service"
@@ -236,9 +217,8 @@
                                     @if (selectedNode) {
                                         <div class="services-form p-fluid">
                                             <div class="field">
-                                                <p-inputgroup>
-                                                    <p-floatlabel>
-                                                        <label for="serviceName">Name</label>
+                                                <p-floatlabel>
+                                                    <p-inputgroup>
                                                         <input id="serviceName"
                                                                type="text"
                                                                pInputText
@@ -246,38 +226,45 @@
                                                                (ngModelChange)="markTreeFormDirty()"
                                                                (keydown.enter)="saveTreeForm()"
                                                                (keydown.escape)="cancelTreeField('key')"/>
-                                                    </p-floatlabel>
-                                                    <p-inputgroup-addon>
-                                                        <p-button icon="bx bx-check" severity="success" [text]="true"
-                                                                  (onClick)="saveTreeForm()"/>
-                                                        <p-button icon="bx bx-x" severity="danger" [text]="true"
-                                                                  [disabled]="!isTreeFormDirty"
-                                                                  (onClick)="cancelTreeField('key')"/>
-                                                    </p-inputgroup-addon>
-                                                </p-inputgroup>
+                                                        @if (isTreeFormDirty) {
+                                                            <p-inputgroup-addon>
+                                                                <p-button icon="bx bx-check" severity="success"
+                                                                          [text]="true"
+                                                                          (onClick)="saveTreeForm()"/>
+                                                                <p-button icon="bx bx-x" severity="danger"
+                                                                          [text]="true"
+                                                                          (onClick)="cancelTreeField('key')"/>
+                                                            </p-inputgroup-addon>
+                                                        }
+                                                    </p-inputgroup>
+                                                    <label for="serviceName">Name</label>
+                                                </p-floatlabel>
                                             </div>
                                             <div class="field">
-                                                <p-inputgroup>
                                                 <p-floatlabel>
+                                                    <p-inputgroup>
+                                                        <input id="serviceLink"
+                                                               type="text"
+                                                               pInputText
+                                                               [(ngModel)]="treeForm.value"
+                                                               (ngModelChange)="markTreeFormDirty()"
+                                                               (keydown.enter)="saveTreeForm()"
+                                                               (keydown.escape)="cancelTreeField('value')"/>
+                                                        @if (isTreeFormDirty) {
+                                                            <p-inputgroup-addon>
+                                                                <p-button icon="bx bx-check" severity="success"
+                                                                          [text]="true"
+                                                                          (onClick)="saveTreeForm()"/>
+                                                                <p-button icon="bx bx-x" severity="danger"
+                                                                          [text]="true"
+                                                                          (onClick)="cancelTreeField('value')"/>
+                                                            </p-inputgroup-addon>
+                                                        }
+                                                    </p-inputgroup>
                                                     <label for="serviceLink">Link</label>
-                                                    <input id="serviceLink"
-                                                           type="text"
-                                                           pInputText
-                                                           [(ngModel)]="treeForm.value"
-                                                           (ngModelChange)="markTreeFormDirty()"
-                                                           (keydown.enter)="saveTreeForm()"
-                                                           (keydown.escape)="cancelTreeField('value')"/>
-                                                    <p-inputgroup-addon>
-                                                        <p-button icon="bx bx-check" severity="success" [text]="true"
-                                                                  (onClick)="saveTreeForm()"/>
-                                                        <p-button icon="bx bx-x" severity="danger" [text]="true"
-                                                                  [disabled]="!isTreeFormDirty"
-                                                                  (onClick)="cancelTreeField('value')"/>
-                                                    </p-inputgroup-addon>
                                                 </p-floatlabel>
-                                                </p-inputgroup>
                                             </div>
-                                            <div class="services-form-actions">
+                                            <div class="services-form-actions surface-50">
                                                 <p-button
                                                         icon="bx bx-trash-alt"
                                                         label="Delete"
@@ -296,6 +283,7 @@
                                     } @else {
                                         <div class="services-form-empty">
                                             <p>Select service to edit</p>
+                                            <p>Use drag and drop to reorder</p>
                                         </div>
                                     }
                                 </div>

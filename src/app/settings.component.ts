@@ -91,6 +91,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     async loadProfiles() {
         this.profiles = await this.uiService.ipcInvoke('profiles:get')
+        this.profiles.sort((a: any, b: any) => {
+            const dateA = new Date(a.createdAt || 0).getTime()
+            const dateB = new Date(b.createdAt || 0).getTime()
+            return dateA - dateB
+        })
         this.profiles.forEach(profile => {
             if (profile.active) {
                 this.activeProfile = profile
@@ -245,7 +250,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteItem(selectedNode: TreeNode) {
-        // console.log(this.servicesMenuData)
         if (this.sideMenuTreeNodes.length === 1 && selectedNode.parent === null) {
             this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
             return;
@@ -256,18 +260,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
             acceptLabel: 'Yes',
             rejectLabel: 'No',
             icon: 'bx bx-exclamation-triangle',
-            accept: () => {
-                // console.log(selectedNode)
+            accept: async () => {
                 this.deleteNodeByData(selectedNode.data, this.sideMenuTreeNodes);
                 this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
                 this.onNodeUnselect()
-                this.servicesMenuDataSave(false)
-                //this.messageService.add({severity: 'success', summary: 'Deleted'});
+                await this.servicesMenuDataSave(false)
             },
             reject: () => {
             }
         });
-
     }
 
     getNodeByData(data: any, nodes: TreeNode[]) {
@@ -456,8 +457,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     cancelTreeField(field: 'key' | 'value') {
-        this.treeForm[field] = '';
-        this.markTreeFormDirty();
+        if (this.selectedNode?.data) {
+            this.treeForm[field] = this.selectedNode.data[field] ?? ''
+        } else {
+            this.treeForm[field] = ''
+        }
+        this.markTreeFormDirty()
     }
 
     markTreeFormDirty() {

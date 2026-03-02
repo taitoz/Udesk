@@ -112,6 +112,37 @@ function createWindow() {
         Menu.buildFromTemplate(getMainViewMenu(mainView)).popup()
     });
 
+    mainWindow.webContents.on('context-menu', (event, params) => {
+        event.preventDefault()
+        const template = [
+            {
+                label: 'Inspect Element',
+                click: () => {
+                    if (!mainWindow.webContents.isDevToolsOpened()) {
+                        mainWindow.webContents.openDevTools({mode: 'detach'})
+                    }
+                    if (params?.x !== undefined && params?.y !== undefined) {
+                        mainWindow.webContents.inspectElement(params.x, params.y)
+                    }
+                }
+            },
+            {
+                type: 'separator'
+            },
+            {
+                label: mainWindow.webContents.isDevToolsOpened() ? 'Close DevTools' : 'Open DevTools',
+                click: () => {
+                    if (mainWindow.webContents.isDevToolsOpened()) {
+                        mainWindow.webContents.closeDevTools()
+                    } else {
+                        mainWindow.webContents.openDevTools({mode: 'detach'})
+                    }
+                }
+            }
+        ]
+        Menu.buildFromTemplate(template).popup({window: mainWindow})
+    })
+
     // Puppeteer
     pie.connect(app, puppeteerApp).then(async browser => {
         pie.getPage(browser, mainView).then(async _page => {
@@ -134,12 +165,12 @@ function createWindow() {
     })
 
     // Loading indicator: send to Angular app in the main window
-    //TODO timeout to 10 sec
+    //timeout 10 sec
     mainView.webContents.on('did-start-navigation', function () {
         mainWindow.webContents.send('showLoading', true);
         setTimeout(() => {
             mainWindow.webContents.send('showLoading', false);
-        }, 30000);
+        }, 10000);
     });
 
     mainView.webContents.on('did-finish-load', function () {

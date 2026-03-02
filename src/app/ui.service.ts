@@ -60,7 +60,7 @@ export class UiService {
     //awaits return value
     ipcSendSync(channel: string, ...args: any[]) {
         if (window.electronAPI) {
-            return window.electronAPI.sendSync(channel, ...args);
+            return window.electronAPI.sendSync(channel, args);
         } else if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.sendSync(channel, args);
         }
@@ -69,7 +69,7 @@ export class UiService {
     //async void
     ipcSend(channel: string, ...args: any[]) {
         if (window.electronAPI) {
-            window.electronAPI.send(channel, ...args);
+            window.electronAPI.send(channel, args);
         } else if (this.electronService.isElectronApp) {
             this.electronService.ipcRenderer.send(channel, args);
         }
@@ -78,7 +78,7 @@ export class UiService {
     //return Promise
     async ipcInvoke(channel: string, ...args: any[]) {
         if (window.electronAPI) {
-            return window.electronAPI.invoke(channel, ...args);
+            return window.electronAPI.invoke(channel, args);
         } else if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.invoke(channel, args);
         }
