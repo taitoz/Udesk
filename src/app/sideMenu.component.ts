@@ -92,7 +92,7 @@ export class SideMenuComponent implements OnInit, OnChanges, AfterViewInit {
             value: treeNode.data.value,
             command: () => {
                 this.uiService.settingsToggle.emit(false);
-                this.uiService.ipcInvoke('load-url', treeNode.data.value, (treeNode.children.length > 0)).then()
+                this.uiService.ipcInvoke('load-url', treeNode.data.value, (treeNode.children.length > 0), treeNode.data.id).then()
             },
             // icon: (treeNode.data.icon) ? treeNode.data.icon : 'bx bx-circle-off',
             // badge: treeNode.data.id +' ',

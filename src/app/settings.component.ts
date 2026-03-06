@@ -1,10 +1,16 @@
 import {ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, ViewEncapsulation} from '@angular/core';
 import {ConfirmationService, MessageService, TreeNode} from 'primeng/api';
-import {DialogService, DynamicDialogRef} from 'primeng/dynamicdialog';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
-import {PageActionEditDialogComponent} from "./page-action-edit-dialog/page-action-edit-dialog.component";
+
+export enum PageActionType {
+    waitElement = 'waitElement',
+    typeToInput = 'typeToInput',
+    clickElement = 'clickElement',
+    selectElement = 'selectElement',
+    delay = 'delay'
+}
 
 interface TreeNodeForm {
     id: any
@@ -33,7 +39,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     treeForm: TreeNodeForm = this.createEmptyTreeForm()
     isTreeFormDirty = false
 
-    ref: DynamicDialogRef | undefined
     theme = 'dark'
     themeOptions: any[] = [{label: 'Dark', value: 'dark'}, {label: 'Light', value: 'light'}]
 
@@ -51,14 +56,20 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     pageActions: {
         _id: string;
+        serviceId: any;
         domain: string;
         actions: any[]
     }[]
 
+    // Inline page action editing
+    currentPageActions: any[] = []
+    currentPageActionDomain: string = ''
+    pageActionOptions: string[] = Object.values(PageActionType)
+    editingPageAction: any = null
+
     constructor(
         private uiService: UiService,
         private messageService: MessageService,
-        public dialogService: DialogService,
         private confirmationService: ConfirmationService,
         @Inject(DOCUMENT) private document: Document,
         private cdr: ChangeDetectorRef
@@ -75,9 +86,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.ref) {
-            this.ref.close()
-        }
     }
 
     hasUnsavedChanges(): boolean {
@@ -210,6 +218,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.clearPendingDraft()
         this.treeForm = this.createEmptyTreeForm()
         this.isTreeFormDirty = false
+        this.currentPageActions = []
+        this.currentPageActionDomain = ''
+        this.editingPageAction = null
     }
 
     async servicesMenuDataSave(preserveSelection = true) {
@@ -261,10 +272,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'No',
             icon: 'bx bx-exclamation-triangle',
             accept: async () => {
+                // Delete associated page actions from DB by serviceId
+                const serviceId = selectedNode.data?.id
+                if (serviceId) {
+                    await this.uiService.ipcInvoke('pageAction:delete', serviceId)
+                }
                 this.deleteNodeByData(selectedNode.data, this.sideMenuTreeNodes);
                 this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
                 this.onNodeUnselect()
                 await this.servicesMenuDataSave(false)
+                await this.loadPageActions()
             },
             reject: () => {
             }
@@ -349,61 +366,128 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return this.uiService.getLogoPath(profile)
     }
 
-    showPageActionsDialog(rowDataUrl: string) {
-        if (!rowDataUrl) {
+    loadCurrentPageActions() {
+        const serviceId = this.selectedNode?.data?.id ?? this.treeForm.id
+        if (!serviceId) {
+            this.currentPageActions = []
+            this.currentPageActionDomain = ''
             return
         }
-        let domain: string;
-        try {
-            domain = new URL(rowDataUrl).hostname;
-        } catch {
-            try {
-                domain = new URL('https://' + rowDataUrl).hostname;
-            } catch {
-                this.messageService.add({severity: 'error', summary: 'Invalid URL', detail: rowDataUrl});
-                return;
-            }
-        }
-        let pageActions = this.pageActions.find(pa => pa.domain === domain);
 
-        if (!pageActions) {
-            pageActions = {
-                _id: `pa_${Date.now()}`,
-                domain: domain,
-                actions: []
-            }
-        }
-
-        this.ref = this.dialogService.open(PageActionEditDialogComponent, {
-            header: 'Edit page action',
-            height: '100%',
-            width: '100%',
-            closeOnEscape: false,
-            showHeader: false,
-            baseZIndex: 10000,
-            data: {
-                domain: domain,
-                actions: pageActions.actions
-            }
-        });
-
-        this.ref.onClose.subscribe((result) => {
-            if (result) {
-                // Update the local pageActions with the returned data
-                const index = this.pageActions.findIndex(pa => pa.domain === result.domain);
-                if (index !== -1) {
-                    this.pageActions[index].actions = result.actions;
-                } else {
-                    this.pageActions.push({
-                        _id: `pa_${Date.now()}`,
-                        domain: result.domain,
-                        actions: result.actions
-                    });
+        // Parse domain from URL for display
+        const url = this.treeForm.value
+        if (url) {
+            try { this.currentPageActionDomain = new URL(url).hostname } catch {
+                try { this.currentPageActionDomain = new URL('https://' + url).hostname } catch {
+                    this.currentPageActionDomain = ''
                 }
-                // Save the updated page actions
-                this.loadPageActions();
             }
-        });
+        } else {
+            this.currentPageActionDomain = ''
+        }
+
+        const existing = this.pageActions?.find(pa => pa.serviceId === serviceId)
+        if (existing) {
+            this.currentPageActions = JSON.parse(JSON.stringify(existing.actions)).map((a: any) => ({
+                ...a,
+                _id: a._id || `pa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            }))
+        } else {
+            this.currentPageActions = []
+        }
+        this.editingPageAction = null
+    }
+
+    startPageActionEdit(pageAction: any) {
+        this.editingPageAction = JSON.parse(JSON.stringify(pageAction))
+    }
+
+    confirmPageActionEdit() {
+        if (!this.editingPageAction) return
+        const index = this.currentPageActions.findIndex((pa: any) => pa._id === this.editingPageAction._id)
+        if (index !== -1) {
+            this.currentPageActions[index] = {...this.editingPageAction}
+        }
+        this.editingPageAction = null
+    }
+
+    cancelPageActionEdit() {
+        if (this.editingPageAction) {
+            const existing = this.currentPageActions.find((pa: any) => pa._id === this.editingPageAction._id)
+            if (existing && !existing.action && !existing.selector) {
+                this.currentPageActions = this.currentPageActions.filter((pa: any) => pa._id !== this.editingPageAction._id)
+            }
+        }
+        this.editingPageAction = null
+    }
+
+    addPageAction() {
+        if (this.editingPageAction) {
+            this.confirmPageActionEdit()
+        }
+        const newAction = {
+            _id: `pa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            action: '',
+            selector: '',
+            value: null
+        }
+        this.currentPageActions = [...this.currentPageActions, newAction]
+        this.startPageActionEdit(newAction)
+    }
+
+    deletePageAction(pageAction: any) {
+        this.currentPageActions = this.currentPageActions.filter((pa: any) => pa._id !== pageAction._id)
+        if (this.editingPageAction && this.editingPageAction._id === pageAction._id) {
+            this.editingPageAction = null
+        }
+    }
+
+    async saveAllPageActions() {
+        if (!this.currentPageActionDomain) {
+            this.messageService.add({severity: 'warn', summary: 'Set service link first', detail: 'A valid URL is required to save page actions'})
+            return
+        }
+
+        if (this.editingPageAction) {
+            this.confirmPageActionEdit()
+        }
+
+        let hasErrors = false
+        for (let i = 0; i < this.currentPageActions.length; i++) {
+            const pa = this.currentPageActions[i]
+            if (!pa.action) {
+                this.messageService.add({severity: 'error', summary: 'Validation error', detail: `Row ${i + 1}: action is required`})
+                hasErrors = true
+            }
+            if (!pa.selector && pa.action !== PageActionType.delay) {
+                this.messageService.add({severity: 'error', summary: 'Validation error', detail: `Row ${i + 1}: selector is required`})
+                hasErrors = true
+            }
+        }
+        if (hasErrors) {
+            return
+        }
+
+        const serviceId = this.selectedNode?.data?.id ?? this.treeForm.id
+        const fullPageAction = {
+            serviceId: serviceId,
+            key: this.selectedNode?.data?.key || '',
+            domain: this.currentPageActionDomain,
+            actions: this.currentPageActions.map(({_id, ...rest}: any) => rest)
+        }
+
+        try {
+            await this.uiService.ipcInvoke('pageAction:update', fullPageAction)
+            this.messageService.add({severity: 'success', summary: 'Page actions saved'})
+            await this.loadPageActions()
+            this.loadCurrentPageActions()
+        } catch (error) {
+            console.error('Failed to save page actions:', error)
+        }
+    }
+
+    importPageActions() {
+        // TODO: implement import
     }
 
     onAppNameChange(newName: string) {
@@ -490,6 +574,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.treeForm = this.createEmptyTreeForm()
         }
         this.isTreeFormDirty = false
+        this.loadCurrentPageActions()
     }
 
     private clearPendingDraft() {

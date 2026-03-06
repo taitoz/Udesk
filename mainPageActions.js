@@ -40,8 +40,10 @@ export function addResponseHandlers(page, pageActions) {
 }
 
 export async function executePageActions(page, pageActions) {
-    //console.log('executePageActions')
-    for (const pageAction of pageActions) {
+    console.log(`[PageActions] Executing ${pageActions.length} actions on: ${page.url()}`)
+    for (let i = 0; i < pageActions.length; i++) {
+        const pageAction = pageActions[i]
+        console.log(`[PageActions] [${i + 1}/${pageActions.length}] ${pageAction.action}`, pageAction.selector || '', pageAction.value || '')
         switch (pageAction.action) {
             case 'waitElement': {
                 await waitElement(page, pageAction.selector);
@@ -59,8 +61,14 @@ export async function executePageActions(page, pageActions) {
                 await selectElement(page, pageAction.selector, pageAction.value)
                 break
             }
+            case 'delay': {
+                await delay(pageAction.value || 1000)
+                break
+            }
         }
+        console.log(`[PageActions] [${i + 1}/${pageActions.length}] ${pageAction.action} done`)
     }
+    console.log('[PageActions] All actions completed')
 }
 
 async function typeToInput(page, selector, text) {
@@ -68,10 +76,9 @@ async function typeToInput(page, selector, text) {
         await page.waitForSelector(selector, {timeout: 15 * 1000})
         await page.focus(selector)
         await page.keyboard.type(text)
+        console.log(`[PageActions] typeToInput OK: ${selector}`)
     } catch (e) {
-        // if (e instanceof TimeoutError) {
-        //page.reload()
-        // }
+        console.error(`[PageActions] typeToInput FAILED: ${selector}`, e.message)
     }
 }
 
@@ -80,11 +87,9 @@ async function clickElement(page, selector) {
         await page.waitForSelector(selector, {visible: true}, {timeout: 60000}).then(async element => {
             await element.click()
         })
+        console.log(`[PageActions] clickElement OK: ${selector}`)
     } catch (e) {
-        // if (e instanceof TimeoutError) {
-        //page.reload()
-        //     console.error("timeout on click: " + selector)
-        // }
+        console.error(`[PageActions] clickElement FAILED: ${selector}`, e.message)
     }
 }
 
@@ -93,22 +98,19 @@ async function selectElement(page, selector, values) {
         await page.waitForSelector(selector, {timeout: 60000}).then(async () => {
             await page.select(selector, values)
         })
+        console.log(`[PageActions] selectElement OK: ${selector}`)
     } catch (e) {
-        // if (e instanceof TimeoutError) {
-        //page.reload()
-        //     console.error("timeout on select: " + selector)
-        // }
+        console.error(`[PageActions] selectElement FAILED: ${selector}`, e.message)
     }
 }
 
 async function waitElement(page, selector) {
     try {
-        return await page.waitForSelector(selector, {timeout: 60000})
+        const el = await page.waitForSelector(selector, {timeout: 60000})
+        console.log(`[PageActions] waitElement OK: ${selector}`)
+        return el
     } catch (e) {
-        // if (e instanceof TimeoutError) {
-        //page.reload()
-        //     console.error("timeout on wait: " + selector)
-        // }
+        console.error(`[PageActions] waitElement FAILED: ${selector}`, e.message)
     }
 }
 

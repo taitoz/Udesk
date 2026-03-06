@@ -89,36 +89,49 @@ export function getProfiles() {
     return db.profiles.getAllData();
 }
 
-export async function getPageAction(url) {
+export async function getPageAction(url, serviceId) {
     return new Promise((resolve, reject) => {
-        if (!url) {
+        if (!url && !serviceId) {
             resolve(null);
             return;
         }
 
-        let urlObj;
-        try {
-            urlObj = typeof url === 'string' ? new URL(url) : url;
-        } catch (e) {
-            console.error('Invalid URL:', url);
-            resolve(null);
-            return;
-        }
-
-        let domain = urlObj.hostname;
-        if (domain.startsWith('www.')) {
-            domain = domain.substring(4);
-        }
-        db.pageActions.findOne({url: url}, (err, doc) => {
-            if (err) reject(err);
-            if (doc) {
-                resolve(doc);
-            } else {
-                db.pageActions.findOne({domain: domain}, (err, doc) => {
+        // Try serviceId first (most specific)
+        if (serviceId) {
+            db.pageActions.findOne({serviceId: serviceId}, (err, doc) => {
+                if (err) { reject(err); return; }
+                if (doc) {
                     resolve(doc);
-                })
-            }
-        });
+                    return;
+                }
+                // Fall back to domain lookup
+                findByDomain(url, resolve, reject);
+            });
+        } else {
+            findByDomain(url, resolve, reject);
+        }
+    });
+}
+
+function findByDomain(url, resolve, reject) {
+    if (!url) { resolve(null); return; }
+
+    let urlObj;
+    try {
+        urlObj = typeof url === 'string' ? new URL(url) : url;
+    } catch (e) {
+        console.error('Invalid URL:', url);
+        resolve(null);
+        return;
+    }
+
+    let domain = urlObj.hostname;
+    if (domain.startsWith('www.')) {
+        domain = domain.substring(4);
+    }
+    db.pageActions.findOne({domain: domain}, (err, doc) => {
+        if (err) reject(err);
+        else resolve(doc);
     });
 }
 
@@ -171,11 +184,11 @@ export async function updateProfile(profile) {
 
 export async function upsertPageAction(pageAction) {
     console.log('Upserting page action:', pageAction);
+    const query = pageAction.serviceId ? {serviceId: pageAction.serviceId} : {domain: pageAction.domain};
     return new Promise(async (resolve, reject) => {
         try {
-            let pageActionsCount = await countPageActions({domain: pageAction.domain});
             db.pageActions.update(
-                {domain: pageAction.domain}, 
+                query, 
                 pageAction, 
                 {upsert: true}, 
                 async function (err) {
@@ -188,7 +201,7 @@ export async function upsertPageAction(pageAction) {
                     // Force persistence
                     await new Promise((res) => db.pageActions.persistence.compactDatafile(res));
                     
-                    db.pageActions.findOne({domain: pageAction.domain}, (err, doc) => {
+                    db.pageActions.findOne(query, (err, doc) => {
                         if (err) {
                             console.error('Error finding page action after update:', err);
                             reject(err);
@@ -203,6 +216,21 @@ export async function upsertPageAction(pageAction) {
             console.error('Error in upsertPageAction:', error);
             reject(error);
         }
+    });
+}
+
+export async function deletePageAction(serviceId) {
+    return new Promise((resolve, reject) => {
+        db.pageActions.remove({serviceId: serviceId}, {}, async (err, numRemoved) => {
+            if (err) {
+                console.error('Error deleting page action:', err);
+                reject(err);
+                return;
+            }
+            await new Promise((res) => db.pageActions.persistence.compactDatafile(res));
+            console.log(`Page action deleted for serviceId: ${serviceId}, removed: ${numRemoved}`);
+            resolve(numRemoved);
+        });
     });
 }
 

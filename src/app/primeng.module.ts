@@ -31,6 +31,8 @@ import {BadgeModule} from 'primeng/badge';
 import { CheckboxModule } from 'primeng/checkbox';
 import {ProgressBarModule} from 'primeng/progressbar';
 import {DragDropModule} from 'primeng/dragdrop';
+import {InputNumberModule} from 'primeng/inputnumber';
+import {MessageModule} from 'primeng/message';
 @NgModule({
     imports: [
         TabsModule,
@@ -64,7 +66,9 @@ import {DragDropModule} from 'primeng/dragdrop';
         SelectButtonModule,
         CheckboxModule,
         ProgressBarModule,
-        DragDropModule
+        DragDropModule,
+        InputNumberModule,
+        MessageModule
     ],
     exports: [
         TabsModule,
@@ -98,7 +102,9 @@ import {DragDropModule} from 'primeng/dragdrop';
         SelectButtonModule,
         CheckboxModule,
         ProgressBarModule,
-        DragDropModule
+        DragDropModule,
+        InputNumberModule,
+        MessageModule
     ],
     providers: [DialogService]
 })

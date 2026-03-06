@@ -38,7 +38,7 @@ import {
     getProfiles,
     importProfile,
     setActiveProfile,
-    updateProfile, upsertPageAction
+    updateProfile, upsertPageAction, deletePageAction
 } from "./mainDb.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -276,8 +276,9 @@ ipcMain.handle('reload', () => {
 
 ipcMain.handle('load-url', async (event, args) => {
     const url = args[0]
+    const serviceId = args[2]
     if (url) {
-        await loadUrl(url)
+        await loadUrl(url, serviceId)
     }
 })
 
@@ -371,6 +372,11 @@ ipcMain.handle('pageAction:update', async (event, args) => {
     await upsertPageAction(pageAction)
 })
 
+ipcMain.handle('pageAction:delete', async (event, args) => {
+    const serviceId = args[0]
+    await deletePageAction(serviceId)
+})
+
 ipcMain.handle('profile:update', async (event, args) => {
     const profile = args[0]
     console.log(profile)
@@ -428,11 +434,11 @@ ipcMain.handle('profile:export', async (event, args) => {
 
 })
 
-//TODO add pageActions Edit
+//TODO
 // lang nestdb, lang setting
 // ? events to angular
 //=====================================================================================
-async function loadUrl(urlStr) {
+async function loadUrl(urlStr, serviceId) {
     try {
         const url = new URL(urlStr)
         await page.goto(urlStr, {
@@ -442,9 +448,12 @@ async function loadUrl(urlStr) {
             // networkidle2
         })
 
-        const pageAction = await getPageAction(url)
+        const pageAction = await getPageAction(url, serviceId)
         if (pageAction) {
+            console.log(`[PageActions] Found page action for serviceId: ${serviceId}, domain: ${pageAction.domain}, ${pageAction.actions.length} actions`)
             await executePageActions(page, pageAction.actions)
+        } else {
+            console.log(`[PageActions] No page action found for serviceId: ${serviceId}, url: ${url.hostname}`)
         }
     } catch (error) {
         if (error.code !== 'ERR_ABORTED') console.error(error.message)

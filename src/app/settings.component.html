@@ -272,13 +272,132 @@
                                                         [text]="true"
                                                         [disabled]="!selectedNode"
                                                         (onClick)="deleteItem(selectedNode)"></p-button>
-                                                <p-button
-                                                        icon="bx bx-pencil"
-                                                        label="Page actions"
-                                                        [text]="true"
-                                                        [disabled]="!this.selectedNode"
-                                                        (onClick)="showPageActionsDialog(treeForm.value)"></p-button>
                                             </div>
+
+                                            @if (selectedNode) {
+                                                <div class="mt-3">
+                                                    <h4 class="mb-2">Page actions @if (currentPageActionDomain) { — {{ currentPageActionDomain }} }</h4>
+                                                    <p-message severity="info" [closable]="true">
+                                                        <b>Selector rules:</b> Use CSS selectors only, e.g. <code>#myId</code>, <code>input[name="user"]</code>, <code>button[type="submit"]</code>.
+                                                        Avoid dynamic IDs. Do not use <code>document.querySelector(...)</code>.
+                                                    </p-message>
+                                                    <p-table [value]="currentPageActions"
+                                                             class="p-datatable-striped"
+                                                             [reorderableRows]="true">
+                                                        <ng-template pTemplate="header">
+                                                            <tr>
+                                                                <th style="width: 40px"></th>
+                                                                <th>Action</th>
+                                                                <th>Selector</th>
+                                                                <th>Value</th>
+                                                                <th style="width: 120px"></th>
+                                                            </tr>
+                                                        </ng-template>
+                                                        <ng-template pTemplate="body" let-pageAction let-index="rowIndex">
+                                                            <tr [pReorderableRow]="index">
+                                                                <td style="width: 40px">
+                                                                    <span class="pi pi-bars" pReorderableRowHandle></span>
+                                                                </td>
+                                                                <td>
+                                                                    @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
+                                                                        <span class="font-bold ml-2 truncate-text">{{ pageAction.action }}</span>
+                                                                    }
+                                                                    @if (editingPageAction && editingPageAction._id === pageAction._id) {
+                                                                        <p-select placeholder="Select action"
+                                                                                  [options]="pageActionOptions"
+                                                                                  [(ngModel)]="editingPageAction.action"
+                                                                                  appendTo="body"/>
+                                                                    }
+                                                                </td>
+                                                                <td>
+                                                                    @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
+                                                                        <span class="font-bold ml-2 truncate-text">{{ pageAction.selector }}</span>
+                                                                    }
+                                                                    @if (editingPageAction && editingPageAction._id === pageAction._id && editingPageAction.action !== 'delay') {
+                                                                        <input pInputText type="text"
+                                                                               [(ngModel)]="editingPageAction.selector"
+                                                                               [ngStyle]="{'width': '100%'}"
+                                                                               placeholder="CSS selector"
+                                                                               (keydown.space)="$event.stopPropagation()">
+                                                                    }
+                                                                </td>
+                                                                <td>
+                                                                    @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
+                                                                        @if (pageAction.action === 'typeToInput') {
+                                                                            <span class="font-bold ml-2 truncate-text">{{ pageAction.value }}</span>
+                                                                        }
+                                                                        @if (pageAction.action === 'delay') {
+                                                                            <span class="font-bold ml-2 truncate-text">{{ pageAction.value }} ms</span>
+                                                                        }
+                                                                    }
+                                                                    @if (editingPageAction && editingPageAction._id === pageAction._id) {
+                                                                        @if (editingPageAction.action === 'typeToInput') {
+                                                                            <input pInputText type="text"
+                                                                                   [(ngModel)]="editingPageAction.value"
+                                                                                   [ngStyle]="{'width': '100%'}"
+                                                                                   placeholder="Value"
+                                                                                   (keydown.space)="$event.stopPropagation()">
+                                                                        }
+                                                                        @if (editingPageAction.action === 'delay') {
+                                                                            <p-inputnumber [(ngModel)]="editingPageAction.value"
+                                                                                           [showButtons]="true"
+                                                                                           buttonLayout="horizontal"
+                                                                                           [step]="250"
+                                                                                           [min]="0"
+                                                                                           suffix=" ms"
+                                                                                           placeholder="Delay (ms)">
+                                                                                <ng-template #incrementbuttonicon>
+                                                                                    <span class="pi pi-plus"></span>
+                                                                                </ng-template>
+                                                                                <ng-template #decrementbuttonicon>
+                                                                                    <span class="pi pi-minus"></span>
+                                                                                </ng-template>
+                                                                            </p-inputnumber>
+                                                                        }
+                                                                    }
+                                                                </td>
+                                                                <td style="width: 120px">
+                                                                    <div class="flex align-items-center justify-content-center gap-1">
+                                                                        @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
+                                                                            <p-button icon="bx bx-pencil"
+                                                                                      [rounded]="true" [text]="true"
+                                                                                      (click)="startPageActionEdit(pageAction)"></p-button>
+                                                                            <p-button icon="bx bx-trash"
+                                                                                      [rounded]="true" [text]="true" severity="danger"
+                                                                                      (click)="deletePageAction(pageAction)"></p-button>
+                                                                        }
+                                                                        @if (editingPageAction && editingPageAction._id === pageAction._id) {
+                                                                            <p-button icon="bx bx-check"
+                                                                                      [rounded]="true" [text]="true" severity="success"
+                                                                                      (click)="confirmPageActionEdit()"></p-button>
+                                                                            <p-button icon="bx bx-x"
+                                                                                      [rounded]="true" [text]="true" severity="danger"
+                                                                                      (click)="cancelPageActionEdit()"></p-button>
+                                                                        }
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </ng-template>
+                                                        <ng-template pTemplate="summary">
+                                                            <div class="flex align-items-center justify-content-between">
+                                                                <div class="flex gap-2">
+                                                                    <p-button icon="bx bx-plus"
+                                                                              pTooltip="Add action" tooltipPosition="top"
+                                                                              label="Add" [text]="true"
+                                                                              (onClick)="addPageAction()"></p-button>
+                                                                    <p-button icon="bx bxs-file-import"
+                                                                              pTooltip="Import" tooltipPosition="top"
+                                                                              label="Import" [text]="true"
+                                                                              (onClick)="importPageActions()"></p-button>
+                                                                </div>
+                                                                <p-button icon="bx bx-save"
+                                                                          label="Save"
+                                                                          (onClick)="saveAllPageActions()"></p-button>
+                                                            </div>
+                                                        </ng-template>
+                                                    </p-table>
+                                                </div>
+                                            }
                                         </div>
                                     } @else {
                                         <div class="services-form-empty">
