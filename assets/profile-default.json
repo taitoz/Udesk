@@ -8,7 +8,7 @@
     {
       "data": {
         "id": 1729881048071,
-        "key": "Router 1",
+        "key": "CPE_Router",
         "value": "https://192.168.1.1/index.html"
       },
       "children": [],
@@ -17,8 +17,8 @@
     {
       "data": {
         "id": 1729881527560,
-        "key": "Router 2",
-        "value": "http://192.168.1.2/Main_Login.asp"
+        "key": "Asus_Router",
+        "value": "https://192.168.1.2:8443/Main_Login.asp"
       },
       "children": [],
       "parent": null

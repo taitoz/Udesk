@@ -1,44 +1,89 @@
-import {app} from 'electron'
+import {app, clipboard, shell, dialog} from 'electron'
 import {loadTranslation, translate} from './translations/i18n.js'
 
 
-export function getMainViewMenu(window) {
-    //loadTranslation(locale)
-    return [
-        {
-            label: 'Copy',
-            role: 'copy',
+export function getMainViewMenu(window, params = {}) {
+    const menu = []
+
+    // Link options
+    if (params.linkURL) {
+        menu.push({
+            label: 'Copy Link',
+            click: () => clipboard.writeText(params.linkURL)
+        })
+        menu.push({
+            label: 'Open Link in Browser',
+            click: () => shell.openExternal(params.linkURL)
+        })
+        menu.push({type: 'separator'})
+    }
+
+    // Image options
+    if (params.hasImageContents) {
+        menu.push({
+            label: 'Save Image As...',
             click: () => {
-                console.log('Copy action triggered');
+                const url = params.srcURL
+                dialog.showSaveDialog(null, {
+                    defaultPath: url.split('/').pop().split('?')[0] || 'image.png'
+                }).then(result => {
+                    if (!result.canceled) {
+                        window.webContents.session.downloadURL(url)
+                    }
+                })
             }
-        },
-        {
-            label: 'Paste',
-            role: 'paste',
-            click: () => {
-                console.log('Paste action triggered');
-            }
-        },
-        {
-            type: 'separator'
-        },
-        {
-            label: translate('DevTools'),
-            // accelerator: 'F12',
-            click: () => {
-                window.webContents.openDevTools({mode: 'detach'});
-            }
+        })
+        menu.push({
+            label: 'Copy Image',
+            click: () => window.webContents.copyImageAt(params.x, params.y)
+        })
+        menu.push({
+            label: 'Copy Image URL',
+            click: () => clipboard.writeText(params.srcURL)
+        })
+        menu.push({type: 'separator'})
+    }
+
+    // Text editing options
+    if (params.isEditable) {
+        menu.push({label: 'Cut', role: 'cut', enabled: params.editFlags?.canCut})
+        menu.push({label: 'Copy', role: 'copy', enabled: params.editFlags?.canCopy})
+        menu.push({label: 'Paste', role: 'paste', enabled: params.editFlags?.canPaste})
+        menu.push({label: 'Select All', role: 'selectAll'})
+    } else {
+        // Non-editable context
+        if (params.selectionText) {
+            menu.push({label: 'Copy', role: 'copy'})
         }
-        // {
-        //   role: 'help', label: translate('Help'),
-        //   submenu: [
-        //     {
-        //       label: translate('Learn more'),
-        //       click () { require('electron').shell.openExternal('https://github.com/crilleengvall/electron-tutorial-app') }
-        //     }
-        //   ]
-        // }
-    ]
+        menu.push({label: 'Select All', role: 'selectAll'})
+        menu.push({label: 'Paste', role: 'paste'})
+    }
+
+    // Save page
+    menu.push({type: 'separator'})
+    menu.push({
+        label: 'Save Page As...',
+        accelerator: 'CmdOrCtrl+S',
+        click: () => {
+            dialog.showSaveDialog(null, {
+                defaultPath: window.webContents.getTitle() + '.html',
+                filters: [{name: 'Web Page', extensions: ['html', 'htm']}]
+            }).then(result => {
+                if (!result.canceled) {
+                    window.webContents.savePage(result.filePath, 'HTMLComplete')
+                }
+            })
+        }
+    })
+
+    // DevTools
+    menu.push({type: 'separator'})
+    menu.push({
+        label: translate('DevTools'),
+        click: () => window.webContents.openDevTools({mode: 'detach'})
+    })
+
+    return menu
 }
 
 export function getMainWindowMenu(window, locale) {

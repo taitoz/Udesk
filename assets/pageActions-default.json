@@ -1,38 +1,46 @@
 [
   {
-    "key": "Router 1",
+    "serviceId": 1729881048071,
+    "key": "CPE_Router",
     "domain": "192.168.1.1",
     "actions": [
       {
-        "action": "typeToInput", "selector": "input.textfield:nth-child(2)", "value": "admin"
+        "action": "typeToInput",
+        "selector": "#user_name_field",
+        "value": "admin"
       },
       {
-        "action": "typeToInput", "selector": "input.textfield:nth-child(5)", "value": "admin"
+        "action": "typeToInput",
+        "selector": "#password_field",
+        "value": "9e10949e"
       },
       {
-        "action": "clickElement", "selector": "#btnSignIn"
+        "action": "clickElement",
+        "selector": "#login_btn",
+        "value": null
       }
     ]
   },
   {
-    "key": "Router 2",
+    "serviceId": 1729881527560,
+    "key": "Asus_Router",
     "domain": "192.168.1.2",
     "actions": [
       {
         "action": "typeToInput",
         "selector": "#login_username",
-        "value": "admin"
+        "value": "taitoz"
       },
       {
         "action": "typeToInput",
         "selector": "#login_filed > div.password_gap > input",
-        "value": "admin"
+        "value": "jlnxgi"
       },
       {
         "action": "clickElement",
-        "selector": "#login_filed > div.button"
+        "selector": "#login_filed > div.button",
+        "value": null
       }
     ]
   }
 ]
-

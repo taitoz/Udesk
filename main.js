@@ -108,9 +108,36 @@ function createWindow() {
     mainView = new WebContentsView()
     mainWindow.contentView.addChildView(mainView, 1)
     mainView.setBounds({x: 0, y: 0, width: 0, height: 0}) // Hidden until Angular tells us where
-    mainView.webContents.on('context-menu', () => {
-        Menu.buildFromTemplate(getMainViewMenu(mainView)).popup()
+    mainView.webContents.on('context-menu', (event, params) => {
+        Menu.buildFromTemplate(getMainViewMenu(mainView, params)).popup()
     });
+
+    // WebHID support for external web content (e.g. device driver pages)
+    const mainViewSession = mainView.webContents.session
+    mainViewSession.on('select-hid-device', (event, details, callback) => {
+        event.preventDefault()
+        if (details.deviceList && details.deviceList.length > 0) {
+            callback(details.deviceList[0].deviceId)
+        } else {
+            callback('')
+        }
+    })
+    mainViewSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+        if (permission === 'hid') return true
+        return true
+    })
+    mainViewSession.setDevicePermissionHandler((details) => {
+        if (details.deviceType === 'hid' || details.deviceType === 'usb') return true
+        return false
+    })
+    mainViewSession.on('select-usb-device', (event, details, callback) => {
+        event.preventDefault()
+        if (details.deviceList && details.deviceList.length > 0) {
+            callback(details.deviceList[0].deviceId)
+        } else {
+            callback('')
+        }
+    })
 
     mainWindow.webContents.on('context-menu', (event, params) => {
         event.preventDefault()
