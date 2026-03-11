@@ -9,8 +9,8 @@ import {UiService} from './ui.service';
 })
 export class SideBarComponent implements OnInit {
 
+    profiles: any[] = []
     activeProfile: any
-    logoCachePath: string
 
     constructor(
         private uiService: UiService,
@@ -19,44 +19,51 @@ export class SideBarComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.activeProfile = this.uiService.ipcSendSync('profiles:getActive')
-        this.logoCachePath = this.uiService.getLogoCachePath()
+        this.loadProfiles()
 
         this.uiService.activeProfileChange.subscribe(activeProfile => {
-            this.onActiveProfileUpdate(activeProfile)
+            this.activeProfile = activeProfile
+            this.loadProfiles()
+        })
+
+        this.uiService.profilesListChange.subscribe(() => {
+            this.loadProfiles()
         })
     }
 
-    openLink(url: string) {
-        this.uiService.settingsToggle.emit(false);
-        this.uiService.sideMenuToggle.emit(null);
-        this.uiService.ipcInvoke('load-url', url, false).then()
+    async loadProfiles() {
+        this.profiles = await this.uiService.ipcInvoke('profiles:get') || []
+        this.profiles.sort((a: any, b: any) => {
+            const dateA = new Date(a.createdAt || 0).getTime()
+            const dateB = new Date(b.createdAt || 0).getTime()
+            return dateA - dateB
+        })
+        // Migrate old PNG logos
+        this.profiles.forEach(p => {
+            if (!p.logo || !p.logo.startsWith('bx ')) p.logo = 'bx bx-desktop'
+        })
+        this.activeProfile = this.profiles.find(p => p.active) || this.activeProfile
+        this.cdr.detectChanges()
     }
 
-    getActiveProfileHomeUrl() {
-        return this.activeProfile['homeUrl']
-    }
-
-    toggleSideMenu(menuId: string) {
-        this.uiService.settingsToggle.emit(false);
-        this.uiService.sideMenuToggle.emit(menuId);
+    selectProfile(profile: any) {
+        this.uiService.settingsToggle.emit(false)
+        if (this.activeProfile?._id === profile._id) {
+            // Already active — toggle sideMenu
+            this.uiService.sideMenuToggle.emit('servicesMenu')
+            return
+        }
+        // Switch profile: close sideMenu first, then reopen after profile is set
+        this.uiService.sideMenuToggle.emit(null)
+        this.uiService.ipcInvoke('profiles:setActive', profile._id).then(() => {
+            this.activeProfile = profile
+            this.cdr.detectChanges()
+            // Open sideMenu after a tick so it doesn't toggle off
+            setTimeout(() => this.uiService.sideMenuToggle.emit('servicesMenu'), 0)
+        })
     }
 
     toggleSettings() {
         this.uiService.settingsToggle.emit(null);
-    }
-
-    callRenderer(channel: string) {
-        this.uiService.settingsToggle.emit(false);
-        this.uiService.ipcInvoke(channel).then()
-    }
-
-    onActiveProfileUpdate(activeProfile: any) {
-        this.activeProfile = activeProfile
-        this.cdr.detectChanges()
-    }
-
-    getLogoPath(profile: any){
-        return  this.uiService.getLogoPath(profile)
     }
 }

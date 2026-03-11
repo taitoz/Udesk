@@ -1,7 +1,7 @@
 {
   "active": true,
   "name": "local",
-  "logo": "Udesk_logo.png",
+  "logo": "bx bx-desktop",
   "homeUrl": "http://localhost:80",
   "lang": "en",
   "sideMenuTreeNodes": [

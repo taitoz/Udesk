@@ -3,6 +3,8 @@ import {DOCUMENT} from '@angular/common';
 import {UiService} from './ui.service';
 import {Subscription} from 'rxjs';
 import './electron-api.d.ts';
+import {updatePrimaryPalette, updateSurfacePalette} from '@primeuix/themes';
+import {primaryColors, surfaceColors} from './theme-palettes';
 
 @Component({
   selector: 'app-root',
@@ -17,7 +19,7 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewChecked {
   sideMenuId = 'servicesMenu';
   sideMenuWidth = 230;
   settingsVisible = false;
-  sideBarWidth = 70;
+  sideBarWidth = 48;
   titleBarHeight = 34;
 
   private splitterDragging = false;
@@ -36,6 +38,15 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Apply initial theme
     const currentTheme = this.uiService.ipcSendSync('settings:getTheme');
     this.uiService.toggleTheme(this.document, currentTheme || 'dark');
+
+    // Apply saved primary/surface colors
+    const savedPrimary = this.uiService.ipcSendSync('settings:getPrimaryColor') || 'emerald';
+    const primaryColor = primaryColors.find(c => c.name === savedPrimary);
+    if (primaryColor) updatePrimaryPalette(primaryColor.palette as any);
+
+    const savedSurface = this.uiService.ipcSendSync('settings:getSurfaceColor') || 'zinc';
+    const surfaceColor = surfaceColors.find(c => c.name === savedSurface);
+    if (surfaceColor) updateSurfacePalette(surfaceColor.palette as any);
 
     this.subscriptions.push(
         this.uiService.themeChange.subscribe(theme => {

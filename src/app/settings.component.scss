@@ -162,6 +162,11 @@
 }
 
 
+:host ::ng-deep .services-form .p-datatable-table td {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
 :host ::ng-deep .p-datatable-reorderablerow-handle {
   cursor: grab;
   color: var(--text-color-secondary, #9ca3af);
@@ -170,6 +175,33 @@
 :host ::ng-deep tr.p-datatable-dragging {
   opacity: 0.6;
   background: var(--p-primary-color, #3b82f6) !important;
+}
+
+.color-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+  max-width: calc(8 * 28px + 7 * 8px); /* 8 dots per row */
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &.active-color {
+    box-shadow: 0 0 0 3px var(--p-content-background), 0 0 0 5px var(--p-text-color);
+  }
 }
 
 .services-form-empty {

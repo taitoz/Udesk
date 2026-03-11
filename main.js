@@ -57,6 +57,18 @@ const singleInstanceLock = app.requestSingleInstanceLock()
 
 let appCfg = cfg.create('config.json')
 
+// Surface palette hex values for titlebar overlay (light=50, dark=900)
+const surfacePalettes = {
+    slate:   { 50: '#f8fafc', 900: '#0f172a' },
+    gray:    { 50: '#f9fafb', 900: '#111827' },
+    zinc:    { 50: '#fafafa', 900: '#18181b' },
+    neutral: { 50: '#fafafa', 900: '#171717' },
+    stone:   { 50: '#fafaf9', 900: '#1c1917' },
+    soho:    { 50: '#f4f4f4', 900: '#34343d' },
+    viva:    { 50: '#f3f3f3', 900: '#262b2c' },
+    ocean:   { 50: '#fbfcfc', 900: '#193030' }
+}
+
 let puppeteerApp = puppeteer
 await pie.initialize(app)
 let page
@@ -78,16 +90,19 @@ function createWindow() {
     const winCfg = appCfg.window()
 
     const isDark = nativeTheme.themeSource === 'dark'
+    const savedSurface = appCfg.get('surfaceColor', 'zinc')
+    const surfacePal = surfacePalettes[savedSurface] || surfacePalettes.zinc
+    const overlayColor = isDark ? surfacePal['900'] : surfacePal['50']
     mainWindow = new BrowserWindow({
         width: 1200, height: 720, minWidth: 1200, minHeight: 720,
-        backgroundColor: isDark ? "#18181b" : "#ffffff",
+        backgroundColor: overlayColor,
         titleBarStyle: "hidden",
         icon: appIcon,
         ...(process.platform === "linux" ? {icon: appIcon} : {}),
         trafficLightPosition: {x: 16, y: 16},
         titleBarOverlay: {
             symbolColor: isDark ? "#DADBE1" : "#333333",
-            color: isDark ? "#18181b" : "#ffffff",
+            color: overlayColor,
             height: 32,
         },
         webPreferences: {
@@ -213,7 +228,6 @@ function createWindow() {
 app.on('ready', async function () {
     //const icon = nativeImage.createFromPath()
     try {
-        initLogoCache()
         await initPageActions()
         //TODO to appCfg
         nativeTheme.themeSource = appCfg.get('theme', 'dark')
@@ -326,34 +340,36 @@ ipcMain.on('settings:toggleTheme', (event, args) => {
     if (mainWindow) {
         mainWindow.webContents.send('theme-toggle', theme)
         // Update titlebar overlay buttons to match theme
+        const surfName = appCfg.get('surfaceColor', 'zinc')
+        const sPal = surfacePalettes[surfName] || surfacePalettes.zinc
         mainWindow.setTitleBarOverlay({
             symbolColor: theme === 'dark' ? '#DADBE1' : '#333333',
-            color: theme === 'dark' ? '#18181b' : '#ffffff',
+            color: theme === 'dark' ? sPal['900'] : sPal['50'],
         })
     }
 })
 ipcMain.on('settings:getTheme', (event) => {
     event.returnValue = nativeTheme.themeSource
 })
-
-
-
-ipcMain.on('profile:logo:getCachePath', async (event) => {
-    event.returnValue = appCfg.get('logoCachePath')
+ipcMain.on('settings:getPrimaryColor', (event) => {
+    event.returnValue = appCfg.get('primaryColor', 'emerald')
 })
-ipcMain.handle('profile:logo:set', async () => {
-    const result = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
-        title: "", properties: ['openFile'], filters: [{name: 'Images', extensions: ['jpg', 'png', 'gif']}]
-    })
-    if (!result.canceled) {
-        const newLogoPath = result.filePaths[0]
-        result['logoName'] = (newLogoPath.includes('/')) ? newLogoPath.split("/").pop() : newLogoPath.split("\\").pop()
-        const logoCachePath = appCfg.get('logoCachePath') + result['logoName']
-        fs.cpSync(newLogoPath, logoCachePath)
-    } else {
-        //console.log("no file selected");
+ipcMain.on('settings:setPrimaryColor', (event, args) => {
+    appCfg.set('primaryColor', args[0])
+})
+ipcMain.on('settings:getSurfaceColor', (event) => {
+    event.returnValue = appCfg.get('surfaceColor', 'zinc')
+})
+ipcMain.on('settings:setSurfaceColor', (event, args) => {
+    appCfg.set('surfaceColor', args[0])
+    // Update titlebar overlay to match new surface color
+    if (mainWindow) {
+        const isDark = nativeTheme.themeSource === 'dark'
+        const pal = surfacePalettes[args[0]] || surfacePalettes.zinc
+        mainWindow.setTitleBarOverlay({
+            color: isDark ? pal['900'] : pal['50'],
+        })
     }
-    return result['logoName']
 })
 
 ipcMain.handle('pageActions:get', async () => {
@@ -523,23 +539,6 @@ async function activeProfileUpdate() {
     mainWindow.webContents.send('activeProfile:update', activeProfile)
 }
 
-function initLogoCache() {
-    appCfg.set('logoCachePath', path.join(app.getPath('userData'), 'LogoCache'))
-    copyFromAssets('Udesk_logo.png')
-    copyFromAssets('logo48b.png')
-
-    //TODO appLogo from appCfg
-    // appLogo trasp test animated
-
-    const appLogoPath = appCfg.get('logoCachePath') + `Udesk_logo.png`
-}
-
-function copyFromAssets(logoName) {
-    const logoPath = path.join(appCfg.get('logoCachePath'), logoName)
-    if (!fs.existsSync(logoPath)) {
-        fs.cpSync(path.join(__dirname, 'assets', logoName), logoPath)
-    }
-}
 
 
 // toggleSideMenu, loadPrimeComponent, toggleSettings removed

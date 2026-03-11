@@ -3,7 +3,6 @@ import {EventEmitter, Injectable, Output} from '@angular/core';
 import {TreeNode} from 'primeng/api';
 import {SessionStorageService} from 'angular-web-storage';
 import {ElectronService} from "ngx-electronyzer";
-import path from "node:path";
 import './electron-api.d.ts';
 
 @Injectable()
@@ -12,13 +11,12 @@ export class UiService {
     @Output() showLoading = new EventEmitter<boolean>();
     @Output() themeChange: EventEmitter<string> = new EventEmitter();
     @Output() activeProfileChange: EventEmitter<string> = new EventEmitter();
+    @Output() profilesListChange: EventEmitter<void> = new EventEmitter();
 
     // Layout events (single-renderer architecture)
     @Output() sideMenuToggle = new EventEmitter<string>();  // menuId or null to close
     @Output() settingsToggle = new EventEmitter<boolean>();
     @Output() mainViewResize = new EventEmitter<{x: number, y: number, width: number, height: number}>();
-
-    logoCachePath: string
 
     constructor(
         private http: HttpClient,
@@ -50,7 +48,6 @@ export class UiService {
             }
         }
 
-        this.logoCachePath = this.getLogoCachePath()
     }
 
     private isElectron(): boolean {
@@ -82,14 +79,6 @@ export class UiService {
         } else if (this.electronService.isElectronApp) {
             return this.electronService.ipcRenderer.invoke(channel, args);
         }
-    }
-
-    getLogoCachePath() : string {
-        return this.ipcSendSync('profile:logo:getCachePath')
-    }
-
-    getLogoPath(profile: any){
-       return path.join(this.logoCachePath, profile.logo)
     }
 
     toggleTheme(document: Document, theme: string) {

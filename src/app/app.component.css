@@ -17,7 +17,7 @@
 }
 
 .app-sidebar {
-    width: 70px;
+    width: 48px;
     flex-shrink: 0;
     overflow: hidden;
     border-right: 1px solid var(--p-content-border-color);
@@ -32,6 +32,7 @@
 .app-sidemenu {
     flex-shrink: 0;
     overflow-y: auto;
+    background-color: var(--app-chrome-bg);
 }
 
 .app-splitter {

@@ -13,6 +13,7 @@ import {AppComponent} from './app.component';
 import {SideBarComponent} from './sideBar.component';
 import {NgOptimizedImage} from '@angular/common';
 import {TitleBarComponent} from './titleBar.component';
+import {IconPickerComponent} from './icon-picker.component';
 import {ToolbarModule} from "primeng/toolbar";
 import {FileUploadModule} from "primeng/fileupload";
 import {InputGroupModule} from "primeng/inputgroup";
@@ -29,7 +30,7 @@ import {InputTextModule} from "primeng/inputtext";
 
 
 @NgModule({
-    declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent],
+    declarations: [AppComponent, SettingsComponent, SideMenuComponent, SideBarComponent, TitleBarComponent, IconPickerComponent],
     bootstrap: [AppComponent],
     imports: [PrimeNgModule,
         BrowserModule,

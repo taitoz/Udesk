@@ -3,6 +3,10 @@ import {ConfirmationService, MessageService, TreeNode} from 'primeng/api';
 import {UiService} from './ui.service';
 import {DOCUMENT} from '@angular/common';
 import {SelectButtonChangeEvent} from "primeng/selectbutton";
+import {updatePrimaryPalette, updateSurfacePalette} from '@primeuix/themes';
+import {primaryColors, surfaceColors, getPrimaryDisplayColor, getSurfaceDisplayColor, PrimaryColor, SurfaceColor} from './theme-palettes';
+import {DialogService} from 'primeng/dynamicdialog';
+import {IconPickerComponent} from './icon-picker.component';
 
 export enum PageActionType {
     waitElement = 'waitElement',
@@ -44,6 +48,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
     theme = 'dark'
     themeOptions: any[] = [{label: 'Dark', value: 'dark'}, {label: 'Light', value: 'light'}]
 
+    primaryColors = primaryColors
+    surfaceColors = surfaceColors
+    selectedPrimaryColor = 'emerald'
+    selectedSurfaceColor = 'zinc'
+    getPrimaryDisplayColor = getPrimaryDisplayColor
+    getSurfaceDisplayColor = getSurfaceDisplayColor
+
     profiles: {
         _id: string;
         active: boolean;
@@ -68,11 +79,15 @@ export class SettingsComponent implements OnInit, OnDestroy {
     currentPageActionDomain: string = ''
     pageActionOptions: string[] = Object.values(PageActionType)
     editingPageAction: any = null
+    selectorFocused = false
+    urlSuggestions: string[] = ['http://', 'https://', 'file:///', 'http://localhost', 'http://127.0.0.1']
+    filteredUrlSuggestions: string[] = []
 
     constructor(
         private uiService: UiService,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
+        private dialogService: DialogService,
         @Inject(DOCUMENT) private document: Document,
         private cdr: ChangeDetectorRef
     ) {
@@ -82,6 +97,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
         // Get current theme for the toggle button state
         const currentTheme = this.uiService.ipcSendSync('settings:getTheme')
         this.theme = currentTheme || 'dark'
+
+        // Load saved primary/surface color
+        this.selectedPrimaryColor = this.uiService.ipcSendSync('settings:getPrimaryColor') || 'emerald'
+        this.selectedSurfaceColor = this.uiService.ipcSendSync('settings:getSurfaceColor') || 'zinc'
 
         await this.loadProfiles()
         await this.loadPageActions()
@@ -107,6 +126,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
             return dateA - dateB
         })
         this.profiles.forEach(profile => {
+            // Migrate old PNG logo to Boxicon class
+            if (!profile.logo || !profile.logo.startsWith('bx ')) {
+                profile.logo = 'bx bx-desktop'
+            }
             if (profile.active) {
                 this.activeProfile = profile
                 this.sideMenuTreeNodes = profile.sideMenuTreeNodes || []
@@ -133,12 +156,24 @@ export class SettingsComponent implements OnInit, OnDestroy {
     saveProfileKeyEdit() {
         this.uiService.ipcInvoke('profile:update', this.editingProfile).then(() => {
             this.loadProfiles()
+            this.uiService.profilesListChange.emit()
         })
         this.editingProfile = null;
     }
 
-    async setProfileLogo() {
-        this.editingProfile.logo = await this.uiService.ipcInvoke('profile:logo:set');
+    openIconPicker() {
+        const ref = this.dialogService.open(IconPickerComponent, {
+            header: 'Choose Icon',
+            width: '500px',
+            modal: true,
+            dismissableMask: true
+        });
+        ref.onClose.subscribe((iconClass: string) => {
+            if (iconClass && this.editingProfile) {
+                this.editingProfile.logo = iconClass;
+                this.cdr.detectChanges();
+            }
+        });
     }
 
     cancelProfileKeyEdit() {
@@ -155,6 +190,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     importProfile() {
         this.uiService.ipcInvoke('profile:import').then(result => {
             this.loadProfiles()
+            this.uiService.profilesListChange.emit()
             this.messageService.add(result)
         })
     }
@@ -170,6 +206,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     async addProfile() {
         await this.uiService.ipcInvoke('profiles:add').then(() => {
             this.loadProfiles()
+            this.uiService.profilesListChange.emit()
         })
     }
 
@@ -190,6 +227,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
                 await this.uiService.ipcInvoke('profiles:delete', profileId).then(() => {
                     this.loadProfiles()
                     this.setActiveProfile(this.profiles[0]._id)
+                    this.uiService.profilesListChange.emit()
                 })
                 //this.messageService.add({severity: 'success', summary: 'Deleted'});
             },
@@ -376,8 +414,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.uiService.ipcSend('settings:toggleTheme', this.theme)
     }
 
-    getLogoPath(profile: any) {
-        return this.uiService.getLogoPath(profile)
+    setPrimaryColor(color: PrimaryColor) {
+        this.selectedPrimaryColor = color.name
+        updatePrimaryPalette(color.palette as any)
+        this.uiService.ipcSend('settings:setPrimaryColor', color.name)
+    }
+
+    setSurfaceColor(color: SurfaceColor) {
+        this.selectedSurfaceColor = color.name
+        updateSurfacePalette(color.palette as any)
+        this.uiService.ipcSend('settings:setSurfaceColor', color.name)
     }
 
     parseDomain(url: string): string {
@@ -527,6 +573,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     importPageActions() {
         // TODO: implement import
+    }
+
+    filterUrlSuggestions(event: any) {
+        const query = (event.query || '').toLowerCase()
+        this.filteredUrlSuggestions = this.urlSuggestions.filter(s => s.toLowerCase().startsWith(query) || query.length === 0)
     }
 
     onAppNameChange(newName: string) {

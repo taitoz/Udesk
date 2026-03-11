@@ -1,38 +1,37 @@
 <div class="card lg:block flex-shrink-0 select-none">
     <div class="flex align-items-center flex-column h-full">
-        <div class="flex align-items-center justify-content-center flex-shrink-0" style="height: 60px;"><!--bg-indigo-500-->
-            <img ngSrc='{{getLogoPath(activeProfile)}}' alt="" width="50" height="50">
-        </div>
-        <div class="mt-3 select-none">
-            <ul class="list-none p-3 lg:py-3 lg:px-2 m-0">
-                <li>
-                    <p-button icon="bx bx-home bx-sm" (click)="openLink(getActiveProfileHomeUrl())" [plain]="true" [text]="true"/>
-                </li>
-                <li>
-                    <p-button icon="bx bx-collection bx-sm"
-                              (click)="toggleSideMenu('servicesMenu')" [plain]="true" [text]="true"/>
-                </li>
-<!--                <li>-->
-<!--                    <p-button icon="bx bx-server bx-sm"-->
-<!--                              (click)="ipcSend('sideMenu:toggle', 'web1cMenu')" [plain]="true" [text]="true"/>-->
-<!--                </li>-->
-                <li>
-                    <p-button icon="bx bx-envelope bx-sm" (click)="callRenderer('open-link:messages')" [plain]="true" [text]="true"
-                              pBadge [badgeDisabled]="false" class="p-badge-dot"/>
-                </li>
-                <li>
-                    <p-button icon="bx bx-calendar bx-sm" (click)="callRenderer('open-link:calendar')" [plain]="true" [text]="true"/>
-                </li>
-            </ul>
+        <div class="flex align-items-center justify-content-center flex-shrink-0" style="height: 40px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="26" height="26"
+                 fill="currentColor" class="app-logo">
+                <path fill-rule="evenodd" d="
+                    M 176,20 L 176,236 L 96,236
+                    A 76,76 0 0 1 20,160 L 20,116
+                    A 76,76 0 0 1 96,40 L 140,40 L 140,20 Z
+                    M 136,80 L 96,80
+                    A 36,36 0 0 0 60,116 L 60,160
+                    A 36,36 0 0 0 96,196 L 136,196 Z
+                "/>
+            </svg>
         </div>
 
-        <div class="mt-auto">
-            <hr class="mb-3 mx-2 border-top-1 border-none sidebar-separator">
-            <ul class="list-none p-3 lg:py-3 lg:px-2 m-0">
-                <li>
-                    <p-button icon="bx bx-cog bx-sm" (click)="toggleSettings()" [plain]="true" [text]="true"/>
-                </li>
-            </ul>
+        <hr class="my-0 border-top-1 border-none sidebar-separator w-full">
+
+        <div class="profiles-list flex-grow-1 overflow-y-auto">
+            @for (profile of profiles; track profile._id) {
+                <div class="profile-item"
+                     [class.active]="activeProfile?._id === profile._id"
+                     [title]="profile.name"
+                     (click)="selectProfile(profile)">
+                    <i [class]="profile.logo + ' bx-sm'"></i>
+                </div>
+            }
+        </div>
+
+        <div class="mt-auto flex-shrink-0">
+            <hr class="my-0 border-top-1 border-none sidebar-separator w-full">
+            <div class="profile-item settings-btn" (click)="toggleSettings()" title="Settings">
+                <i class="bx bx-cog bx-sm"></i>
+            </div>
         </div>
     </div>
 </div>

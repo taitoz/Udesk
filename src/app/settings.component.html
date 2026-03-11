@@ -63,12 +63,6 @@
 
                                             <div class="p-toolbar-group-start">
                                                 <p-button
-                                                        pTooltip="load" tooltipPosition="top"
-                                                        icon="bx bx-check"
-                                                        severity="success" [text]="true" [outlined]="true"
-                                                        (onClick)="setActiveProfile(profile._id)">
-                                                </p-button>
-                                                <p-button
                                                         pTooltip="delete" tooltipPosition="top"
                                                         icon="bx bxs-trash"
                                                         severity="danger" [text]="true" [outlined]="true"
@@ -90,16 +84,13 @@
                                         </div>
                                     </td>
                                     <td class="">
-                                        <img [alt]="profile.logo" ngSrc="{{getLogoPath(profile)}}" height="32"
-                                             width="32"
-                                             style="vertical-align: middle" pTooltip="profile logo"
-                                        />
-                                        <div class="flex align-items-center justify-content-center gap-2">
+                                        <div class="flex align-items-center gap-2">
+                                            <i [class]="profile.logo + ' bx-md'" style="vertical-align: middle" pTooltip="profile icon"></i>
                                             @if (editingProfile && editingProfile._id === profile._id) {
                                                 <p-button
                                                         icon="bx bx-pencil"
                                                         [rounded]="true" [text]="true"
-                                                        (onClick)="setProfileLogo()">
+                                                        (onClick)="openIconPicker()">
                                                 </p-button>
                                             }
                                         </div>
@@ -200,20 +191,23 @@
                                             </ng-template>
                                         </p-tree>
                                     </div>
-                                    <div class="services-tree-actions surface-50">
-                                        <p-button
-                                                icon="bx bx-plus"
-                                                label="Add service"
-                                                [text]="true"
-                                                (onClick)="startAddService()"></p-button>
-                                        <p-button
-                                                icon="bx bx-trash-alt"
-                                                label="Delete"
-                                                severity="danger"
-                                                [text]="true"
-                                                [disabled]="!selectedNode"
-                                                (onClick)="deleteItem(selectedNode)"></p-button>
-                                    </div>
+                                    <p-toolbar styleClass="surface-50 services-tree-actions">
+                                        <ng-template #start>
+                                            <div class="flex" style="gap: 10px">
+                                            <p-button
+                                                    icon="bx bx-plus"
+                                                    label="Add service"
+                                                    variant="outlined"
+                                                    (onClick)="startAddService()"></p-button>
+                                            <p-button
+                                                    icon="bx bx-trash-alt"
+                                                    label="Delete"
+                                                    variant="outlined" severity="danger"
+                                                    [disabled]="!selectedNode"
+                                                    (onClick)="deleteItem(selectedNode)"></p-button>
+                                            </div>
+                                        </ng-template>
+                                    </p-toolbar>
                                 </div>
                             </ng-template>
                             <ng-template #panel>
@@ -256,15 +250,15 @@
                                             <div class="field">
                                                 <div class="flex align-items-start gap-2">
                                                     <p-floatlabel variant="on" class="flex-1">
-                                                        <input id="serviceURL"
-                                                               type="text"
-                                                               pInputText
-                                                               [(ngModel)]="treeForm.value"
-                                                               [invalid]="!!urlError"
-                                                               [fluid]="true"
-                                                               (ngModelChange)="onUrlChange()"
-                                                               (keydown.enter)="saveTreeForm()"
-                                                               (keydown.escape)="cancelTreeField('value')"/>
+                                                        <p-autocomplete id="serviceURL"
+                                                                        [(ngModel)]="treeForm.value"
+                                                                        [suggestions]="filteredUrlSuggestions"
+                                                                        (completeMethod)="filterUrlSuggestions($event)"
+                                                                        [invalid]="!!urlError"
+                                                                        [fluid]="true"
+                                                                        (ngModelChange)="onUrlChange()"
+                                                                        (keydown.enter)="saveTreeForm()"
+                                                                        (keydown.escape)="cancelTreeField('value')"/>
                                                         <label for="serviceURL">URL</label>
                                                     </p-floatlabel>
                                                     @if (isTreeFormDirty) {
@@ -286,10 +280,12 @@
                                             @if (selectedNode) {
                                                 <div class="mt-3">
                                                     <h4 class="mb-2">Page actions @if (currentPageActionDomain) { — {{ currentPageActionDomain }} }</h4>
-                                                    <p-message severity="info" [closable]="true">
-                                                        <b>Selector rules:</b> Use CSS selectors only, e.g. <code>#myId</code>, <code>input[name="user"]</code>, <code>button[type="submit"]</code>.
-                                                        Avoid dynamic IDs. Do not use <code>document.querySelector(...)</code>.
-                                                    </p-message>
+                                                    @if (editingPageAction && selectorFocused) {
+                                                        <p-message severity="secondary" [closable]="true">
+                                                            <b>Selector rules:</b> Use CSS selectors only, e.g. <code>#myId</code>, <code>input[name="user"]</code>, <code>button[type="submit"]</code>.
+                                                            Avoid dynamic IDs. Do not use <code>document.querySelector(...)</code>.
+                                                        </p-message>
+                                                    }
                                                     <p-table [value]="currentPageActions"
                                                              class="p-datatable-striped"
                                                              [reorderableRows]="true">
@@ -309,7 +305,7 @@
                                                                 </td>
                                                                 <td>
                                                                     @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
-                                                                        <span class="font-bold ml-2 truncate-text">{{ pageAction.action }}</span>
+                                                                        <span class="ml-2 truncate-text">{{ pageAction.action }}</span>
                                                                     }
                                                                     @if (editingPageAction && editingPageAction._id === pageAction._id) {
                                                                         <p-select placeholder="Select action"
@@ -320,23 +316,25 @@
                                                                 </td>
                                                                 <td>
                                                                     @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
-                                                                        <span class="font-bold ml-2 truncate-text">{{ pageAction.selector }}</span>
+                                                                        <span class="ml-2 truncate-text">{{ pageAction.selector }}</span>
                                                                     }
                                                                     @if (editingPageAction && editingPageAction._id === pageAction._id && editingPageAction.action !== 'delay') {
                                                                         <input pInputText type="text"
                                                                                [(ngModel)]="editingPageAction.selector"
                                                                                [ngStyle]="{'width': '100%'}"
                                                                                placeholder="CSS selector"
+                                                                               (focus)="selectorFocused = true"
+                                                                               (blur)="selectorFocused = false"
                                                                                (keydown.space)="$event.stopPropagation()">
                                                                     }
                                                                 </td>
                                                                 <td>
                                                                     @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
                                                                         @if (pageAction.action === 'typeToInput') {
-                                                                            <span class="font-bold ml-2 truncate-text">{{ pageAction.value }}</span>
+                                                                            <span class="ml-2 truncate-text">{{ pageAction.value }}</span>
                                                                         }
                                                                         @if (pageAction.action === 'delay') {
-                                                                            <span class="font-bold ml-2 truncate-text">{{ pageAction.value }} ms</span>
+                                                                            <span class="ml-2 truncate-text">{{ pageAction.value }} ms</span>
                                                                         }
                                                                     }
                                                                     @if (editingPageAction && editingPageAction._id === pageAction._id) {
@@ -388,22 +386,24 @@
                                                             </tr>
                                                         </ng-template>
                                                         <ng-template pTemplate="summary">
-                                                            <div class="flex align-items-center justify-content-between">
-                                                                <div class="flex gap-2">
+                                                            <p-toolbar class="surface-50">
+                                                                <ng-template #start>
+                                                                    <div class="flex" style="gap: 10px">
                                                                     <p-button icon="bx bx-plus"
                                                                               pTooltip="Add action" tooltipPosition="top"
-                                                                              label="Add page action" [text]="true"
+                                                                              label="Add page action" variant="outlined"
                                                                               (onClick)="addPageAction()"></p-button>
                                                                     <p-button icon="bx bxs-file-import"
                                                                               pTooltip="Import" tooltipPosition="top"
-                                                                              label="Import page actions" [text]="true"
+                                                                              label="Import" variant="outlined" severity="info"
                                                                               (onClick)="importPageActions()"></p-button>
-                                                                </div>
-                                                                <p-button icon="bx bx-save"
-                                                                          pTooltip="Save page actions" tooltipPosition="top"
-                                                                          label="Save page actions" [text]="true"
-                                                                          (onClick)="saveAllPageActions()"></p-button>
-                                                            </div>
+                                                                    <p-button icon="bx bx-save"
+                                                                              pTooltip="Save page actions" tooltipPosition="top"
+                                                                              label="Save" variant="outlined" severity="success"
+                                                                              (onClick)="saveAllPageActions()"></p-button>
+                                                                    </div>
+                                                                </ng-template>
+                                                            </p-toolbar>
                                                         </ng-template>
                                                     </p-table>
                                                 </div>
@@ -412,7 +412,7 @@
                                     } @else {
                                         <div class="services-form-empty">
                                             <p>Select service to edit</p>
-                                            <p>Use drag and drop to reorder</p>
+                                            <p><== Use drag and drop to reorder tree</p>
                                         </div>
                                     }
                                 </div>
@@ -434,6 +434,32 @@
                         (onChange)="toggleTheme($event)"
                         optionLabel="label"
                         optionValue="value"/>
+
+                <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
+                <h3>Primary</h3>
+                <div class="color-picker-row">
+                    @for (color of primaryColors; track color.name) {
+                        <button type="button"
+                                class="color-swatch"
+                                [class.active-color]="selectedPrimaryColor === color.name"
+                                [style.background-color]="getPrimaryDisplayColor(color)"
+                                [title]="color.name"
+                                (click)="setPrimaryColor(color)"></button>
+                    }
+                </div>
+
+                <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
+                <h3>Surface</h3>
+                <div class="color-picker-row">
+                    @for (color of surfaceColors; track color.name) {
+                        <button type="button"
+                                class="color-swatch"
+                                [class.active-color]="selectedSurfaceColor === color.name"
+                                [style.background-color]="getSurfaceDisplayColor(color)"
+                                [title]="color.name"
+                                (click)="setSurfaceColor(color)"></button>
+                    }
+                </div>
 
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
 

@@ -33,6 +33,8 @@ import {ProgressBarModule} from 'primeng/progressbar';
 import {DragDropModule} from 'primeng/dragdrop';
 import {InputNumberModule} from 'primeng/inputnumber';
 import {MessageModule} from 'primeng/message';
+import {AutoCompleteModule} from 'primeng/autocomplete';
+import {ToolbarModule} from 'primeng/toolbar';
 @NgModule({
     imports: [
         TabsModule,
@@ -68,7 +70,9 @@ import {MessageModule} from 'primeng/message';
         ProgressBarModule,
         DragDropModule,
         InputNumberModule,
-        MessageModule
+        MessageModule,
+        AutoCompleteModule,
+        ToolbarModule
     ],
     exports: [
         TabsModule,
@@ -104,7 +108,9 @@ import {MessageModule} from 'primeng/message';
         ProgressBarModule,
         DragDropModule,
         InputNumberModule,
-        MessageModule
+        MessageModule,
+        AutoCompleteModule,
+        ToolbarModule
     ],
     providers: [DialogService]
 })
