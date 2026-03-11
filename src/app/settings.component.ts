@@ -38,6 +38,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     editingProfile: any
     treeForm: TreeNodeForm = this.createEmptyTreeForm()
     isTreeFormDirty = false
+    urlError: string | null = null
+    nameError: string | null = null
 
     theme = 'dark'
     themeOptions: any[] = [{label: 'Dark', value: 'dark'}, {label: 'Light', value: 'light'}]
@@ -272,10 +274,19 @@ export class SettingsComponent implements OnInit, OnDestroy {
             rejectLabel: 'No',
             icon: 'bx bx-exclamation-triangle',
             accept: async () => {
-                // Delete associated page actions from DB by serviceId
+                // Delete page actions: only remove from DB if no other service in profile uses the same domain
                 const serviceId = selectedNode.data?.id
+                const deletedDomain = this.parseDomain(selectedNode.data?.value)
                 if (serviceId) {
-                    await this.uiService.ipcInvoke('pageAction:delete', serviceId)
+                    // Check if any other service in the tree uses the same domain
+                    const domainUsedElsewhere = deletedDomain && this.isDomainUsedByOtherNode(deletedDomain, serviceId, this.sideMenuTreeNodes)
+                    if (domainUsedElsewhere) {
+                        // Just unlink — delete the page action record for this serviceId only
+                        await this.uiService.ipcInvoke('pageAction:delete', serviceId)
+                    } else {
+                        // No other service uses this domain — delete from DB
+                        await this.uiService.ipcInvoke('pageAction:delete', serviceId)
+                    }
                 }
                 this.deleteNodeByData(selectedNode.data, this.sideMenuTreeNodes);
                 this.sideMenuTreeNodes = [...this.sideMenuTreeNodes];
@@ -355,6 +366,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.treeForm = this.createEmptyTreeForm()
         this.treeForm.id = this.pendingDraftNode.data.id
         this.isTreeFormDirty = false
+        this.currentPageActions = []
+        this.currentPageActionDomain = ''
+        this.editingPageAction = null
     }
 
     toggleTheme(event: SelectButtonChangeEvent) {
@@ -366,6 +380,28 @@ export class SettingsComponent implements OnInit, OnDestroy {
         return this.uiService.getLogoPath(profile)
     }
 
+    parseDomain(url: string): string {
+        if (!url) return ''
+        try { return new URL(url).hostname } catch {
+            try { return new URL('https://' + url).hostname } catch {
+                return ''
+            }
+        }
+    }
+
+    isDomainUsedByOtherNode(domain: string, excludeServiceId: any, nodes: TreeNode[]): boolean {
+        for (const node of nodes) {
+            if (node.data?.id !== excludeServiceId && node.data?.value) {
+                const nodeDomain = this.parseDomain(node.data.value)
+                if (nodeDomain === domain) return true
+            }
+            if (node.children && this.isDomainUsedByOtherNode(domain, excludeServiceId, node.children)) {
+                return true
+            }
+        }
+        return false
+    }
+
     loadCurrentPageActions() {
         const serviceId = this.selectedNode?.data?.id ?? this.treeForm.id
         if (!serviceId) {
@@ -374,19 +410,17 @@ export class SettingsComponent implements OnInit, OnDestroy {
             return
         }
 
-        // Parse domain from URL for display
-        const url = this.treeForm.value
-        if (url) {
-            try { this.currentPageActionDomain = new URL(url).hostname } catch {
-                try { this.currentPageActionDomain = new URL('https://' + url).hostname } catch {
-                    this.currentPageActionDomain = ''
-                }
-            }
-        } else {
-            this.currentPageActionDomain = ''
+        this.currentPageActionDomain = this.parseDomain(this.treeForm.value)
+
+        // First try by serviceId
+        let existing = this.pageActions?.find(pa => pa.serviceId === serviceId)
+        // Fall back to domain match (reuse actions from another service with same domain)
+        if (!existing && this.currentPageActionDomain) {
+            existing = this.pageActions?.find(pa => pa.domain === this.currentPageActionDomain)
         }
 
-        const existing = this.pageActions?.find(pa => pa.serviceId === serviceId)
+        console.log('[loadCurrentPageActions] serviceId:', serviceId, 'domain:', this.currentPageActionDomain, 'pageActions count:', this.pageActions?.length, 'found:', !!existing, 'domains in DB:', this.pageActions?.map(pa => pa.domain))
+
         if (existing) {
             this.currentPageActions = JSON.parse(JSON.stringify(existing.actions)).map((a: any) => ({
                 ...a,
@@ -452,6 +486,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.confirmPageActionEdit()
         }
 
+        if (this.currentPageActions.length === 0) {
+            this.messageService.add({severity: 'warn', summary: 'No actions', detail: 'Add at least one action before saving'})
+            return
+        }
+
         let hasErrors = false
         for (let i = 0; i < this.currentPageActions.length; i++) {
             const pa = this.currentPageActions[i]
@@ -499,12 +538,75 @@ export class SettingsComponent implements OnInit, OnDestroy {
         await this.servicesMenuDataSave();
     }
 
-    async saveTreeForm() {
-        if (this.pendingDraftNode) {
-            if (this.treeForm.key.length === 0) {
-                this.messageService.add({severity: 'error', summary: 'save cancelled, name is empty'})
-                return
+    validateUrl(url: string): string | null {
+        if (!url || url.trim().length === 0) {
+            return null // empty URL is allowed for parent nodes
+        }
+        const trimmed = url.trim()
+
+        // URLs must not contain spaces
+        if (/\s/.test(trimmed)) {
+            return 'URL must not contain spaces'
+        }
+
+        // file:/// (triple slash) followed by a valid path
+        if (/^file:/i.test(trimmed)) {
+            if (/^file:\/\/\/[a-zA-Z0-9]/.test(trimmed)) {
+                return null
             }
+            return 'Invalid file path (must start with file:/// e.g. file:///C:/path)'
+        }
+
+        // Valid host patterns
+        const domain = '([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}'
+        const ipv4 = '(\\d{1,3}\\.){3}\\d{1,3}'
+        const localhost = 'localhost'
+        const host = `(${domain}|${ipv4}|${localhost})`
+        const port = '(:\\d{1,5})?'
+        const path = '(\\/.*)?'
+
+        // With scheme: http(s)://host[:port][/path]
+        const withScheme = new RegExp(`^https?:\\/\\/${host}${port}${path}$`, 'i')
+        // Without scheme: host[:port][/path] — must have dot, colon, or slash after hostname
+        const withoutScheme = new RegExp(`^${host}${port}${path}$`, 'i')
+
+        if (withScheme.test(trimmed)) {
+            return null
+        }
+        if (withoutScheme.test(trimmed)) {
+            // Bare "localhost" without port/path is too ambiguous — require more
+            if (/^localhost$/i.test(trimmed)) {
+                return 'Add port or scheme (e.g. localhost:80 or http://localhost)'
+            }
+            return null
+        }
+        return 'Enter a valid URL (e.g. http://example.com or example.com:8080)'
+    }
+
+    onUrlChange() {
+        this.urlError = this.validateUrl(this.treeForm.value)
+        this.markTreeFormDirty()
+        this.loadCurrentPageActions()
+    }
+
+    onNameChange() {
+        this.nameError = this.treeForm.key.trim().length === 0 ? 'Name is required' : null
+        this.markTreeFormDirty()
+    }
+
+    async saveTreeForm() {
+        // Trim values before validation and save
+        this.treeForm.key = this.treeForm.key.trim()
+        this.treeForm.value = this.treeForm.value.trim()
+
+        // Validate name
+        this.nameError = this.treeForm.key.length === 0 ? 'Name is required' : null
+        this.urlError = this.validateUrl(this.treeForm.value)
+        if (this.nameError || this.urlError) {
+            return
+        }
+
+        if (this.pendingDraftNode) {
             const createdNode = this.pendingDraftNode
             createdNode.data.key = this.treeForm.key
             createdNode.data.value = this.treeForm.value
@@ -529,10 +631,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         if (!this.selectedNode?.data || !this.isTreeFormDirty) {
             return
         }
-        if (this.treeForm.key.length == 0) {
-            this.messageService.add({severity: 'error', summary: 'save cancelled, name is empty'})
-            return
-        }
         this.selectedNode.data.key = this.treeForm.key
         this.selectedNode.data.value = this.treeForm.value
         this.selectedNode.label = this.treeForm.key
@@ -546,6 +644,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
         } else {
             this.treeForm[field] = ''
         }
+        if (field === 'key') this.nameError = null
+        if (field === 'value') this.urlError = null
         this.markTreeFormDirty()
     }
 
@@ -574,6 +674,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.treeForm = this.createEmptyTreeForm()
         }
         this.isTreeFormDirty = false
+        this.nameError = null
+        this.urlError = null
         this.loadCurrentPageActions()
     }
 

@@ -23,8 +23,9 @@ import {ConfirmationService, MessageService, TreeDragDropService} from 'primeng/
 import {DialogService} from 'primeng/dynamicdialog';
 import {providePrimeNG} from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
-import {FloatLabel} from "primeng/floatlabel";
+import {FloatLabel, FloatLabelModule} from "primeng/floatlabel";
 import {InputGroupAddon} from "primeng/inputgroupaddon";
+import {InputTextModule} from "primeng/inputtext";
 
 
 @NgModule({
@@ -39,6 +40,8 @@ import {InputGroupAddon} from "primeng/inputgroupaddon";
         ToolbarModule,
         FileUploadModule,
         InputGroupModule,
+        FloatLabelModule,
+        InputTextModule,
         TagModule,
         TreeModule,
         SplitterModule, FloatLabel, InputGroupAddon],

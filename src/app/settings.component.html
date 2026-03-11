@@ -206,6 +206,13 @@
                                                 label="Add service"
                                                 [text]="true"
                                                 (onClick)="startAddService()"></p-button>
+                                        <p-button
+                                                icon="bx bx-trash-alt"
+                                                label="Delete"
+                                                severity="danger"
+                                                [text]="true"
+                                                [disabled]="!selectedNode"
+                                                (onClick)="deleteItem(selectedNode)"></p-button>
                                     </div>
                                 </div>
                             </ng-template>
@@ -217,63 +224,65 @@
                                     @if (selectedNode) {
                                         <div class="services-form p-fluid">
                                             <div class="field">
-                                                <p-floatlabel>
-                                                    <p-inputgroup>
+                                                <div class="flex align-items-start gap-2">
+                                                    <p-floatlabel variant="on" class="flex-1">
                                                         <input id="serviceName"
                                                                type="text"
                                                                pInputText
                                                                [(ngModel)]="treeForm.key"
-                                                               (ngModelChange)="markTreeFormDirty()"
+                                                               [invalid]="!!nameError"
+                                                               [fluid]="true"
+                                                               (ngModelChange)="onNameChange()"
                                                                (keydown.enter)="saveTreeForm()"
                                                                (keydown.escape)="cancelTreeField('key')"/>
-                                                        @if (isTreeFormDirty) {
-                                                            <p-inputgroup-addon>
-                                                                <p-button icon="bx bx-check" severity="success"
-                                                                          [text]="true"
-                                                                          (onClick)="saveTreeForm()"/>
-                                                                <p-button icon="bx bx-x" severity="danger"
-                                                                          [text]="true"
-                                                                          (onClick)="cancelTreeField('key')"/>
-                                                            </p-inputgroup-addon>
-                                                        }
-                                                    </p-inputgroup>
-                                                    <label for="serviceName">Name</label>
-                                                </p-floatlabel>
+                                                        <label for="serviceName">Name</label>
+                                                    </p-floatlabel>
+                                                    @if (isTreeFormDirty) {
+                                                        <div class="flex align-items-center gap-1 mt-1">
+                                                            <p-button icon="bx bx-check" severity="success"
+                                                                      [rounded]="true" [text]="true"
+                                                                      [disabled]="!!nameError || !!urlError"
+                                                                      (onClick)="saveTreeForm()"/>
+                                                            <p-button icon="bx bx-x" severity="danger"
+                                                                      [rounded]="true" [text]="true"
+                                                                      (onClick)="cancelTreeField('key')"/>
+                                                        </div>
+                                                    }
+                                                </div>
+                                                @if (nameError) {
+                                                    <p-message severity="error" size="small" variant="simple">{{ nameError }}</p-message>
+                                                }
                                             </div>
                                             <div class="field">
-                                                <p-floatlabel>
-                                                    <p-inputgroup>
-                                                        <input id="serviceLink"
+                                                <div class="flex align-items-start gap-2">
+                                                    <p-floatlabel variant="on" class="flex-1">
+                                                        <input id="serviceURL"
                                                                type="text"
                                                                pInputText
                                                                [(ngModel)]="treeForm.value"
-                                                               (ngModelChange)="markTreeFormDirty()"
+                                                               [invalid]="!!urlError"
+                                                               [fluid]="true"
+                                                               (ngModelChange)="onUrlChange()"
                                                                (keydown.enter)="saveTreeForm()"
                                                                (keydown.escape)="cancelTreeField('value')"/>
-                                                        @if (isTreeFormDirty) {
-                                                            <p-inputgroup-addon>
-                                                                <p-button icon="bx bx-check" severity="success"
-                                                                          [text]="true"
-                                                                          (onClick)="saveTreeForm()"/>
-                                                                <p-button icon="bx bx-x" severity="danger"
-                                                                          [text]="true"
-                                                                          (onClick)="cancelTreeField('value')"/>
-                                                            </p-inputgroup-addon>
-                                                        }
-                                                    </p-inputgroup>
-                                                    <label for="serviceLink">Link</label>
-                                                </p-floatlabel>
+                                                        <label for="serviceURL">URL</label>
+                                                    </p-floatlabel>
+                                                    @if (isTreeFormDirty) {
+                                                        <div class="flex align-items-center gap-1 mt-1">
+                                                            <p-button icon="bx bx-check" severity="success"
+                                                                      [rounded]="true" [text]="true"
+                                                                      [disabled]="!!nameError || !!urlError"
+                                                                      (onClick)="saveTreeForm()"/>
+                                                            <p-button icon="bx bx-x" severity="danger"
+                                                                      [rounded]="true" [text]="true"
+                                                                      (onClick)="cancelTreeField('value')"/>
+                                                        </div>
+                                                    }
+                                                </div>
+                                                @if (urlError) {
+                                                    <p-message severity="error" size="small" variant="simple">{{ urlError }}</p-message>
+                                                }
                                             </div>
-                                            <div class="services-form-actions surface-50">
-                                                <p-button
-                                                        icon="bx bx-trash-alt"
-                                                        label="Delete"
-                                                        severity="danger"
-                                                        [text]="true"
-                                                        [disabled]="!selectedNode"
-                                                        (onClick)="deleteItem(selectedNode)"></p-button>
-                                            </div>
-
                                             @if (selectedNode) {
                                                 <div class="mt-3">
                                                     <h4 class="mb-2">Page actions @if (currentPageActionDomain) { — {{ currentPageActionDomain }} }</h4>
@@ -383,15 +392,16 @@
                                                                 <div class="flex gap-2">
                                                                     <p-button icon="bx bx-plus"
                                                                               pTooltip="Add action" tooltipPosition="top"
-                                                                              label="Add" [text]="true"
+                                                                              label="Add page action" [text]="true"
                                                                               (onClick)="addPageAction()"></p-button>
                                                                     <p-button icon="bx bxs-file-import"
                                                                               pTooltip="Import" tooltipPosition="top"
-                                                                              label="Import" [text]="true"
+                                                                              label="Import page actions" [text]="true"
                                                                               (onClick)="importPageActions()"></p-button>
                                                                 </div>
                                                                 <p-button icon="bx bx-save"
-                                                                          label="Save"
+                                                                          pTooltip="Save page actions" tooltipPosition="top"
+                                                                          label="Save page actions" [text]="true"
                                                                           (onClick)="saveAllPageActions()"></p-button>
                                                             </div>
                                                         </ng-template>

@@ -122,16 +122,6 @@
   justify-content: flex-start;
 }
 
-.services-form-actions {
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  align-items: center;
-  justify-content: flex-start;
-}
-
 .services-tree-list {
   flex: 1;
   overflow: auto;
@@ -149,6 +139,11 @@
 
 .services-tree-node-link {
   color: var(--text-color-secondary, #9ca3af);
+  display: inline-block;
+  max-width: 60ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .services-form-header {
@@ -165,6 +160,7 @@
 .services-form .field {
   width: 100%;
 }
+
 
 :host ::ng-deep .p-datatable-reorderablerow-handle {
   cursor: grab;
