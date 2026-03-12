@@ -310,9 +310,12 @@ ipcMain.on('online-status-changed', (event, status) => {
 ipcMain.handle('back', () => {
     mainView.webContents.navigationHistory.goBack()
 })
+ipcMain.handle('forward', () => {
+    mainView.webContents.navigationHistory.goForward()
+})
 ipcMain.handle('reload', () => {
     if (mainView.webContents.getURL().includes('primeng-ui')) return;
-    mainView.webContents.reload()
+    mainView.webContents.reloadIgnoringCache()
 })
 
 ipcMain.handle('load-url', async (event, args) => {
@@ -484,6 +487,9 @@ ipcMain.handle('profile:export', async (event, args) => {
 async function loadUrl(urlStr, serviceId) {
     try {
         const url = new URL(urlStr)
+        // Clear HTTP cache before navigation so stale cached UIs don't load
+        // This preserves localStorage/cookies (TrguiNG settings etc.)
+        await mainView.webContents.session.clearCache()
         await page.goto(urlStr, {
             waitUntil: "domcontentloaded",
             // load

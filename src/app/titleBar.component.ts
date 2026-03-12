@@ -24,6 +24,11 @@ export class TitleBarComponent implements OnInit{
         })
     }
 
+    toggleSideMenu() {
+        this.uiService.settingsToggle.emit(false)
+        this.uiService.sideMenuToggle.emit('servicesMenu')
+    }
+
     callRenderer(channel: string) {
         this.uiService.ipcInvoke(channel).then()
     }

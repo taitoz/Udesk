@@ -11,6 +11,7 @@ export class SideBarComponent implements OnInit {
 
     profiles: any[] = []
     activeProfile: any
+    settingsActive = false
 
     constructor(
         private uiService: UiService,
@@ -28,6 +29,11 @@ export class SideBarComponent implements OnInit {
 
         this.uiService.profilesListChange.subscribe(() => {
             this.loadProfiles()
+        })
+
+        this.uiService.settingsToggle.subscribe(show => {
+            this.settingsActive = (show === null) ? !this.settingsActive : show
+            this.cdr.detectChanges()
         })
     }
 
@@ -53,13 +59,11 @@ export class SideBarComponent implements OnInit {
             this.uiService.sideMenuToggle.emit('servicesMenu')
             return
         }
-        // Switch profile: close sideMenu first, then reopen after profile is set
+        // Different profile — just activate it, don't open sideMenu
         this.uiService.sideMenuToggle.emit(null)
         this.uiService.ipcInvoke('profiles:setActive', profile._id).then(() => {
             this.activeProfile = profile
             this.cdr.detectChanges()
-            // Open sideMenu after a tick so it doesn't toggle off
-            setTimeout(() => this.uiService.sideMenuToggle.emit('servicesMenu'), 0)
         })
     }
 

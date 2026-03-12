@@ -4,12 +4,11 @@
 
         <!--<div class="flex align-items-center">-->
         <a pRipple=""
-           class="p-ripple p-element flex align-items-center justify-content-center cursor-pointer
+           class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
                        titlebar-btn transition-duration-150 transition-colors h32"
-           style="width: 48px; flex-shrink: 0;"
-           (click)="callRenderer('back')"
+           (click)="toggleSideMenu()"
         >
-            <i class="bx bx-left-arrow-alt bx-sm"></i>
+            <i class="bx bx-menu bx-sm mr-2 lg:mr-0 text-base"></i>
         </a>
         <a pRipple=""
            class="p-ripple p-element flex align-items-center cursor-pointer p-3 lg:justify-content-center
@@ -17,6 +16,14 @@
            (click)="callRenderer('reload')"
         >
             <i class="bx bx-refresh bx-sm mr-2 lg:mr-0 text-base"></i>
+        </a>
+        <a pRipple=""
+           class="p-ripple p-element flex align-items-center justify-content-center cursor-pointer
+                       titlebar-btn transition-duration-150 transition-colors h32"
+           style="width: 48px; flex-shrink: 0;"
+           (click)="callRenderer('back')"
+        >
+            <i class="bx bx-chevron-left bx-sm mr-2 lg:mr-0 text-base"></i>
         </a>
         <!--</div>-->
         <div class="draggable flex-grow-1">

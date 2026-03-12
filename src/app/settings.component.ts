@@ -166,6 +166,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             header: 'Choose Icon',
             width: '500px',
             modal: true,
+            closable: true,
             dismissableMask: true
         });
         ref.onClose.subscribe((iconClass: string) => {
@@ -450,22 +451,23 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     loadCurrentPageActions() {
         const serviceId = this.selectedNode?.data?.id ?? this.treeForm.id
-        if (!serviceId) {
+        this.currentPageActionDomain = this.parseDomain(this.treeForm.value)
+
+        if (!this.currentPageActionDomain) {
             this.currentPageActions = []
-            this.currentPageActionDomain = ''
+            this.editingPageAction = null
             return
         }
 
-        this.currentPageActionDomain = this.parseDomain(this.treeForm.value)
-
-        // First try by serviceId
-        let existing = this.pageActions?.find(pa => pa.serviceId === serviceId)
-        // Fall back to domain match (reuse actions from another service with same domain)
-        if (!existing && this.currentPageActionDomain) {
-            existing = this.pageActions?.find(pa => pa.domain === this.currentPageActionDomain)
+        // Match by domain of the current URL — this ensures changing URL clears/reloads correctly
+        let existing = this.pageActions?.find(pa => pa.domain === this.currentPageActionDomain)
+        // Fall back to serviceId match only if domain matched too
+        if (!existing && serviceId) {
+            const byServiceId = this.pageActions?.find(pa => pa.serviceId === serviceId)
+            if (byServiceId && byServiceId.domain === this.currentPageActionDomain) {
+                existing = byServiceId
+            }
         }
-
-        console.log('[loadCurrentPageActions] serviceId:', serviceId, 'domain:', this.currentPageActionDomain, 'pageActions count:', this.pageActions?.length, 'found:', !!existing, 'domains in DB:', this.pageActions?.map(pa => pa.domain))
 
         if (existing) {
             this.currentPageActions = JSON.parse(JSON.stringify(existing.actions)).map((a: any) => ({
