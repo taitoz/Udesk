@@ -363,6 +363,12 @@ ipcMain.on('settings:setPrimaryColor', (event, args) => {
 ipcMain.on('settings:getSurfaceColor', (event) => {
     event.returnValue = appCfg.get('surfaceColor', 'zinc')
 })
+ipcMain.on('settings:getLang', (event) => {
+    event.returnValue = appCfg.get('lang', 'en')
+})
+ipcMain.on('settings:setLang', (event, args) => {
+    appCfg.set('lang', args[0])
+})
 ipcMain.on('settings:setSurfaceColor', (event, args) => {
     appCfg.set('surfaceColor', args[0])
     // Update titlebar overlay to match new surface color

@@ -27,6 +27,9 @@ import Aura from '@primeuix/themes/aura';
 import {FloatLabel, FloatLabelModule} from "primeng/floatlabel";
 import {InputGroupAddon} from "primeng/inputgroupaddon";
 import {InputTextModule} from "primeng/inputtext";
+import {Fieldset} from "primeng/fieldset";
+import {ConfirmPopupModule} from "primeng/confirmpopup";
+import {TreeSelectModule} from "primeng/treeselect";
 
 
 @NgModule({
@@ -45,7 +48,7 @@ import {InputTextModule} from "primeng/inputtext";
         InputTextModule,
         TagModule,
         TreeModule,
-        SplitterModule, FloatLabel, InputGroupAddon],
+        SplitterModule, FloatLabel, InputGroupAddon, Fieldset, ConfirmPopupModule, TreeSelectModule],
     providers: [
         UiService,
         provideHttpClient(withInterceptorsFromDi()),

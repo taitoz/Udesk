@@ -12,6 +12,8 @@ export class SideBarComponent implements OnInit {
     profiles: any[] = []
     activeProfile: any
     settingsActive = false
+    clickedProfileId: string | null = null
+    settingsClicked = false
 
     constructor(
         private uiService: UiService,
@@ -53,6 +55,13 @@ export class SideBarComponent implements OnInit {
     }
 
     selectProfile(profile: any) {
+        // Trigger animation
+        this.clickedProfileId = profile._id
+        setTimeout(() => {
+            this.clickedProfileId = null
+            this.cdr.detectChanges()
+        }, 600) // Match animation duration
+        
         this.uiService.settingsToggle.emit(false)
         if (this.activeProfile?._id === profile._id) {
             // Already active — toggle sideMenu
@@ -68,6 +77,13 @@ export class SideBarComponent implements OnInit {
     }
 
     toggleSettings() {
+        // Trigger animation
+        this.settingsClicked = true
+        setTimeout(() => {
+            this.settingsClicked = false
+            this.cdr.detectChanges()
+        }, 300) // Match rotation animation duration
+        
         this.uiService.settingsToggle.emit(null);
     }
 }

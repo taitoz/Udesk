@@ -40,6 +40,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     pendingInsertParentId: any | null = null
     pendingInsertIndex: number | null = null
     editingProfile: any
+    selectedProfile: any = null
+    editingProfileTreeNodes: TreeNode[] = []
+    selectedHomeNode: TreeNode | null = null
     treeForm: TreeNodeForm = this.createEmptyTreeForm()
     isTreeFormDirty = false
     urlError: string | null = null
@@ -55,13 +58,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
     getPrimaryDisplayColor = getPrimaryDisplayColor
     getSurfaceDisplayColor = getSurfaceDisplayColor
 
+    lang = 'en'
+    langOptions: string[] = ['ru', 'en']
     profiles: {
         _id: string;
         active: boolean;
         name: string;
         logo: string,
         homeUrl: string,
-        lang: string,
         sideMenuTreeNodes: TreeNode[]
     }[]
     activeProfile: any
@@ -80,6 +84,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     pageActionOptions: string[] = Object.values(PageActionType)
     editingPageAction: any = null
     selectorFocused = false
+    actionError: string | null = null
+    selectorError: string | null = null
+    valueError: string | null = null
     urlSuggestions: string[] = ['http://', 'https://', 'file:///', 'http://localhost', 'http://127.0.0.1']
     filteredUrlSuggestions: string[] = []
 
@@ -101,6 +108,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         // Load saved primary/surface color
         this.selectedPrimaryColor = this.uiService.ipcSendSync('settings:getPrimaryColor') || 'emerald'
         this.selectedSurfaceColor = this.uiService.ipcSendSync('settings:getSurfaceColor') || 'zinc'
+        this.lang = this.uiService.ipcSendSync('settings:getLang') || 'en'
 
         await this.loadProfiles()
         await this.loadPageActions()
@@ -149,16 +157,43 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     startProfileKeyEdit(profile: any) {
         profile.sideMenuTreeNodes?.forEach((node: TreeNode<any>) => this.stripTreeParents(node));
-        //delete profile['_id']
-        this.editingProfile = profile;
+        this.editingProfile = {...profile};
+        this.editingProfileTreeNodes = this.buildTreeSelectNodes(profile.sideMenuTreeNodes || [])
+        this.selectedHomeNode = this.findTreeSelectNodeByUrl(this.editingProfileTreeNodes, profile.homeUrl) || null
     }
 
     saveProfileKeyEdit() {
+        if (this.selectedHomeNode) {
+            this.editingProfile.homeUrl = this.selectedHomeNode.data?.value || ''
+        }
         this.uiService.ipcInvoke('profile:update', this.editingProfile).then(() => {
             this.loadProfiles()
             this.uiService.profilesListChange.emit()
         })
         this.editingProfile = null;
+        this.editingProfileTreeNodes = []
+        this.selectedHomeNode = null
+    }
+
+    private buildTreeSelectNodes(nodes: TreeNode[]): TreeNode[] {
+        return nodes.map(node => ({
+            key: node.data?.id || node.key,
+            label: node.data?.key || node.label || '',
+            data: node.data,
+            children: node.children ? this.buildTreeSelectNodes(node.children) : [],
+            selectable: !node.children?.length // only leaf nodes are selectable
+        }))
+    }
+
+    private findTreeSelectNodeByUrl(nodes: TreeNode[], url: string): TreeNode | null {
+        for (const node of nodes) {
+            if (node.data?.value === url) return node
+            if (node.children) {
+                const found = this.findTreeSelectNodeByUrl(node.children, url)
+                if (found) return found
+            }
+        }
+        return null
     }
 
     openIconPicker() {
@@ -180,6 +215,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     cancelProfileKeyEdit() {
         this.loadProfiles()
         this.editingProfile = null;
+        this.editingProfileTreeNodes = []
+        this.selectedHomeNode = null
     }
 
     exportProfile(profileId: string) {
@@ -211,17 +248,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
         })
     }
 
-    deleteProfile(profileId: string) {
+    deleteProfile(event: Event, profileId: string) {
         if (this.profiles.length === 1) {
             this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'})
             return
         }
         this.confirmationService.confirm({
-            header: 'Confirmation',
-            message: 'Delete?',
+            target: event.target as EventTarget,
+            message: 'Delete this profile?',
+            icon: 'bx bx-exclamation-triangle',
+            position: 'bottom',
             acceptLabel: 'Yes',
             rejectLabel: 'No',
-            icon: 'bx bx-exclamation-triangle',
             accept: async () => {
                 // let index = this.profilesFlat.findIndex(item => item.name === profileName)
                 // console.log(index)
@@ -301,17 +339,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
         }
     }
 
-    deleteItem(selectedNode: TreeNode) {
+    deleteItem(event: Event, selectedNode: TreeNode) {
         if (this.sideMenuTreeNodes.length === 1 && selectedNode.parent === null) {
             this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
             return;
         }
         this.confirmationService.confirm({
-            header: 'Confirmation',
-            message: 'Delete?',
+            target: event.target as EventTarget,
+            message: 'Delete this service?',
+            icon: 'bx bx-exclamation-triangle',
+            position: 'bottom',
             acceptLabel: 'Yes',
             rejectLabel: 'No',
-            icon: 'bx bx-exclamation-triangle',
             accept: async () => {
                 // Delete page actions: only remove from DB if no other service in profile uses the same domain
                 const serviceId = selectedNode.data?.id
@@ -415,6 +454,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.uiService.ipcSend('settings:toggleTheme', this.theme)
     }
 
+    setLang(event: any) {
+        this.uiService.ipcSend('settings:setLang', this.lang)
+    }
+
     setPrimaryColor(color: PrimaryColor) {
         this.selectedPrimaryColor = color.name
         updatePrimaryPalette(color.palette as any)
@@ -429,7 +472,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     parseDomain(url: string): string {
         if (!url) return ''
-        try { return new URL(url).hostname } catch {
+        try {
+            const parsed = new URL(url)
+            // For file:// URLs, use the pathname as the domain since hostname is empty
+            if (parsed.protocol === 'file:') {
+                return parsed.pathname || 'file'
+            }
+            return parsed.hostname
+        } catch {
             try { return new URL('https://' + url).hostname } catch {
                 return ''
             }
@@ -484,13 +534,75 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.editingPageAction = JSON.parse(JSON.stringify(pageAction))
     }
 
-    confirmPageActionEdit() {
+    onPageActionTypeChange() {
         if (!this.editingPageAction) return
+        
+        // Clear fields based on new action type
+        if (this.editingPageAction.action === 'delay') {
+            // delay only needs value (ms), clear selector
+            this.editingPageAction.selector = ''
+            this.editingPageAction.value = null
+        } else if (this.editingPageAction.action === 'typeToInput') {
+            // typeToInput needs selector and value, clear and reset
+            if (!this.editingPageAction.selector) this.editingPageAction.selector = ''
+            if (!this.editingPageAction.value) this.editingPageAction.value = ''
+        } else {
+            // waitElement, clickElement, selectElement only need selector
+            this.editingPageAction.value = null
+            if (!this.editingPageAction.selector) this.editingPageAction.selector = ''
+        }
+    }
+
+    async confirmPageActionEdit() {
+        if (!this.editingPageAction) return
+        
+        // Clear previous errors
+        this.actionError = null
+        this.selectorError = null
+        this.valueError = null
+        
+        // Validate action is selected
+        if (!this.editingPageAction.action || this.editingPageAction.action.trim().length === 0) {
+            this.actionError = 'Action is required'
+            return
+        }
+        
+        // Action-specific validation
+        if (this.editingPageAction.action === 'delay') {
+            // delay: only value (ms) is required
+            if (!this.editingPageAction.value || this.editingPageAction.value <= 0) {
+                this.valueError = 'Delay value (ms) is required'
+                return
+            }
+        } else if (this.editingPageAction.action === 'typeToInput') {
+            // typeToInput: both selector and value are required
+            if (!this.editingPageAction.selector || this.editingPageAction.selector.trim().length === 0) {
+                this.selectorError = 'Selector is required'
+                return
+            }
+            if (!this.editingPageAction.value || this.editingPageAction.value.trim().length === 0) {
+                this.valueError = 'Value is required'
+                return
+            }
+        } else {
+            // waitElement, clickElement, selectElement: only selector is required
+            if (!this.editingPageAction.selector || this.editingPageAction.selector.trim().length === 0) {
+                this.selectorError = 'Selector is required'
+                return
+            }
+        }
+        
         const index = this.currentPageActions.findIndex((pa: any) => pa._id === this.editingPageAction._id)
         if (index !== -1) {
             this.currentPageActions[index] = {...this.editingPageAction}
         }
+        this.actionError = null
+        this.selectorError = null
+        this.valueError = null
         this.editingPageAction = null
+        
+        // Auto-save to database after successful edit
+        await this.saveAllPageActions()
     }
 
     cancelPageActionEdit() {
@@ -500,6 +612,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
                 this.currentPageActions = this.currentPageActions.filter((pa: any) => pa._id !== this.editingPageAction._id)
             }
         }
+        this.actionError = null
+        this.selectorError = null
+        this.valueError = null
         this.editingPageAction = null
     }
 
@@ -517,11 +632,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.startPageActionEdit(newAction)
     }
 
-    deletePageAction(pageAction: any) {
+    async deletePageAction(pageAction: any) {
         this.currentPageActions = this.currentPageActions.filter((pa: any) => pa._id !== pageAction._id)
         if (this.editingPageAction && this.editingPageAction._id === pageAction._id) {
             this.editingPageAction = null
         }
+        // Auto-save to database after deletion
+        await this.saveAllPageActions()
     }
 
     async saveAllPageActions() {

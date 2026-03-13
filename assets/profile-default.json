@@ -3,7 +3,6 @@
   "name": "local",
   "logo": "bx bx-desktop",
   "homeUrl": "http://localhost:80",
-  "lang": "en",
   "sideMenuTreeNodes": [
     {
       "data": {

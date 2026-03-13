@@ -1,24 +1,4 @@
 <div class="card surface-50">
-    <!--  <h5>Programmatic</h5>-->
-    <!--  <div style="padding: .5em 0 1em 0">-->
-    <!--    <p-button-->
-    <!--      (click)="activeIndex = 0"-->
-    <!--      class="p-button-text"-->
-    <!--      pButtonLabel="Activate 1rd"-->
-    <!--    ></p-button>-->
-    <!--    <p-button-->
-    <!--      (click)="activeIndex = 1"-->
-    <!--      class="p-button-text"-->
-    <!--      pButtonLabel="Activate 2rd"-->
-    <!--      [style]="{ 'margin-left': '.5em' }"-->
-    <!--    ></p-button>-->
-    <!--    <p-button-->
-    <!--      (click)="activeIndex = 2"-->
-    <!--      class="p-button-text"-->
-    <!--      pButtonLabel="Activate 3rd"-->
-    <!--      [style]="{ 'margin-left': '.5em' }"-->
-    <!--    ></p-button>-->
-    <!--  </div>-->
     <h2 class="m-3">Settings</h2>
     <p-tabs [(value)]="activeTabIndex">
         <p-tablist>
@@ -31,128 +11,122 @@
                 <div class="tableContainer">
                     @if (showTable) {
                         <p-table [value]="profiles"
-                                 class="p-datatable-striped"
+                                 class="p-datatable"
                                  [scrollable]="true"
-                                 scrollHeight="flex">
+                                 selectionMode="single"
+                                 [(selection)]="selectedProfile"
+                                 dataKey="_id">
                             <ng-template pTemplate="header">
                                 <tr>
                                     <th>Name</th>
                                     <th>Image</th>
-                                    <th>homeUrl</th>
-                                    <th>lang</th>
-                                    <th></th>
+                                    <th>Start URL</th>
+                                    <th style="width:10%"></th>
                                 </tr>
                             </ng-template>
                             <ng-template pTemplate="body" let-profile>
-                                <tr>
-                                    <td class="">
-                                        <div>
-                                            @if (!editingProfile) {
-                                                <span class="font-bold ml-2 truncate-text">
-                                            {{ profile.name }}
-                                        </span>
-                                            } @else {
-                                                <input
-                                                        pInputText type="text"
-                                                        [(ngModel)]="profile.name"
-                                                        [ngStyle]="{'width': '100%'}"
-                                                        (keydown.space)="$event.stopPropagation()"
-                                                        (keydown.enter)="saveProfileKeyEdit()"
-                                                        (keydown.escape)="cancelProfileKeyEdit()">
-                                            }
-
-                                            <div class="p-toolbar-group-start">
-                                                <p-button
-                                                        pTooltip="delete" tooltipPosition="top"
-                                                        icon="bx bxs-trash"
-                                                        severity="danger" [text]="true" [outlined]="true"
-                                                        (onClick)="deleteProfile(profile._id)">
-                                                </p-button>
-                                                <p-button
-                                                        pTooltip="export" tooltipPosition="top"
-                                                        icon="bx bxs-file-export"
-                                                        severity="info" [text]="true" [outlined]="true"
-                                                        (onClick)="exportProfile(profile._id)">
-                                                </p-button>
+                                <tr [pSelectableRow]="profile" [pSelectableRowDisabled]="editingProfile && editingProfile._id === profile._id">
+                                    <td>
+                                        @if (!editingProfile || editingProfile._id !== profile._id) {
+                                            <div class="flex align-items-center gap-2">
+                                                <span class="font-bold ml-2 truncate-text">{{ profile.name }}</span>
+                                                @if (activeProfile._id === profile._id) {
+                                                    <p-tag [value]="'active'" [severity]="'success'"/>
+                                                }
                                             </div>
-
-                                            @if (activeProfile._id === profile._id) {
-                                                <p-tag
-                                                        [value]="'active'"
-                                                        [severity]="'success'"/>
-                                            }
-                                        </div>
-                                    </td>
-                                    <td class="">
-                                        <div class="flex align-items-center gap-2">
-                                            <i [class]="profile.logo + ' bx-md'" style="vertical-align: middle" pTooltip="profile icon"></i>
-                                            @if (editingProfile && editingProfile._id === profile._id) {
-                                                <p-button
-                                                        icon="bx bx-pencil"
-                                                        [rounded]="true" [text]="true"
-                                                        (onClick)="openIconPicker()">
-                                                </p-button>
-                                            }
-                                        </div>
-                                    </td>
-                                    <td class="">
-                                        @if (!editingProfile) {
-                                            <span class="truncate-text">
-                                        {{ profile.homeUrl }}
-                                    </span>
-                                        } @else {
-                                            <input
-                                                    pInputText type="text"
-                                                    [(ngModel)]="profile.homeUrl"
-                                                    [ngStyle]="{'width': '100%'}"
-                                                    (keydown.space)="$event.stopPropagation()"
-                                                    (keydown.enter)="saveProfileKeyEdit()"
-                                                    (keydown.escape)="cancelProfileKeyEdit()">
+                                        }
+                                        @if (editingProfile && editingProfile._id === profile._id) {
+                                            <input pInputText type="text"
+                                                   [(ngModel)]="editingProfile.name"
+                                                   [ngStyle]="{'width': '100%'}"
+                                                   (keydown.space)="$event.stopPropagation()"
+                                                   (keydown.enter)="saveProfileKeyEdit()"
+                                                   (keydown.escape)="cancelProfileKeyEdit()">
                                         }
                                     </td>
-                                    <td class="">
-                                        <p-select placeholder="Select"
-                                                  [options]="['ru', 'en']"
-                                                  [(ngModel)]="profile.lang"/>
+                                    <td>
+                                        @if (!editingProfile || editingProfile._id !== profile._id) {
+                                            <i [class]="profile.logo + ' bx-md'" style="vertical-align: middle"></i>
+                                        }
+                                        @if (editingProfile && editingProfile._id === profile._id) {
+                                            <div class="flex align-items-center gap-2">
+                                                <i [class]="editingProfile.logo + ' bx-md'" style="vertical-align: middle"></i>
+                                                <p-button icon="bx bx-pencil"
+                                                          pTooltip="Change icon" tooltipPosition="top"
+                                                          [rounded]="true" [text]="true"
+                                                          (onClick)="openIconPicker()"></p-button>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!editingProfile || editingProfile._id !== profile._id) {
+                                            <span class="ml-2 truncate-text">{{ profile.homeUrl }}</span>
+                                        }
+                                        @if (editingProfile && editingProfile._id === profile._id) {
+                                            <p-treeselect
+                                                    [(ngModel)]="selectedHomeNode"
+                                                    [options]="editingProfileTreeNodes"
+                                                    placeholder="Select start page"
+                                                    [ngStyle]="{'width': '100%'}"
+                                                    appendTo="body"
+                                                    selectionMode="single"/>
+                                        }
                                     </td>
                                     <td style="width:10%">
                                         <div class="flex align-items-center justify-content-center gap-2">
                                             @if (!editingProfile || editingProfile._id !== profile._id) {
-                                                <p-button
-                                                        icon="bx bx-pencil"
-                                                        [rounded]="true" [text]="true"
-                                                        (onClick)="startProfileKeyEdit(profile)">
-                                                </p-button>
+                                                <p-button icon="bx bx-pencil"
+                                                          pTooltip="Edit" tooltipPosition="top"
+                                                          [rounded]="true" [text]="true"
+                                                          (onClick)="startProfileKeyEdit(profile)"></p-button>
                                             }
                                             @if (editingProfile && editingProfile._id === profile._id) {
-                                                <p-button
-                                                        icon="bx bx-check"
-                                                        severity="success" [rounded]="true" [text]="true" class="mr-2"
-                                                        (onClick)="saveProfileKeyEdit()">
-                                                </p-button>
-                                                <p-button
-                                                        icon="bx bx-x"
-                                                        severity="danger" [rounded]="true" [text]="true"
-                                                        (onClick)="cancelProfileKeyEdit()">
-                                                </p-button>
+                                                <p-button icon="bx bx-check"
+                                                          pTooltip="Save" tooltipPosition="top"
+                                                          severity="success" [rounded]="true" [text]="true"
+                                                          (onClick)="saveProfileKeyEdit()"></p-button>
+                                                <p-button icon="bx bx-x"
+                                                          pTooltip="Cancel edit" tooltipPosition="top"
+                                                          severity="danger" [rounded]="true" [text]="true"
+                                                          (onClick)="cancelProfileKeyEdit()"></p-button>
                                             }
                                         </div>
                                     </td>
                                 </tr>
                             </ng-template>
                             <ng-template pTemplate="summary">
-                                <div class="profiles-form-actions surface-50">
-                                    <p-button
-                                            icon="bx bx-down-arrow-alt"
-                                            pTooltip="Add" tooltipPosition="top"
-                                            label="Add" [text]="true"
-                                            (onClick)="addProfile()"></p-button>
-                                    <p-button
-                                            icon="bx bxs-file-import"
-                                            pTooltip="Import" tooltipPosition="top"
-                                            label="Import" [text]="true"
-                                            (onClick)="importProfile()"></p-button>
-                                </div>
+                                <p-toolbar class="surface-50">
+                                    <ng-template #start>
+                                        <div class="flex" style="gap: 10px">
+                                            <p-button icon="bx bx-plus"
+                                                      pTooltip="Add profile"
+                                                      tooltipPosition="top"
+                                                      variant="outlined"
+                                                      (onClick)="addProfile()"></p-button>
+                                            <p-button icon="bx bxs-trash"
+                                                      pTooltip="Delete profile"
+                                                      tooltipPosition="top"
+                                                      variant="outlined"
+                                                      severity="danger"
+                                                      [disabled]="!selectedProfile || profiles.length <= 1"
+                                                      (onClick)="deleteProfile($event, selectedProfile?._id)"></p-button>
+                                            <p-button icon="bx bxs-file-import"
+                                                      pTooltip="Import profile"
+                                                      tooltipPosition="top"
+                                                      variant="outlined"
+                                                      severity="contrast"
+                                                      [disabled]="!selectedProfile"
+                                                      (onClick)="importProfile()"></p-button>
+                                            <p-button icon="bx bxs-file-export"
+                                                      pTooltip="Export profile"
+                                                      tooltipPosition="top"
+                                                      variant="outlined"
+                                                      severity="contrast"
+                                                      [disabled]="!selectedProfile"
+                                                      (onClick)="exportProfile(selectedProfile?._id)"></p-button>
+                                        </div>
+                                    </ng-template>
+                                </p-toolbar>
                             </ng-template>
                         </p-table>
                     }
@@ -181,6 +155,7 @@
                                                 (onNodeSelect)="onSelect($event)"
                                                 (onNodeUnselect)="onNodeUnselect()"
                                                 (onNodeDrop)="onTreeNodeDrop($event)">
+                                            <br>
                                             <ng-template let-node pTemplate="default">
                                                 <div class="services-tree-node">
                                                     <span class="services-tree-node-name">{{ node.data?.key }}</span>
@@ -191,20 +166,21 @@
                                             </ng-template>
                                         </p-tree>
                                     </div>
-                                    <p-toolbar styleClass="surface-50 services-tree-actions">
+                                    <p-toolbar class="surface-50 services-tree-actions">
                                         <ng-template #start>
                                             <div class="flex" style="gap: 10px">
-                                            <p-button
-                                                    icon="bx bx-plus"
-                                                    label="Add service"
-                                                    variant="outlined"
-                                                    (onClick)="startAddService()"></p-button>
-                                            <p-button
-                                                    icon="bx bx-trash-alt"
-                                                    label="Delete"
-                                                    variant="outlined" severity="danger"
-                                                    [disabled]="!selectedNode"
-                                                    (onClick)="deleteItem(selectedNode)"></p-button>
+                                                <p-button icon="bx bx-plus"
+                                                          pTooltip="Add service"
+                                                          tooltipPosition="top"
+                                                          variant="outlined"
+                                                          (onClick)="startAddService()"></p-button>
+                                                <p-button icon="bx bx-trash-alt"
+                                                          pTooltip="Delete"
+                                                          tooltipPosition="top"
+                                                          variant="outlined"
+                                                          severity="danger"
+                                                          [disabled]="!selectedNode"
+                                                          (onClick)="deleteItem($event, selectedNode)"></p-button>
                                             </div>
                                         </ng-template>
                                     </p-toolbar>
@@ -212,83 +188,86 @@
                             </ng-template>
                             <ng-template #panel>
                                 <div class="services-form-panel">
-                                    <div class="services-form-header">
-                                        <h3>Service details</h3>
-                                    </div>
                                     @if (selectedNode) {
-                                        <div class="services-form p-fluid">
-                                            <div class="field">
-                                                <div class="flex align-items-start gap-2">
-                                                    <p-floatlabel variant="on" class="flex-1">
-                                                        <input id="serviceName"
-                                                               type="text"
-                                                               pInputText
-                                                               [(ngModel)]="treeForm.key"
-                                                               [invalid]="!!nameError"
-                                                               [fluid]="true"
-                                                               (ngModelChange)="onNameChange()"
-                                                               (keydown.enter)="saveTreeForm()"
-                                                               (keydown.escape)="cancelTreeField('key')"/>
-                                                        <label for="serviceName">Name</label>
-                                                    </p-floatlabel>
-                                                    @if (isTreeFormDirty) {
-                                                        <div class="flex align-items-center gap-1 mt-1">
-                                                            <p-button icon="bx bx-check" severity="success"
-                                                                      [rounded]="true" [text]="true"
-                                                                      [disabled]="!!nameError || !!urlError"
-                                                                      (onClick)="saveTreeForm()"/>
-                                                            <p-button icon="bx bx-x" severity="danger"
-                                                                      [rounded]="true" [text]="true"
-                                                                      (onClick)="cancelTreeField('key')"/>
-                                                        </div>
+                                        <p-fieldset legend="Service details">
+                                            <br>
+                                            <div class="services-form p-fluid">
+                                                <div class="field">
+                                                    <div class="flex align-items-start gap-2">
+                                                        <p-floatlabel variant="on" class="flex-1">
+                                                            <input id="serviceName"
+                                                                   type="text"
+                                                                   pInputText
+                                                                   [(ngModel)]="treeForm.key"
+                                                                   [invalid]="!!nameError"
+                                                                   [fluid]="true"
+                                                                   (ngModelChange)="onNameChange()"
+                                                                   (keydown.enter)="saveTreeForm()"
+                                                                   (keydown.escape)="cancelTreeField('key')"/>
+                                                            <label for="serviceName">Name</label>
+                                                        </p-floatlabel>
+                                                        @if (isTreeFormDirty) {
+                                                            <div class="flex align-items-center gap-1 mt-1">
+                                                                <p-button icon="bx bx-check" severity="success" pTooltip="Save" tooltipPosition="top"
+                                                                          [rounded]="true" [text]="true"
+                                                                          [disabled]="!!nameError || !!urlError"
+                                                                          (onClick)="saveTreeForm()"/>
+                                                                <p-button icon="bx bx-x" severity="danger" pTooltip="Cancel edit" tooltipPosition="top"
+                                                                          [rounded]="true" [text]="true"
+                                                                          (onClick)="cancelTreeField('key')"/>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    @if (nameError) {
+                                                        <p-message severity="error" size="small"
+                                                                   variant="simple">{{ nameError }}
+                                                        </p-message>
                                                     }
                                                 </div>
-                                                @if (nameError) {
-                                                    <p-message severity="error" size="small" variant="simple">{{ nameError }}</p-message>
-                                                }
-                                            </div>
-                                            <div class="field">
-                                                <div class="flex align-items-start gap-2">
-                                                    <p-floatlabel variant="on" class="flex-1">
-                                                        <p-autocomplete id="serviceURL"
-                                                                        [(ngModel)]="treeForm.value"
-                                                                        [suggestions]="filteredUrlSuggestions"
-                                                                        (completeMethod)="filterUrlSuggestions($event)"
-                                                                        [invalid]="!!urlError"
-                                                                        [fluid]="true"
-                                                                        (ngModelChange)="onUrlChange()"
-                                                                        (keydown.enter)="saveTreeForm()"
-                                                                        (keydown.escape)="cancelTreeField('value')"/>
-                                                        <label for="serviceURL">URL</label>
-                                                    </p-floatlabel>
-                                                    @if (isTreeFormDirty) {
-                                                        <div class="flex align-items-center gap-1 mt-1">
-                                                            <p-button icon="bx bx-check" severity="success"
-                                                                      [rounded]="true" [text]="true"
-                                                                      [disabled]="!!nameError || !!urlError"
-                                                                      (onClick)="saveTreeForm()"/>
-                                                            <p-button icon="bx bx-x" severity="danger"
-                                                                      [rounded]="true" [text]="true"
-                                                                      (onClick)="cancelTreeField('value')"/>
-                                                        </div>
+                                                <div class="field">
+                                                    <div class="flex align-items-start gap-2">
+                                                        <p-floatlabel variant="on" class="flex-1">
+                                                            <p-autocomplete id="serviceURL"
+                                                                            [(ngModel)]="treeForm.value"
+                                                                            [suggestions]="filteredUrlSuggestions"
+                                                                            (completeMethod)="filterUrlSuggestions($event)"
+                                                                            [invalid]="!!urlError"
+                                                                            [fluid]="true"
+                                                                            (ngModelChange)="onUrlChange()"
+                                                                            (keydown.enter)="saveTreeForm()"
+                                                                            (keydown.escape)="cancelTreeField('value')"></p-autocomplete>
+                                                            <label for="serviceURL">URL</label>
+                                                        </p-floatlabel>
+                                                        @if (isTreeFormDirty) {
+                                                            <div class="flex align-items-center gap-1 mt-1">
+                                                                <p-button icon="bx bx-check" severity="success" pTooltip="Save" tooltipPosition="top"
+                                                                          [rounded]="true" [text]="true"
+                                                                          [disabled]="!!nameError || !!urlError"
+                                                                          (onClick)="saveTreeForm()"/>
+                                                                <p-button icon="bx bx-x" severity="danger" pTooltip="Cancel edit" tooltipPosition="top"
+                                                                          [rounded]="true" [text]="true"
+                                                                          (onClick)="cancelTreeField('value')"/>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    @if (urlError) {
+                                                        <p-message severity="error" size="small"
+                                                                   variant="simple">{{ urlError }}
+                                                        </p-message>
                                                     }
                                                 </div>
-                                                @if (urlError) {
-                                                    <p-message severity="error" size="small" variant="simple">{{ urlError }}</p-message>
-                                                }
-                                            </div>
-                                            @if (selectedNode) {
-                                                <div class="mt-3">
-                                                    <h4 class="mb-2">Page actions @if (currentPageActionDomain) { — {{ currentPageActionDomain }} }</h4>
+                                                @if (selectedNode && !selectedNode.children?.length && !pendingDraftNode && currentPageActionDomain) {
+                                                    <p-fieldset [legend]="'Page actions for' + (currentPageActionDomain ? ' — ' + currentPageActionDomain : '')">
+                                                        <h4 class="mb-2"></h4>
                                                     @if (editingPageAction && selectorFocused) {
-                                                        <p-message severity="secondary" [closable]="true">
-                                                            <b>Selector rules:</b> Use CSS selectors only, e.g. <code>#myId</code>, <code>input[name="user"]</code>, <code>button[type="submit"]</code>.
+                                                        <p-message [closable]="true">
+                                                            <b>Selector rules:</b> Use CSS selectors only, e.g.
+                                                            <code>#myId</code>, <code>input[name="user"]</code>,
+                                                            <code>button[type="submit"]</code>.
                                                             Avoid dynamic IDs. Do not use <code>document.querySelector(...)</code>.
                                                         </p-message>
                                                     }
-                                                    <p-table [value]="currentPageActions"
-                                                             class="p-datatable-striped"
-                                                             [reorderableRows]="true">
+                                                    <p-table [value]="currentPageActions" [reorderableRows]="true">
                                                         <ng-template pTemplate="header">
                                                             <tr>
                                                                 <th style="width: 40px"></th>
@@ -298,20 +277,32 @@
                                                                 <th style="width: 120px"></th>
                                                             </tr>
                                                         </ng-template>
-                                                        <ng-template pTemplate="body" let-pageAction let-index="rowIndex">
+                                                        <ng-template pTemplate="body" let-pageAction
+                                                                     let-index="rowIndex">
                                                             <tr [pReorderableRow]="index">
                                                                 <td style="width: 40px">
-                                                                    <span class="pi pi-bars" pReorderableRowHandle></span>
+                                                                        <span class="bx bx-grid-vertical bx-sm"
+                                                                              pReorderableRowHandle></span>
                                                                 </td>
                                                                 <td>
                                                                     @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
                                                                         <span class="ml-2 truncate-text">{{ pageAction.action }}</span>
                                                                     }
                                                                     @if (editingPageAction && editingPageAction._id === pageAction._id) {
-                                                                        <p-select placeholder="Select action"
-                                                                                  [options]="pageActionOptions"
-                                                                                  [(ngModel)]="editingPageAction.action"
-                                                                                  appendTo="body"/>
+                                                                        <div>
+                                                                            <p-select placeholder="Select action"
+                                                                                      [options]="pageActionOptions"
+                                                                                      [(ngModel)]="editingPageAction.action"
+                                                                                      [invalid]="!!actionError"
+                                                                                      (onChange)="onPageActionTypeChange()"
+                                                                                      appendTo="body"/>
+                                                                            @if (actionError) {
+                                                                                <p-message severity="error"
+                                                                                           size="small"
+                                                                                           variant="simple">{{ actionError }}
+                                                                                </p-message>
+                                                                            }
+                                                                        </div>
                                                                     }
                                                                 </td>
                                                                 <td>
@@ -319,13 +310,24 @@
                                                                         <span class="ml-2 truncate-text">{{ pageAction.selector }}</span>
                                                                     }
                                                                     @if (editingPageAction && editingPageAction._id === pageAction._id && editingPageAction.action !== 'delay') {
-                                                                        <input pInputText type="text"
-                                                                               [(ngModel)]="editingPageAction.selector"
-                                                                               [ngStyle]="{'width': '100%'}"
-                                                                               placeholder="CSS selector"
-                                                                               (focus)="selectorFocused = true"
-                                                                               (blur)="selectorFocused = false"
-                                                                               (keydown.space)="$event.stopPropagation()">
+                                                                        <div>
+                                                                            <input pInputText type="text"
+                                                                                   [(ngModel)]="editingPageAction.selector"
+                                                                                   [invalid]="!!selectorError"
+                                                                                   [ngStyle]="{'width': '100%'}"
+                                                                                   placeholder="CSS selector"
+                                                                                   (focus)="selectorFocused = true"
+                                                                                   (blur)="selectorFocused = false"
+                                                                                   (keydown.enter)="confirmPageActionEdit()"
+                                                                                   (keydown.escape)="cancelPageActionEdit()"
+                                                                                   (keydown.space)="$event.stopPropagation()">
+                                                                            @if (selectorError) {
+                                                                                <p-message severity="error"
+                                                                                           size="small"
+                                                                                           variant="simple">{{ selectorError }}
+                                                                                </p-message>
+                                                                            }
+                                                                        </div>
                                                                     }
                                                                 </td>
                                                                 <td>
@@ -334,32 +336,54 @@
                                                                             <span class="ml-2 truncate-text">{{ pageAction.value }}</span>
                                                                         }
                                                                         @if (pageAction.action === 'delay') {
-                                                                            <span class="ml-2 truncate-text">{{ pageAction.value }} ms</span>
+                                                                            <span class="ml-2 truncate-text">{{ pageAction.value }}
+                                                                                ms</span>
                                                                         }
                                                                     }
                                                                     @if (editingPageAction && editingPageAction._id === pageAction._id) {
                                                                         @if (editingPageAction.action === 'typeToInput') {
-                                                                            <input pInputText type="text"
-                                                                                   [(ngModel)]="editingPageAction.value"
-                                                                                   [ngStyle]="{'width': '100%'}"
-                                                                                   placeholder="Value"
-                                                                                   (keydown.space)="$event.stopPropagation()">
+                                                                            <div>
+                                                                                <input pInputText type="text"
+                                                                                       [(ngModel)]="editingPageAction.value"
+                                                                                       [invalid]="!!valueError"
+                                                                                       [ngStyle]="{'width': '100%'}"
+                                                                                       placeholder="Value"
+                                                                                       (keydown.enter)="confirmPageActionEdit()"
+                                                                                       (keydown.escape)="cancelPageActionEdit()"
+                                                                                       (keydown.space)="$event.stopPropagation()">
+                                                                                @if (valueError) {
+                                                                                    <p-message severity="error"
+                                                                                               size="small"
+                                                                                               variant="simple">{{ valueError }}
+                                                                                    </p-message>
+                                                                                }
+                                                                            </div>
                                                                         }
                                                                         @if (editingPageAction.action === 'delay') {
-                                                                            <p-inputnumber [(ngModel)]="editingPageAction.value"
-                                                                                           [showButtons]="true"
-                                                                                           buttonLayout="horizontal"
-                                                                                           [step]="250"
-                                                                                           [min]="0"
-                                                                                           suffix=" ms"
-                                                                                           placeholder="Delay (ms)">
-                                                                                <ng-template #incrementbuttonicon>
-                                                                                    <span class="pi pi-plus"></span>
-                                                                                </ng-template>
-                                                                                <ng-template #decrementbuttonicon>
-                                                                                    <span class="pi pi-minus"></span>
-                                                                                </ng-template>
-                                                                            </p-inputnumber>
+                                                                            <div>
+                                                                                <p-inputnumber
+                                                                                        [(ngModel)]="editingPageAction.value"
+                                                                                        [invalid]="!!valueError"
+                                                                                        [showButtons]="true"
+                                                                                        buttonLayout="horizontal"
+                                                                                        [step]="250"
+                                                                                        [min]="0"
+                                                                                        suffix=" ms"
+                                                                                        placeholder="Delay (ms)">
+                                                                                    <ng-template>
+                                                                                        <span class="pi pi-plus"></span>
+                                                                                    </ng-template>
+                                                                                    <ng-template>
+                                                                                        <span class="pi pi-minus"></span>
+                                                                                    </ng-template>
+                                                                                </p-inputnumber>
+                                                                                @if (valueError) {
+                                                                                    <p-message severity="error"
+                                                                                               size="small"
+                                                                                               variant="simple">{{ valueError }}
+                                                                                    </p-message>
+                                                                                }
+                                                                            </div>
                                                                         }
                                                                     }
                                                                 </td>
@@ -368,17 +392,26 @@
                                                                         @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
                                                                             <p-button icon="bx bx-pencil"
                                                                                       [rounded]="true" [text]="true"
+                                                                                      pTooltip="Edit"
+                                                                                      tooltipPosition="top"
                                                                                       (click)="startPageActionEdit(pageAction)"></p-button>
                                                                             <p-button icon="bx bx-trash"
-                                                                                      [rounded]="true" [text]="true" severity="danger"
+                                                                                      [rounded]="true" [text]="true"
+                                                                                      pTooltip="Delete"
+                                                                                      tooltipPosition="top"
+                                                                                      severity="danger"
                                                                                       (click)="deletePageAction(pageAction)"></p-button>
                                                                         }
                                                                         @if (editingPageAction && editingPageAction._id === pageAction._id) {
                                                                             <p-button icon="bx bx-check"
-                                                                                      [rounded]="true" [text]="true" severity="success"
+                                                                                      pTooltip="Save" tooltipPosition="top"
+                                                                                      [rounded]="true" [text]="true"
+                                                                                      severity="success"
                                                                                       (click)="confirmPageActionEdit()"></p-button>
                                                                             <p-button icon="bx bx-x"
-                                                                                      [rounded]="true" [text]="true" severity="danger"
+                                                                                      pTooltip="Cancel edit" tooltipPosition="top"
+                                                                                      [rounded]="true" [text]="true"
+                                                                                      severity="danger"
                                                                                       (click)="cancelPageActionEdit()"></p-button>
                                                                         }
                                                                     </div>
@@ -389,26 +422,26 @@
                                                             <p-toolbar class="surface-50">
                                                                 <ng-template #start>
                                                                     <div class="flex" style="gap: 10px">
-                                                                    <p-button icon="bx bx-plus"
-                                                                              pTooltip="Add action" tooltipPosition="top"
-                                                                              label="Add page action" variant="outlined"
-                                                                              (onClick)="addPageAction()"></p-button>
-                                                                    <p-button icon="bx bxs-file-import"
-                                                                              pTooltip="Import" tooltipPosition="top"
-                                                                              label="Import" variant="outlined" severity="info"
-                                                                              (onClick)="importPageActions()"></p-button>
-                                                                    <p-button icon="bx bx-save"
-                                                                              pTooltip="Save page actions" tooltipPosition="top"
-                                                                              label="Save" variant="outlined" severity="success"
-                                                                              (onClick)="saveAllPageActions()"></p-button>
+                                                                        <p-button icon="bx bx-plus"
+                                                                                  pTooltip="Add action"
+                                                                                  tooltipPosition="top"
+                                                                                  variant="outlined"
+                                                                                  (onClick)="addPageAction()"></p-button>
+                                                                        <p-button icon="bx bxs-file-import"
+                                                                                  pTooltip="Import"
+                                                                                  tooltipPosition="top"
+                                                                                  variant="outlined"
+                                                                                  severity="contrast"
+                                                                                  (onClick)="importPageActions()"></p-button>
                                                                     </div>
                                                                 </ng-template>
                                                             </p-toolbar>
                                                         </ng-template>
                                                     </p-table>
-                                                </div>
-                                            }
-                                        </div>
+                                                    </p-fieldset>
+                                                }
+                                            </div>
+                                        </p-fieldset>
                                     } @else {
                                         <div class="services-form-empty">
                                             <p>Select service to edit</p>
@@ -424,6 +457,13 @@
 
             <p-tabpanel value="2">
                 <h2>Main</h2>
+
+                <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
+                <h3>Language</h3>
+                <p-select [options]="langOptions"
+                          [(ngModel)]="lang"
+                          (onChange)="setLang($event)"
+                          placeholder="Select language"/>
 
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
                 <h3>Theme</h3>
@@ -467,12 +507,10 @@
         </p-tabpanels>
     </p-tabs>
 </div>
+<p-confirmpopup></p-confirmpopup>
 <p-toast
         position="top-center"
         [life]="4000"
         style="padding-top: 17px;"
 ></p-toast>
-<p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="10000"></p-confirmDialog>
-
-
 

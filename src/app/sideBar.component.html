@@ -20,6 +20,7 @@
             @for (profile of profiles; track profile._id) {
                 <div class="profile-item"
                      [class.active]="activeProfile?._id === profile._id"
+                     [class.clicked]="clickedProfileId === profile._id"
                      [title]="profile.name"
                      (click)="selectProfile(profile)">
                     <i [class]="profile.logo + ' bx-sm'"></i>
@@ -33,7 +34,7 @@
 
         <div class="mt-auto flex-shrink-0 w-full">
             <hr class="my-0 border-top-1 border-none sidebar-separator w-full">
-            <div class="profile-item settings-btn" [class.active]="settingsActive" (click)="toggleSettings()" title="Settings">
+            <div class="profile-item settings-btn" [class.active]="settingsActive" [class.clicked]="settingsClicked" (click)="toggleSettings()" title="Settings">
                 <i class="bx bx-cog bx-sm"></i>
             </div>
         </div>

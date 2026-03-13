@@ -18,7 +18,6 @@ import {DialogService, DynamicDialogModule} from 'primeng/dynamicdialog';
 import {DataViewModule} from 'primeng/dataview';
 import {InputTextModule} from 'primeng/inputtext';
 import {TextareaModule} from 'primeng/textarea';
-import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {DialogModule} from 'primeng/dialog';
 import {MultiSelectModule} from 'primeng/multiselect';
 import {ContextMenuModule} from 'primeng/contextmenu';
@@ -55,7 +54,6 @@ import {ToolbarModule} from 'primeng/toolbar';
         DataViewModule,
         InputTextModule,
         TextareaModule,
-        ConfirmDialogModule,
         CardModule,
         DialogModule,
         MultiSelectModule,
@@ -93,7 +91,6 @@ import {ToolbarModule} from 'primeng/toolbar';
         DataViewModule,
         InputTextModule,
         TextareaModule,
-        ConfirmDialogModule,
         CardModule,
         DialogModule,
         MultiSelectModule,

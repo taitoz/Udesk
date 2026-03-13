@@ -6,7 +6,7 @@
   overflow: hidden;
 }
 
-:host ::ng-deep {
+:host {
   .p-tabs {
     flex: 1;
     display: flex;
@@ -78,11 +78,11 @@
   }
 }
 
-:host ::ng-deep .services-splitter .p-splitter-panel:first-child {
+.services-splitter .p-splitter-panel:first-child {
   min-width: 250px;
 }
 
-:host ::ng-deep .services-splitter .p-splitter-panel:last-child {
+.services-splitter .p-splitter-panel:last-child {
   min-width: 450px;
 }
 
@@ -162,17 +162,17 @@
 }
 
 
-:host ::ng-deep .services-form .p-datatable-table td {
+.services-form .p-datatable-table td {
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
 }
 
-:host ::ng-deep .p-datatable-reorderablerow-handle {
+.p-datatable-reorderablerow-handle {
   cursor: grab;
   color: var(--text-color-secondary, #9ca3af);
 }
 
-:host ::ng-deep tr.p-datatable-dragging {
+tr.p-datatable-dragging {
   opacity: 0.6;
   background: var(--p-primary-color, #3b82f6) !important;
 }
