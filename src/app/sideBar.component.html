@@ -16,7 +16,7 @@
 
         <hr class="my-0 border-top-1 border-none sidebar-separator w-full">
 
-        <div class="profiles-list flex-grow-1 overflow-y-auto">
+        <div class="profiles-list overflow-y-auto">
             @for (profile of profiles; track profile._id) {
                 <div class="profile-item"
                      [class.active]="activeProfile?._id === profile._id"
@@ -25,6 +25,10 @@
                     <i [class]="profile.logo + ' bx-sm'"></i>
                 </div>
             }
+        </div>
+
+        <div class="draggable flex-grow-1">
+            <wbr>
         </div>
 
         <div class="mt-auto flex-shrink-0 w-full">

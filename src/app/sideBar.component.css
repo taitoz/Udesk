@@ -27,12 +27,23 @@
     height: 48px;
     cursor: pointer;
     color: var(--p-text-muted-color);
-    transition: background-color 0.15s, color 0.15s;
+    transition: background-color 0.15s, color 0.15s, transform 0.3s;
 }
 
 .profile-item:hover {
     background-color: var(--p-content-hover-background);
     color: var(--p-text-color);
+}
+
+.profile-item:not(.settings-btn):hover i {
+    animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-8px); }
+    50% { transform: translateY(0); }
+    75% { transform: translateY(-4px); }
 }
 
 .profile-item.active {
@@ -52,4 +63,21 @@
 
 .settings-btn {
     margin: 0;
+}
+
+.settings-btn i {
+    transition: transform 0.3s ease-in-out;
+}
+
+.settings-btn:hover i {
+    transform: rotate(90deg);
+}
+
+.draggable {
+    min-width: 48px;
+    min-height: 48px;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-app-region: drag;
+    /*background: #1B91F7;*/
 }
