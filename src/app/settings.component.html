@@ -305,7 +305,7 @@
                                                                         </div>
                                                                     }
                                                                 </td>
-                                                                <td>
+                                                                <td class="selector-cell">
                                                                     @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
                                                                         <span class="ml-2 truncate-text">{{ pageAction.selector }}</span>
                                                                     }
@@ -463,7 +463,8 @@
                 <p-select [options]="langOptions"
                           [(ngModel)]="lang"
                           (onChange)="setLang($event)"
-                          placeholder="Select language"/>
+                          placeholder="Select language"
+                          styleClass="lang-select"/>
 
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
                 <h3>Theme</h3>

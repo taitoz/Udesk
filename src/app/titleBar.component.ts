@@ -24,12 +24,22 @@ export class TitleBarComponent implements OnInit{
         })
     }
 
-    toggleSideMenu() {
+    toggleSideMenu(event: Event) {
+        this.addClickAnimation(event)
         this.uiService.settingsToggle.emit(false)
         this.uiService.sideMenuToggle.emit('servicesMenu')
     }
 
-    callRenderer(channel: string) {
+    callRenderer(channel: string, event: Event) {
+        this.addClickAnimation(event)
         this.uiService.ipcInvoke(channel).then()
+    }
+
+    private addClickAnimation(event: Event) {
+        const target = event.currentTarget as HTMLElement
+        target.classList.add('clicked')
+        setTimeout(() => {
+            target.classList.remove('clicked')
+        }, 600)
     }
 }

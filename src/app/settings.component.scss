@@ -45,6 +45,26 @@
   display: inline-block;
 }
 
+.selector-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selector-cell .truncate-text {
+  max-width: 60ch;
+}
+
+:host ::ng-deep .lang-select {
+  width: 100px;
+  min-width: 100px;
+  max-width: 200px;
+}
+
+:host ::ng-deep .lang-select .p-select {
+  width: 100%;
+}
+
 .profileKey {
   font-weight: bold;
   padding-left: 60px;
