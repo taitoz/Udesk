@@ -27,8 +27,27 @@
     background-color: var(--p-content-hover-background);
 }
 
-.titlebar-btn.clicked i {
-    animation: bounce 0.6s ease-in-out;
+.titlebar-menu-btn.clicked i {
+    animation: bounce-right 0.6s ease-in-out;
+}
+
+.titlebar-refresh-btn i {
+    transition: transform 0.3s ease-in-out;
+}
+
+.titlebar-refresh-btn.clicked i {
+    transform: rotate(90deg);
+}
+
+.titlebar-back-btn.clicked i {
+    animation: bounce-left 0.6s ease-in-out;
+}
+
+.draggable {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-app-region: drag;
+    /*background: #1B91F7;*/
 }
 
 @keyframes bounce {
@@ -37,9 +56,17 @@
     50% { transform: translateY(0); }
     75% { transform: translateY(-4px); }
 }
-.draggable {
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-app-region: drag;
-    /*background: #1B91F7;*/
+
+@keyframes bounce-left {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    50% { transform: translateX(0); }
+    75% { transform: translateX(-4px); }
+}
+
+@keyframes bounce-right {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(8px); }
+    50% { transform: translateX(0); }
+    75% { transform: translateX(4px); }
 }

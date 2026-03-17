@@ -267,7 +267,7 @@
                                                             Avoid dynamic IDs. Do not use <code>document.querySelector(...)</code>.
                                                         </p-message>
                                                     }
-                                                    <p-table [value]="currentPageActions" [reorderableRows]="true">
+                                                    <p-table [value]="currentPageActions" [reorderableRows]="true" (onRowReorder)="onPageActionsReorder($event)">
                                                         <ng-template pTemplate="header">
                                                             <tr>
                                                                 <th style="width: 40px"></th>

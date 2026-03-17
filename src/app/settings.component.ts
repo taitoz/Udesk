@@ -641,6 +641,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
         await this.saveAllPageActions()
     }
 
+    async onPageActionsReorder(event: any) {
+        // PrimeNG updates the array automatically, just need to save
+        await this.saveAllPageActions()
+    }
+
     async saveAllPageActions() {
         if (!this.currentPageActionDomain) {
             this.messageService.add({severity: 'warn', summary: 'Set service link first', detail: 'A valid URL is required to save page actions'})
