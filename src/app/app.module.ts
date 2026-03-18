@@ -30,6 +30,7 @@ import {InputTextModule} from "primeng/inputtext";
 import {Fieldset} from "primeng/fieldset";
 import {ConfirmPopupModule} from "primeng/confirmpopup";
 import {TreeSelectModule} from "primeng/treeselect";
+import {PanelModule} from "primeng/panel";
 
 
 @NgModule({
@@ -48,6 +49,7 @@ import {TreeSelectModule} from "primeng/treeselect";
         InputTextModule,
         TagModule,
         TreeModule,
+        PanelModule,
         SplitterModule, FloatLabel, InputGroupAddon, Fieldset, ConfirmPopupModule, TreeSelectModule],
     providers: [
         UiService,

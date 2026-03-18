@@ -443,9 +443,12 @@
                                             </div>
                                         </p-fieldset>
                                     } @else {
-                                        <div class="services-form-empty">
-                                            <p>Select service to edit</p>
-                                            <p><== Use drag and drop to reorder tree</p>
+                                        <div class="flex justify-content-center align-items-center h-full">
+                                            <p-panel header="Hint">
+                                                <i class="bx bx-arrow-back bx-sm mr-2 lg:mr-0 text-base"></i><p class="m-0">  Select or add service to edit in service tree</p>
+                                                <br>
+                                                <p class="m-0">Use drag and drop to reorder tree</p>
+                                            </p-panel>
                                         </div>
                                     }
                                 </div>
@@ -456,7 +459,6 @@
             </p-tabpanel>
 
             <p-tabpanel value="2">
-                <h2>Main</h2>
 
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
                 <h3>Language</h3>
