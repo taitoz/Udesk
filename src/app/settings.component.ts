@@ -60,6 +60,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     lang = 'en'
     langOptions: string[] = ['ru', 'en']
+    
+    // App info for About section
+    appName = ''
+    appDescription = ''
+    appVersion = ''
+    appBuildDate = ''
+    appRepository = ''
+    
     profiles: {
         _id: string;
         active: boolean;
@@ -109,6 +117,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.selectedPrimaryColor = this.uiService.ipcSendSync('settings:getPrimaryColor') || 'emerald'
         this.selectedSurfaceColor = this.uiService.ipcSendSync('settings:getSurfaceColor') || 'zinc'
         this.lang = this.uiService.ipcSendSync('settings:getLang') || 'en'
+
+        // Load app info for About section
+        const appInfo = await this.uiService.ipcInvoke('app:getInfo')
+        if (appInfo) {
+            this.appName = appInfo.name || ''
+            this.appDescription = appInfo.description || ''
+            this.appVersion = appInfo.version || ''
+            this.appBuildDate = appInfo.buildDate || ''
+            this.appRepository = appInfo.repository || ''
+        }
 
         await this.loadProfiles()
         await this.loadPageActions()
@@ -468,6 +486,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.selectedSurfaceColor = color.name
         updateSurfacePalette(color.palette as any)
         this.uiService.ipcSend('settings:setSurfaceColor', color.name)
+    }
+
+    checkForUpdates() {
+        this.uiService.ipcInvoke('app:checkForUpdates').then(result => {
+            if (result) {
+                this.messageService.add(result)
+            }
+        })
+    }
+
+    openSourceCode() {
+        if (this.appRepository) {
+            this.uiService.ipcInvoke('load-url', this.appRepository)
+            this.uiService.settingsToggle.emit(false)
+        }
     }
 
     parseDomain(url: string): string {

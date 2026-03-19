@@ -460,7 +460,6 @@
 
             <p-tabpanel value="2">
 
-                <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
                 <h3>Language</h3>
                 <p-select [options]="langOptions"
                           [(ngModel)]="lang"
@@ -469,8 +468,8 @@
                           styleClass="lang-select"/>
 
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
-                <h3>Theme</h3>
 
+                <h3>Theme</h3>
                 <p-selectButton
                         [options]="themeOptions"
                         [(ngModel)]="theme"
@@ -479,7 +478,8 @@
                         optionValue="value"/>
 
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
-                <h3>Primary</h3>
+
+                <h3>Primary color</h3>
                 <div class="color-picker-row">
                     @for (color of primaryColors; track color.name) {
                         <button type="button"
@@ -490,9 +490,9 @@
                                 (click)="setPrimaryColor(color)"></button>
                     }
                 </div>
-
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
-                <h3>Surface</h3>
+
+                <h3>Surface color</h3>
                 <div class="color-picker-row">
                     @for (color of surfaceColors; track color.name) {
                         <button type="button"
@@ -503,9 +503,37 @@
                                 (click)="setSurfaceColor(color)"></button>
                     }
                 </div>
-
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
 
+                <h3>About</h3>
+                <div class="flex flex-column gap-3">
+                    <div>
+                        <h4 class="mb-2">{{ appName }}</h4>
+                        <p class="text-color-secondary m-0">{{ appDescription }}</p>
+                    </div>
+                    
+                    <div class="flex flex-column gap-2">
+                        <div class="flex align-items-center gap-2">
+                            <strong>Version:</strong>
+                            <span>{{ appVersion }}</span>
+                        </div>
+                        <div class="flex align-items-center gap-2">
+                            <strong>Build Date:</strong>
+                            <span>{{ appBuildDate }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-column gap-2">
+                        <p-button label="Check for Updates" 
+                                  icon="bx bx-download" 
+                                  (onClick)="checkForUpdates()"
+                                  severity="secondary"/>
+                        <span (click)="openSourceCode()" class="flex align-items-center gap-2 text-color cursor-pointer" style="text-decoration: none;">
+                            <i class="bx bxl-github bx-sm"></i>
+                            <span>{{ appRepository }}</span>
+                        </span>
+                    </div>
+                </div>
             </p-tabpanel>
         </p-tabpanels>
     </p-tabs>

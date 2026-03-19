@@ -486,6 +486,49 @@ ipcMain.handle('profile:export', async (event, args) => {
 
 })
 
+ipcMain.handle('app:getInfo', async () => {
+    try {
+        const packageJsonPath = path.join(__dirname, 'package.json')
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+        
+        // Get build date from app.asar file modification time if it exists, otherwise use current date
+        let buildDate = new Date().toISOString()
+        try {
+            const asarPath = path.join(process.resourcesPath, 'app.asar')
+            if (fs.existsSync(asarPath)) {
+                const stats = fs.statSync(asarPath)
+                buildDate = stats.mtime.toISOString()
+            }
+        } catch (err) {
+            console.log('Could not get build date from asar:', err.message)
+        }
+        
+        return {
+            name: packageJson.productName || packageJson.name,
+            description: packageJson.description,
+            version: packageJson.version,
+            buildDate: new Date(buildDate).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }),
+            repository: packageJson.author?.url || 'https://github.com/taitoz/uchet-desktop'
+        }
+    } catch (err) {
+        console.error('Error getting app info:', err)
+        return null
+    }
+})
+
+ipcMain.handle('app:checkForUpdates', async () => {
+    // TODO: Implement update checking logic with electron-simple-updater
+    return {
+        severity: 'info',
+        summary: 'Check for updates',
+        detail: 'Update checking is not yet implemented'
+    }
+})
+
 //TODO
 // lang nestdb, lang setting
 // ? events to angular
