@@ -17,6 +17,7 @@ export class UiService {
     @Output() sideMenuToggle = new EventEmitter<string>();  // menuId or null to close
     @Output() settingsToggle = new EventEmitter<boolean>();
     @Output() mainViewResize = new EventEmitter<{x: number, y: number, width: number, height: number}>();
+    @Output() updateAvailable = new EventEmitter<boolean>();
 
     constructor(
         private http: HttpClient,
@@ -34,6 +35,9 @@ export class UiService {
                 })
                 window.electronAPI.on('activeProfile:update', (activeProfile: string) => {
                     this.activeProfileChange.emit(activeProfile)
+                })
+                window.electronAPI.on('app:updateAvailable', (available: boolean) => {
+                    this.updateAvailable.emit(available)
                 })
             } else if (this.electronService.isElectronApp) {
                 this.electronService.ipcRenderer.on('showLoading', (event: any, show: boolean) => {

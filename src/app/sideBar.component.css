@@ -63,6 +63,23 @@
 
 .settings-btn {
     margin: 0;
+    position: relative;
+}
+
+.update-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--p-primary-color);
+    animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
 }
 
 .settings-btn i {
