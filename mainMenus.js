@@ -28,6 +28,9 @@ export function getMainViewMenu(window, params = {}) {
                     defaultPath: url.split('/').pop().split('?')[0] || 'image.png'
                 }).then(result => {
                     if (!result.canceled) {
+                        window.webContents.session.once('will-download', (event, item) => {
+                            item.setSavePath(result.filePath)
+                        })
                         window.webContents.session.downloadURL(url)
                     }
                 })
