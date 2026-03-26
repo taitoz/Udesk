@@ -14,6 +14,7 @@ export class SideBarComponent implements OnInit {
     settingsActive = false
     clickedProfileId: string | null = null
     settingsClicked = false
+    updateAvailable = false
 
     constructor(
         private uiService: UiService,
@@ -35,6 +36,11 @@ export class SideBarComponent implements OnInit {
 
         this.uiService.settingsToggle.subscribe(show => {
             this.settingsActive = (show === null) ? !this.settingsActive : show
+            this.cdr.detectChanges()
+        })
+
+        this.uiService.updateAvailable.subscribe(available => {
+            this.updateAvailable = available
             this.cdr.detectChanges()
         })
     }

@@ -24,6 +24,7 @@ import appLog from 'electron-log'
 import cfg from 'electron-cfg';
 
 // App updater
+import {initUpdater, showUpdateDialog} from './updater.js'
 
 // Puppeteer
 import pie from 'puppeteer-in-electron'
@@ -232,9 +233,9 @@ app.on('ready', async function () {
         //TODO to appCfg
         nativeTheme.themeSource = appCfg.get('theme', 'dark')
         //appLog.info(updater.buildId)
-        //TODO initUpdater();
         loadTranslation(app.getLocale())
         createWindow()
+        initUpdater(mainWindow)
 
         // const ret = globalShortcut.register('CommandOrControl+R', () => {
         //     app.relaunch();
@@ -521,12 +522,7 @@ ipcMain.handle('app:getInfo', async () => {
 })
 
 ipcMain.handle('app:checkForUpdates', async () => {
-    // TODO: Implement update checking logic with electron-simple-updater
-    return {
-        severity: 'info',
-        summary: 'Check for updates',
-        detail: 'Update checking is not yet implemented'
-    }
+    showUpdateDialog()
 })
 
 //TODO
