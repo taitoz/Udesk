@@ -1,5 +1,6 @@
 import {AfterViewChecked, Component, ElementRef, HostListener, Inject, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation} from '@angular/core';
 import {DOCUMENT} from '@angular/common';
+import {TranslateService} from '@ngx-translate/core';
 import {UiService} from './ui.service';
 import {Subscription} from 'rxjs';
 import './electron-api.d.ts';
@@ -30,11 +31,17 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   constructor(
       private uiService: UiService,
+      private translate: TranslateService,
       private zone: NgZone,
       @Inject(DOCUMENT) private document: Document
   ) {}
 
   ngOnInit() {
+    // Apply saved language
+    const savedLang = this.uiService.ipcSendSync('settings:getLang') || 'en';
+    this.translate.setDefaultLang('en');
+    this.translate.use(savedLang);
+
     // Apply initial theme
     const currentTheme = this.uiService.ipcSendSync('settings:getTheme');
     this.uiService.toggleTheme(this.document, currentTheme || 'dark');

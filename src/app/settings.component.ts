@@ -7,6 +7,7 @@ import {updatePrimaryPalette, updateSurfacePalette} from '@primeuix/themes';
 import {primaryColors, surfaceColors, getPrimaryDisplayColor, getSurfaceDisplayColor, PrimaryColor, SurfaceColor} from './theme-palettes';
 import {DialogService} from 'primeng/dynamicdialog';
 import {IconPickerComponent} from './icon-picker.component';
+import {TranslateService} from '@ngx-translate/core';
 
 export enum PageActionType {
     waitElement = 'waitElement',
@@ -103,6 +104,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private dialogService: DialogService,
+        private translate: TranslateService,
         @Inject(DOCUMENT) private document: Document,
         private cdr: ChangeDetectorRef
     ) {
@@ -268,16 +270,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     deleteProfile(event: Event, profileId: string) {
         if (this.profiles.length === 1) {
-            this.messageService.add({severity: 'info', summary: 'last profile cannot be deleted.'})
+            this.messageService.add({severity: 'info', summary: this.translate.instant('profiles.lastCannotDelete')})
             return
         }
         this.confirmationService.confirm({
             target: event.target as EventTarget,
-            message: 'Delete this profile?',
+            message: this.translate.instant('profiles.confirmDelete'),
             icon: 'bx bx-exclamation-triangle',
             position: 'bottom',
-            acceptLabel: 'Yes',
-            rejectLabel: 'No',
             accept: async () => {
                 // let index = this.profilesFlat.findIndex(item => item.name === profileName)
                 // console.log(index)
@@ -359,16 +359,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     deleteItem(event: Event, selectedNode: TreeNode) {
         if (this.sideMenuTreeNodes.length === 1 && selectedNode.parent === null) {
-            this.messageService.add({severity: 'error', summary: 'Unable to delete last element'});
+            this.messageService.add({severity: 'error', summary: this.translate.instant('services.cannotDeleteLast')});
             return;
         }
         this.confirmationService.confirm({
             target: event.target as EventTarget,
-            message: 'Delete this service?',
+            message: this.translate.instant('services.confirmDelete'),
             icon: 'bx bx-exclamation-triangle',
             position: 'bottom',
-            acceptLabel: 'Yes',
-            rejectLabel: 'No',
             accept: async () => {
                 // Delete page actions: only remove from DB if no other service in profile uses the same domain
                 const serviceId = selectedNode.data?.id
@@ -473,6 +471,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     setLang(event: any) {
+        this.translate.use(this.lang)
         this.uiService.ipcSend('settings:setLang', this.lang)
     }
 
@@ -596,7 +595,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         
         // Validate action is selected
         if (!this.editingPageAction.action || this.editingPageAction.action.trim().length === 0) {
-            this.actionError = 'Action is required'
+            this.actionError = this.translate.instant('validation.actionRequired')
             return
         }
         
@@ -604,23 +603,23 @@ export class SettingsComponent implements OnInit, OnDestroy {
         if (this.editingPageAction.action === 'delay') {
             // delay: only value (ms) is required
             if (!this.editingPageAction.value || this.editingPageAction.value <= 0) {
-                this.valueError = 'Delay value (ms) is required'
+                this.valueError = this.translate.instant('validation.delayRequired')
                 return
             }
         } else if (this.editingPageAction.action === 'typeToInput') {
             // typeToInput: both selector and value are required
             if (!this.editingPageAction.selector || this.editingPageAction.selector.trim().length === 0) {
-                this.selectorError = 'Selector is required'
+                this.selectorError = this.translate.instant('validation.selectorRequired')
                 return
             }
             if (!this.editingPageAction.value || this.editingPageAction.value.trim().length === 0) {
-                this.valueError = 'Value is required'
+                this.valueError = this.translate.instant('validation.valueRequired')
                 return
             }
         } else {
             // waitElement, clickElement, selectElement: only selector is required
             if (!this.editingPageAction.selector || this.editingPageAction.selector.trim().length === 0) {
-                this.selectorError = 'Selector is required'
+                this.selectorError = this.translate.instant('validation.selectorRequired')
                 return
             }
         }
@@ -681,7 +680,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     async saveAllPageActions() {
         if (!this.currentPageActionDomain) {
-            this.messageService.add({severity: 'warn', summary: 'Set service link first', detail: 'A valid URL is required to save page actions'})
+            this.messageService.add({severity: 'warn', summary: this.translate.instant('pageActions.setUrlFirst'), detail: this.translate.instant('pageActions.setUrlFirstDetail')})
             return
         }
 
@@ -690,7 +689,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         }
 
         if (this.currentPageActions.length === 0) {
-            this.messageService.add({severity: 'warn', summary: 'No actions', detail: 'Add at least one action before saving'})
+            this.messageService.add({severity: 'warn', summary: this.translate.instant('pageActions.noActions'), detail: this.translate.instant('pageActions.noActionsDetail')})
             return
         }
 
@@ -698,11 +697,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
         for (let i = 0; i < this.currentPageActions.length; i++) {
             const pa = this.currentPageActions[i]
             if (!pa.action) {
-                this.messageService.add({severity: 'error', summary: 'Validation error', detail: `Row ${i + 1}: action is required`})
+                this.messageService.add({severity: 'error', summary: this.translate.instant('validation.error'), detail: this.translate.instant('validation.rowActionRequired', {row: i + 1})})
                 hasErrors = true
             }
             if (!pa.selector && pa.action !== PageActionType.delay) {
-                this.messageService.add({severity: 'error', summary: 'Validation error', detail: `Row ${i + 1}: selector is required`})
+                this.messageService.add({severity: 'error', summary: this.translate.instant('validation.error'), detail: this.translate.instant('validation.rowSelectorRequired', {row: i + 1})})
                 hasErrors = true
             }
         }
@@ -720,7 +719,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
         try {
             await this.uiService.ipcInvoke('pageAction:update', fullPageAction)
-            this.messageService.add({severity: 'success', summary: 'Page actions saved'})
+            this.messageService.add({severity: 'success', summary: this.translate.instant('pageActions.saved')})
             await this.loadPageActions()
             this.loadCurrentPageActions()
         } catch (error) {
@@ -754,7 +753,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
         // URLs must not contain spaces
         if (/\s/.test(trimmed)) {
-            return 'URL must not contain spaces'
+            return this.translate.instant('validation.urlNoSpaces')
         }
 
         // file:/// (triple slash) followed by a valid path
@@ -762,7 +761,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
             if (/^file:\/\/\/[a-zA-Z0-9]/.test(trimmed)) {
                 return null
             }
-            return 'Invalid file path (must start with file:/// e.g. file:///C:/path)'
+            return this.translate.instant('validation.invalidFilePath')
         }
 
         // Valid host patterns
@@ -784,11 +783,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
         if (withoutScheme.test(trimmed)) {
             // Bare "localhost" without port/path is too ambiguous — require more
             if (/^localhost$/i.test(trimmed)) {
-                return 'Add port or scheme (e.g. localhost:80 or http://localhost)'
+                return this.translate.instant('validation.addPortOrScheme')
             }
             return null
         }
-        return 'Enter a valid URL (e.g. http://example.com or example.com:8080)'
+        return this.translate.instant('validation.enterValidUrl')
     }
 
     onUrlChange() {
@@ -798,7 +797,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     onNameChange() {
-        this.nameError = this.treeForm.key.trim().length === 0 ? 'Name is required' : null
+        this.nameError = this.treeForm.key.trim().length === 0 ? this.translate.instant('validation.nameRequired') : null
         this.markTreeFormDirty()
     }
 
@@ -808,7 +807,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.treeForm.value = this.treeForm.value.trim()
 
         // Validate name
-        this.nameError = this.treeForm.key.length === 0 ? 'Name is required' : null
+        this.nameError = this.treeForm.key.length === 0 ? this.translate.instant('validation.nameRequired') : null
         this.urlError = this.validateUrl(this.treeForm.value)
         if (this.nameError || this.urlError) {
             return

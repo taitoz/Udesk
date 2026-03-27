@@ -1,9 +1,11 @@
 import {NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {RouterModule} from '@angular/router';
+import {TranslateModule, TranslateLoader} from '@ngx-translate/core';
+import {TranslateHttpLoader} from '@ngx-translate/http-loader';
 import {UiService} from './ui.service';
 import {PrimeNgModule} from './primeng.module';
 import {SettingsComponent} from './settings.component';
@@ -39,6 +41,14 @@ import {PanelModule} from "primeng/panel";
     imports: [PrimeNgModule,
         BrowserModule,
         FormsModule,
+        TranslateModule.forRoot({
+            defaultLanguage: 'en',
+            loader: {
+                provide: TranslateLoader,
+                useFactory: (http: HttpClient) => new TranslateHttpLoader(http, './assets/i18n/', '.json'),
+                deps: [HttpClient]
+            }
+        }),
         AppRouters,
         NgOptimizedImage,
         ReactiveFormsModule,

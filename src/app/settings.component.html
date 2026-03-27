@@ -1,10 +1,10 @@
 <div class="card surface-50">
-    <h2 class="m-3">Settings</h2>
+    <h2 class="m-3">{{ 'settings.title' | translate }}</h2>
     <p-tabs [(value)]="activeTabIndex">
         <p-tablist>
-            <p-tab value="0">Profiles</p-tab>
-            <p-tab value="1">Services</p-tab>
-            <p-tab value="2">Main</p-tab>
+            <p-tab value="0">{{ 'settings.tabs.profiles' | translate }}</p-tab>
+            <p-tab value="1">{{ 'settings.tabs.services' | translate }}</p-tab>
+            <p-tab value="2">{{ 'settings.tabs.main' | translate }}</p-tab>
         </p-tablist>
         <p-tabpanels>
             <p-tabpanel value="0">
@@ -18,9 +18,9 @@
                                  dataKey="_id">
                             <ng-template pTemplate="header">
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Image</th>
-                                    <th>Start URL</th>
+                                    <th>{{ 'profiles.name' | translate }}</th>
+                                    <th>{{ 'profiles.image' | translate }}</th>
+                                    <th>{{ 'profiles.startUrl' | translate }}</th>
                                     <th style="width:10%"></th>
                                 </tr>
                             </ng-template>
@@ -31,7 +31,7 @@
                                             <div class="flex align-items-center gap-2">
                                                 <span class="font-bold ml-2 truncate-text">{{ profile.name }}</span>
                                                 @if (activeProfile._id === profile._id) {
-                                                    <p-tag [value]="'active'" [severity]="'success'"/>
+                                                    <p-tag [value]="'profiles.active' | translate" [severity]="'success'"/>
                                                 }
                                             </div>
                                         }
@@ -52,7 +52,7 @@
                                             <div class="flex align-items-center gap-2">
                                                 <i [class]="editingProfile.logo + ' bx-md'" style="vertical-align: middle"></i>
                                                 <p-button icon="bx bx-pencil"
-                                                          pTooltip="Change icon" tooltipPosition="top"
+                                                          [pTooltip]="'actions.changeIcon' | translate" tooltipPosition="top"
                                                           [rounded]="true" [text]="true"
                                                           (onClick)="openIconPicker()"></p-button>
                                             </div>
@@ -66,7 +66,7 @@
                                             <p-treeselect
                                                     [(ngModel)]="selectedHomeNode"
                                                     [options]="editingProfileTreeNodes"
-                                                    placeholder="Select start page"
+                                                    [placeholder]="'profiles.selectStartPage' | translate"
                                                     [ngStyle]="{'width': '100%'}"
                                                     appendTo="body"
                                                     selectionMode="single"/>
@@ -76,17 +76,17 @@
                                         <div class="flex align-items-center justify-content-center gap-2">
                                             @if (!editingProfile || editingProfile._id !== profile._id) {
                                                 <p-button icon="bx bx-pencil"
-                                                          pTooltip="Edit" tooltipPosition="top"
+                                                          [pTooltip]="'actions.edit' | translate" tooltipPosition="top"
                                                           [rounded]="true" [text]="true"
                                                           (onClick)="startProfileKeyEdit(profile)"></p-button>
                                             }
                                             @if (editingProfile && editingProfile._id === profile._id) {
                                                 <p-button icon="bx bx-check"
-                                                          pTooltip="Save" tooltipPosition="top"
+                                                          [pTooltip]="'actions.save' | translate" tooltipPosition="top"
                                                           severity="success" [rounded]="true" [text]="true"
                                                           (onClick)="saveProfileKeyEdit()"></p-button>
                                                 <p-button icon="bx bx-x"
-                                                          pTooltip="Cancel edit" tooltipPosition="top"
+                                                          [pTooltip]="'actions.cancel' | translate" tooltipPosition="top"
                                                           severity="danger" [rounded]="true" [text]="true"
                                                           (onClick)="cancelProfileKeyEdit()"></p-button>
                                             }
@@ -99,26 +99,26 @@
                                     <ng-template #start>
                                         <div class="flex" style="gap: 10px">
                                             <p-button icon="bx bx-plus"
-                                                      pTooltip="Add profile"
+                                                      [pTooltip]="'profiles.addProfile' | translate"
                                                       tooltipPosition="top"
                                                       variant="outlined"
                                                       (onClick)="addProfile()"></p-button>
                                             <p-button icon="bx bxs-trash"
-                                                      pTooltip="Delete profile"
+                                                      [pTooltip]="'profiles.deleteProfile' | translate"
                                                       tooltipPosition="top"
                                                       variant="outlined"
                                                       severity="danger"
                                                       [disabled]="!selectedProfile || profiles.length <= 1"
                                                       (onClick)="deleteProfile($event, selectedProfile?._id)"></p-button>
                                             <p-button icon="bx bxs-file-import"
-                                                      pTooltip="Import profile"
+                                                      [pTooltip]="'profiles.importProfile' | translate"
                                                       tooltipPosition="top"
                                                       variant="outlined"
                                                       severity="contrast"
                                                       [disabled]="!selectedProfile"
                                                       (onClick)="importProfile()"></p-button>
                                             <p-button icon="bx bxs-file-export"
-                                                      pTooltip="Export profile"
+                                                      [pTooltip]="'profiles.exportProfile' | translate"
                                                       tooltipPosition="top"
                                                       variant="outlined"
                                                       severity="contrast"
@@ -146,7 +146,7 @@
                                                 selectionMode="single"
                                                 [(selection)]="selectedNode"
                                                 dataKey="id"
-                                                [filter]="true" filterBy="label" filterPlaceholder="Search"
+                                                [filter]="true" filterBy="label" [filterPlaceholder]="'services.search' | translate"
                                                 [draggableNodes]="true"
                                                 [droppableNodes]="true"
                                                 scrollHeight="flex"
@@ -170,12 +170,12 @@
                                         <ng-template #start>
                                             <div class="flex" style="gap: 10px">
                                                 <p-button icon="bx bx-plus"
-                                                          pTooltip="Add service"
+                                                          [pTooltip]="'services.addService' | translate"
                                                           tooltipPosition="top"
                                                           variant="outlined"
                                                           (onClick)="startAddService()"></p-button>
                                                 <p-button icon="bx bx-trash-alt"
-                                                          pTooltip="Delete"
+                                                          [pTooltip]="'services.delete' | translate"
                                                           tooltipPosition="top"
                                                           variant="outlined"
                                                           severity="danger"
@@ -189,7 +189,7 @@
                             <ng-template #panel>
                                 <div class="services-form-panel">
                                     @if (selectedNode) {
-                                        <p-fieldset legend="Service details">
+                                        <p-fieldset [legend]="'services.details' | translate">
                                             <br>
                                             <div class="services-form p-fluid">
                                                 <div class="field">
@@ -204,15 +204,15 @@
                                                                    (ngModelChange)="onNameChange()"
                                                                    (keydown.enter)="saveTreeForm()"
                                                                    (keydown.escape)="cancelTreeField('key')"/>
-                                                            <label for="serviceName">Name</label>
+                                                            <label for="serviceName">{{ 'services.name' | translate }}</label>
                                                         </p-floatlabel>
                                                         @if (isTreeFormDirty) {
                                                             <div class="flex align-items-center gap-1 mt-1">
-                                                                <p-button icon="bx bx-check" severity="success" pTooltip="Save" tooltipPosition="top"
+                                                                <p-button icon="bx bx-check" severity="success" [pTooltip]="'actions.save' | translate" tooltipPosition="top"
                                                                           [rounded]="true" [text]="true"
                                                                           [disabled]="!!nameError || !!urlError"
                                                                           (onClick)="saveTreeForm()"/>
-                                                                <p-button icon="bx bx-x" severity="danger" pTooltip="Cancel edit" tooltipPosition="top"
+                                                                <p-button icon="bx bx-x" severity="danger" [pTooltip]="'actions.cancel' | translate" tooltipPosition="top"
                                                                           [rounded]="true" [text]="true"
                                                                           (onClick)="cancelTreeField('key')"/>
                                                             </div>
@@ -240,11 +240,11 @@
                                                         </p-floatlabel>
                                                         @if (isTreeFormDirty) {
                                                             <div class="flex align-items-center gap-1 mt-1">
-                                                                <p-button icon="bx bx-check" severity="success" pTooltip="Save" tooltipPosition="top"
+                                                                <p-button icon="bx bx-check" severity="success" [pTooltip]="'actions.save' | translate" tooltipPosition="top"
                                                                           [rounded]="true" [text]="true"
                                                                           [disabled]="!!nameError || !!urlError"
                                                                           (onClick)="saveTreeForm()"/>
-                                                                <p-button icon="bx bx-x" severity="danger" pTooltip="Cancel edit" tooltipPosition="top"
+                                                                <p-button icon="bx bx-x" severity="danger" [pTooltip]="'actions.cancel' | translate" tooltipPosition="top"
                                                                           [rounded]="true" [text]="true"
                                                                           (onClick)="cancelTreeField('value')"/>
                                                             </div>
@@ -257,23 +257,23 @@
                                                     }
                                                 </div>
                                                 @if (selectedNode && !selectedNode.children?.length && !pendingDraftNode && currentPageActionDomain) {
-                                                    <p-fieldset [legend]="'Page actions for' + (currentPageActionDomain ? ' — ' + currentPageActionDomain : '')">
+                                                    <p-fieldset [legend]="('pageActions.title' | translate) + (currentPageActionDomain ? ' — ' + currentPageActionDomain : '')">
                                                         <h4 class="mb-2"></h4>
                                                     @if (editingPageAction && selectorFocused) {
                                                         <p-message [closable]="true">
-                                                            <b>Selector rules:</b> Use CSS selectors only, e.g.
+                                                            <b>{{ 'pageActions.selectorRules' | translate }}</b> {{ 'pageActions.selectorRulesDetail' | translate }}
                                                             <code>#myId</code>, <code>input[name="user"]</code>,
                                                             <code>button[type="submit"]</code>.
-                                                            Avoid dynamic IDs. Do not use <code>document.querySelector(...)</code>.
+                                                            {{ 'pageActions.selectorRulesAvoid' | translate }} <code>document.querySelector(...)</code>.
                                                         </p-message>
                                                     }
                                                     <p-table [value]="currentPageActions" [reorderableRows]="true" (onRowReorder)="onPageActionsReorder($event)">
                                                         <ng-template pTemplate="header">
                                                             <tr>
                                                                 <th style="width: 40px"></th>
-                                                                <th>Action</th>
-                                                                <th>Selector</th>
-                                                                <th>Value</th>
+                                                                <th>{{ 'pageActions.action' | translate }}</th>
+                                                                <th>{{ 'pageActions.selector' | translate }}</th>
+                                                                <th>{{ 'pageActions.value' | translate }}</th>
                                                                 <th style="width: 120px"></th>
                                                             </tr>
                                                         </ng-template>
@@ -290,7 +290,7 @@
                                                                     }
                                                                     @if (editingPageAction && editingPageAction._id === pageAction._id) {
                                                                         <div>
-                                                                            <p-select placeholder="Select action"
+                                                                            <p-select [placeholder]="'pageActions.selectAction' | translate"
                                                                                       [options]="pageActionOptions"
                                                                                       [(ngModel)]="editingPageAction.action"
                                                                                       [invalid]="!!actionError"
@@ -315,7 +315,7 @@
                                                                                    [(ngModel)]="editingPageAction.selector"
                                                                                    [invalid]="!!selectorError"
                                                                                    [ngStyle]="{'width': '100%'}"
-                                                                                   placeholder="CSS selector"
+                                                                                   [placeholder]="'pageActions.cssSelector' | translate"
                                                                                    (focus)="selectorFocused = true"
                                                                                    (blur)="selectorFocused = false"
                                                                                    (keydown.enter)="confirmPageActionEdit()"
@@ -347,7 +347,7 @@
                                                                                        [(ngModel)]="editingPageAction.value"
                                                                                        [invalid]="!!valueError"
                                                                                        [ngStyle]="{'width': '100%'}"
-                                                                                       placeholder="Value"
+                                                                                       [placeholder]="'pageActions.value' | translate"
                                                                                        (keydown.enter)="confirmPageActionEdit()"
                                                                                        (keydown.escape)="cancelPageActionEdit()"
                                                                                        (keydown.space)="$event.stopPropagation()">
@@ -369,7 +369,7 @@
                                                                                         [step]="250"
                                                                                         [min]="0"
                                                                                         suffix=" ms"
-                                                                                        placeholder="Delay (ms)">
+                                                                                        [placeholder]="'pageActions.delayMs' | translate">
                                                                                     <ng-template>
                                                                                         <span class="pi pi-plus"></span>
                                                                                     </ng-template>
@@ -392,24 +392,24 @@
                                                                         @if (!editingPageAction || editingPageAction._id !== pageAction._id) {
                                                                             <p-button icon="bx bx-pencil"
                                                                                       [rounded]="true" [text]="true"
-                                                                                      pTooltip="Edit"
+                                                                                      [pTooltip]="'actions.edit' | translate"
                                                                                       tooltipPosition="top"
                                                                                       (click)="startPageActionEdit(pageAction)"></p-button>
                                                                             <p-button icon="bx bx-trash"
                                                                                       [rounded]="true" [text]="true"
-                                                                                      pTooltip="Delete"
+                                                                                      [pTooltip]="'actions.delete' | translate"
                                                                                       tooltipPosition="top"
                                                                                       severity="danger"
                                                                                       (click)="deletePageAction(pageAction)"></p-button>
                                                                         }
                                                                         @if (editingPageAction && editingPageAction._id === pageAction._id) {
                                                                             <p-button icon="bx bx-check"
-                                                                                      pTooltip="Save" tooltipPosition="top"
+                                                                                      [pTooltip]="'actions.save' | translate" tooltipPosition="top"
                                                                                       [rounded]="true" [text]="true"
                                                                                       severity="success"
                                                                                       (click)="confirmPageActionEdit()"></p-button>
                                                                             <p-button icon="bx bx-x"
-                                                                                      pTooltip="Cancel edit" tooltipPosition="top"
+                                                                                      [pTooltip]="'actions.cancel' | translate" tooltipPosition="top"
                                                                                       [rounded]="true" [text]="true"
                                                                                       severity="danger"
                                                                                       (click)="cancelPageActionEdit()"></p-button>
@@ -423,12 +423,12 @@
                                                                 <ng-template #start>
                                                                     <div class="flex" style="gap: 10px">
                                                                         <p-button icon="bx bx-plus"
-                                                                                  pTooltip="Add action"
+                                                                                  [pTooltip]="'pageActions.addAction' | translate"
                                                                                   tooltipPosition="top"
                                                                                   variant="outlined"
                                                                                   (onClick)="addPageAction()"></p-button>
                                                                         <p-button icon="bx bxs-file-import"
-                                                                                  pTooltip="Import"
+                                                                                  [pTooltip]="'pageActions.import' | translate"
                                                                                   tooltipPosition="top"
                                                                                   variant="outlined"
                                                                                   severity="contrast"
@@ -444,10 +444,10 @@
                                         </p-fieldset>
                                     } @else {
                                         <div class="flex justify-content-center align-items-center h-full">
-                                            <p-panel header="Hint">
-                                                <i class="bx bx-arrow-back bx-sm mr-2 lg:mr-0 text-base"></i><p class="m-0">  Select or add service to edit in service tree</p>
+                                            <p-panel [header]="'services.hint' | translate">
+                                                <i class="bx bx-arrow-back bx-sm mr-2 lg:mr-0 text-base"></i><p class="m-0">  {{ 'services.hintSelect' | translate }}</p>
                                                 <br>
-                                                <p class="m-0">Use drag and drop to reorder tree</p>
+                                                <p class="m-0">{{ 'services.hintDragDrop' | translate }}</p>
                                             </p-panel>
                                         </div>
                                     }
@@ -460,16 +460,16 @@
 
             <p-tabpanel value="2">
 
-                <h3>Language</h3>
+                <h3>{{ 'main.language' | translate }}</h3>
                 <p-select [options]="langOptions"
                           [(ngModel)]="lang"
                           (onChange)="setLang($event)"
-                          placeholder="Select language"
+                          [placeholder]="'main.selectLanguage' | translate"
                           styleClass="lang-select"/>
 
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
 
-                <h3>Theme</h3>
+                <h3>{{ 'main.theme' | translate }}</h3>
                 <p-selectButton
                         [options]="themeOptions"
                         [(ngModel)]="theme"
@@ -479,7 +479,7 @@
 
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
 
-                <h3>Primary color</h3>
+                <h3>{{ 'main.primaryColor' | translate }}</h3>
                 <div class="color-picker-row">
                     @for (color of primaryColors; track color.name) {
                         <button type="button"
@@ -492,7 +492,7 @@
                 </div>
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
 
-                <h3>Surface color</h3>
+                <h3>{{ 'main.surfaceColor' | translate }}</h3>
                 <div class="color-picker-row">
                     @for (color of surfaceColors; track color.name) {
                         <button type="button"
@@ -505,7 +505,7 @@
                 </div>
                 <hr class="mb-3 mx-2 border-top-1 border-none border-gray-600">
 
-                <h3>About</h3>
+                <h3>{{ 'main.about' | translate }}</h3>
                 <div class="flex flex-column gap-3">
                     <div>
                         <h4 class="mb-2">{{ appName }}</h4>
@@ -514,17 +514,17 @@
                     
                     <div class="flex flex-column gap-2">
                         <div class="flex align-items-center gap-2">
-                            <strong>Version:</strong>
+                            <strong>{{ 'main.version' | translate }}</strong>
                             <span>{{ appVersion }}</span>
                         </div>
                         <div class="flex align-items-center gap-2">
-                            <strong>Build Date:</strong>
+                            <strong>{{ 'main.buildDate' | translate }}</strong>
                             <span>{{ appBuildDate }}</span>
                         </div>
                     </div>
 
                     <div class="flex flex-column gap-2">
-                        <p-button label="Check for Updates" 
+                        <p-button [label]="'main.checkForUpdates' | translate" 
                                   icon="bx bx-download" 
                                   (onClick)="checkForUpdates()"
                                   severity="secondary"/>

@@ -15,7 +15,7 @@ interface BoxIcon {
         <div class="icon-picker">
             <div class="icon-picker-search">
                 <span class="p-input-icon-left w-full">
-                    <input pInputText type="text" placeholder="Search icons..."
+                    <input pInputText type="text" [placeholder]="'iconPicker.searchIcons' | translate"
                            [(ngModel)]="searchText" (input)="filterIcons()"
                            class="w-full" autofocus/>
                 </span>
