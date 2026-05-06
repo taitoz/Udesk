@@ -464,6 +464,8 @@
                 <p-select [options]="langOptions"
                           [(ngModel)]="lang"
                           (onChange)="setLang($event)"
+                          optionLabel="label"
+                          optionValue="value"
                           [placeholder]="'main.selectLanguage' | translate"
                           styleClass="lang-select"/>
 
@@ -509,7 +511,7 @@
                 <div class="flex flex-column gap-3">
                     <div>
                         <h4 class="mb-2">{{ appName }}</h4>
-                        <p class="text-color-secondary m-0">{{ appDescription }}</p>
+                        <p class="text-color-secondary m-0">{{ 'main.appDescription' | translate }}</p>
                     </div>
                     
                     <div class="flex flex-column gap-2">

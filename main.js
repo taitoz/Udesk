@@ -233,7 +233,7 @@ app.on('ready', async function () {
         //TODO to appCfg
         nativeTheme.themeSource = appCfg.get('theme', 'dark')
         //appLog.info(updater.buildId)
-        loadTranslation(app.getLocale())
+        loadTranslation(appCfg.get('lang', app.getLocale()))
         createWindow()
         initUpdater(mainWindow)
 
@@ -368,7 +368,18 @@ ipcMain.on('settings:getLang', (event) => {
     event.returnValue = appCfg.get('lang', 'en')
 })
 ipcMain.on('settings:setLang', (event, args) => {
-    appCfg.set('lang', args[0])
+    const newLang = args[0]
+    appCfg.set('lang', newLang)
+    loadTranslation(newLang)
+    // Rebuild tray menu with new translations
+    if (appTray) {
+        const trayMenu = Menu.buildFromTemplate([{
+            label: translate('Close'), click: () => {
+                app.quit()
+            }
+        }])
+        appTray.setContextMenu(trayMenu)
+    }
 })
 ipcMain.on('settings:setSurfaceColor', (event, args) => {
     appCfg.set('surfaceColor', args[0])
@@ -491,7 +502,7 @@ ipcMain.handle('app:getInfo', async () => {
     try {
         const packageJsonPath = path.join(__dirname, 'package.json')
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
-        
+
         // Get build date from app.asar file modification time if it exists, otherwise use current date
         let buildDate = new Date().toISOString()
         try {
@@ -503,7 +514,7 @@ ipcMain.handle('app:getInfo', async () => {
         } catch (err) {
             console.log('Could not get build date from asar:', err.message)
         }
-        
+
         return {
             name: packageJson.productName || packageJson.name,
             description: packageJson.description,
@@ -526,7 +537,6 @@ ipcMain.handle('app:checkForUpdates', async () => {
 })
 
 //TODO
-// lang nestdb, lang setting
 // ? events to angular
 //=====================================================================================
 async function loadUrl(urlStr, serviceId) {

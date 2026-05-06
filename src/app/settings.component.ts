@@ -50,7 +50,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     nameError: string | null = null
 
     theme = 'dark'
-    themeOptions: any[] = [{label: 'Dark', value: 'dark'}, {label: 'Light', value: 'light'}]
+    themeOptions: any[] = []
 
     primaryColors = primaryColors
     surfaceColors = surfaceColors
@@ -60,7 +60,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     getSurfaceDisplayColor = getSurfaceDisplayColor
 
     lang = 'en'
-    langOptions: string[] = ['ru', 'en']
+    langOptions: any[] = []
     
     // App info for About section
     appName = ''
@@ -111,6 +111,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
 
     async ngOnInit() {
+        this.updateTranslatedOptions()
+        this.translate.onLangChange.subscribe(() => {
+            this.updateTranslatedOptions()
+        })
+
         // Get current theme for the toggle button state
         const currentTheme = this.uiService.ipcSendSync('settings:getTheme')
         this.theme = currentTheme || 'dark'
@@ -473,6 +478,17 @@ export class SettingsComponent implements OnInit, OnDestroy {
     setLang(event: any) {
         this.translate.use(this.lang)
         this.uiService.ipcSend('settings:setLang', this.lang)
+    }
+
+    private updateTranslatedOptions() {
+        this.themeOptions = [
+            {label: this.translate.instant('main.theme.dark'), value: 'dark'},
+            {label: this.translate.instant('main.theme.light'), value: 'light'}
+        ]
+        this.langOptions = [
+            {label: this.translate.instant('main.lang.en'), value: 'en'},
+            {label: this.translate.instant('main.lang.ru'), value: 'ru'}
+        ]
     }
 
     setPrimaryColor(color: PrimaryColor) {
