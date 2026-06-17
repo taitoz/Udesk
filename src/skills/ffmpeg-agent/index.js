@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 const os = require('os');
+const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
 
 const VIDEO_EXTS = ['.mp4'];
@@ -9,31 +9,35 @@ const VIDEO_EXTS = ['.mp4'];
 // ── Paste your key here (temporary hardcoded) ───────────────
 const GEMINI_API_KEY = '';
 
-// ── Prompt: optimize for Oculus Quest 2 streaming over WiFi 6 ─
+// ── Prompt: optimize for Oculus Quest 2 / Quest 3 VR180/VR360 streaming over WiFi 6 ─
 const QUEST2_OPTIMIZATION_PROMPT = `
-You are a VR video streaming engineer. The source video will be served by XBVR and streamed to an Oculus Quest 2 over WiFi 6.
+You are a VR video streaming engineer specializing in VR180/VR360 content for Oculus Quest 2 / Quest 3 via XBVR and DeoVR over WiFi 6.
+The host machine runs Windows/Linux with an NVIDIA RTX 3070 GPU (Ampere). Always prefer GPU hardware encoding (nvenc).
 
 Hard requirements:
 1. Playback must be smooth — zero re-buffering on Quest 2.
-2. Must use Quest 2 hardware decoder: H.264 High Profile (preferred for widest compatibility) or HEVC (only if source resolution is > 4K and you need to preserve detail).
-3. Keep CPU/GPU load on Quest 2 minimal — avoid AV1, VP9, software-heavy profiles.
-4. Bitrate must fit real-world WiFi 6 shared throughput (~600 Mbps theoretical, ~200-400 Mbps practical). Recommend video bitrate between 15 Mbps (1080p) and 40 Mbps (4K/5K). Use -maxrate and -bufsize to prevent spikes.
-5. Audio: AAC stereo, keep original sample rate.
+2. Must use Quest 2 hardware decoder: HEVC (preferred for VR, mandatory for >4K or when scaling down from 8K) or H.264 High Profile (for 4K and below). Avoid AV1, VP9, software decoding.
+3. BITRATE MUST BE STRICTLY CONSTRAINED — use Constrained VBR with hard caps. NEVER use CQ/CRF modes (they cause NVENC to "encode air" and spike bitrate unpredictably).
+   - ALWAYS set -b:v, -maxrate, and -bufsize together.
+   - 6K (6144x3072) @ 60fps: -b:v 60M -maxrate 72M -bufsize 120M
+   - 5.7K (5376x2688) @ 60fps: -b:v 50M -maxrate 60M -bufsize 100M.
+   - 4K (3840x1920) @ 60fps: -b:v 28M -maxrate 35M -bufsize 70M.
+   - 1080p: -b:v 15M -maxrate 18M -bufsize 36M.
+4. Rate-control mode: use -rc vbr_hq combined with the bitrate triple above.
+5. Audio: AAC stereo, keep original sample rate. Use -c:a copy if source is already AAC.
 6. For network streaming add -movflags +faststart.
-7. If source width > 4096 and you keep H.264, scale to max 4096 to stay within Quest 2 decoder level limits (Level 5.2). If you really want > 4096, switch to HEVC.
-8. Use -pix_fmt yuv420p for decoder compatibility.
-9. ENCODING HARDWARE: the host has an NVIDIA RTX 3070 (Ampere). Always prefer hardware GPU encoding over CPU. Use h264_nvenc or hevc_nvenc. Never use libx264/libx265 — those burn CPU and are slower.
-10. NVENC preset for RTX 3070: choose between p4 (quality) and p5 (balanced). Avoid p1-p3 (too blocky) and p6-p7 (marginal gain, slower). Add -preset p4 or -preset p5.
-11. NVENC tuning: add -tune hq for quality or -tune ll (low latency) only if explicitly needed for live. Default to hq.
-12. Include -rc vbr and set -b:v, -maxrate, -bufsize together. Example: -b:v 25M -maxrate 30M -bufsize 60M.
-13. Always add -c:v h264_nvenc -profile:v high -bf 3 -refs 4.
-14. If scaling is needed, use CUDA scaler: -vf "scale_cuda=1920:1080:format=yuv420p" (faster than software scale).
-15. Ensure -hwaccel cuda -hwaccel_output_format cuda is used before -i so the entire pipeline stays on GPU where possible.
+7. Use NVENC preset: p4 (quality) or p5 (balanced). Tuning: -tune hq. Always add -bf 3 -refs 4.
+8. CUDA Scaling rules:
+   - If scaling is needed, use: -vf "scale_cuda=WIDTH:HEIGHT:format=yuv420p".
+   - CRITICAL: If you use "scale_cuda", do NOT add "-pix_fmt yuv420p" to output_args to avoid pipeline conflicts. Only use "-pix_fmt yuv420p" if encoding without scaling.
 
-Return ONLY a valid JSON object with no markdown formatting.
-Keys:
-  "ffmpeg_args": array of strings (codec/filter arguments ONLY; never include -i, filenames, -y, or output paths).
-  "rationale": one-sentence explanation of your choices.
+Return ONLY a valid JSON object with no markdown formatting or backticks.
+Strict Output Format:
+{
+  "input_args": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"],
+  "output_args": ["-c:v", "hevc_nvenc", "-preset", "p4", "-tune", "hq", "-rc", "vbr_hq", "-b:v", "28M", "-maxrate", "35M", "-bufsize", "70M", "-bf", "3", "-refs", "4", "-c:a", "copy", "-movflags", "+faststart"],
+  "rationale": "One-sentence explanation of your choices."
+}
 `.trim();
 
 // ── Prompt: assess 5-second test encode output ──────────────
@@ -136,7 +140,8 @@ class FfmpegAgent {
             const duration = parseFloat(file.metadata.format?.duration || '0');
 
             // ── 2a. Ask Gemini for encoding args ───────────────────
-            let ffmpegArgs;
+            let inputArgs;
+            let outputArgs;
             let rationale;
             try {
                 const prompt = this._buildPrompt(file);
@@ -148,21 +153,24 @@ class FfmpegAgent {
                 const text = response?.text;
                 if (!text) throw new Error('Empty response from Gemini');
                 const parsed = JSON.parse(text);
-                ffmpegArgs = parsed.ffmpeg_args;
+                inputArgs = parsed.input_args;
+                outputArgs = parsed.output_args;
                 rationale = parsed.rationale;
-                if (!Array.isArray(ffmpegArgs)) {
-                    throw new Error('ffmpeg_args is not an array');
+                if (!Array.isArray(inputArgs) || !Array.isArray(outputArgs)) {
+                    throw new Error('input_args or output_args is not an array');
                 }
             } catch (err) {
                 console.warn(`[analyze] AI failed for "${file.name}": ${err.message}`);
-                ffmpegArgs = ['-c:v', 'libx264', '-crf', '23', '-preset', 'medium', '-c:a', 'aac', '-b:a', '192k'];
-                rationale = 'Fallback to H.264/AAC due to AI error';
+                inputArgs = ['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda'];
+                outputArgs = ['-c:v', 'hevc_nvenc', '-preset', 'p5', '-tune', 'hq', '-rc', 'vbr_hq', '-b:v', '28M', '-maxrate', '35M', '-bufsize', '70M', '-bf', '3', '-refs', '4', '-c:a', 'copy', '-movflags', '+faststart'];
+                rationale = 'Fallback to HEVC NVENC Constrained VBR due to AI error';
             }
 
             // ── 2b. Test encode: 5-second sample ───────────────────
-            const tempOutput = path.join(os.tmpdir(), `ffmpeg-agent-test-${Date.now()}-${i}.mp4`);
+            const tempOutput = path.join(path.dirname(file.path), `${path.basename(file.name, file.ext)}_test_tmp${file.ext}`);
             const offsetStr = `00:${String(this.testOffsetMin).padStart(2, '0')}:00`;
-            const testArgs = ['-ss', offsetStr, '-t', '5', '-i', file.path, ...ffmpegArgs, '-y', tempOutput];
+            const testArgs = [...inputArgs, '-ss', offsetStr, '-t', '5', '-i', file.path, ...outputArgs, '-y', tempOutput];
+            console.log(`[ffmpeg] test command: ffmpeg ${testArgs.map(a => (a.includes(' ') ? `"${a}"` : a)).join(' ')}`);
 
             let testSuccess = false;
             const testStart = Date.now();
@@ -212,7 +220,8 @@ class FfmpegAgent {
 
             queue.push({
                 ...file,
-                ffmpegArgs,
+                inputArgs,
+                outputArgs,
                 rationale,
                 testSuccess,
                 testDurationMs,
@@ -242,16 +251,15 @@ class FfmpegAgent {
      * @returns {Promise<Array<{success:boolean, task:object, outputFile?:string, elapsed?:number, error?:string}>>}
      */
     async executeBatch(queue, outputPath, onProgress = () => {}) {
-        const resolvedOut = path.resolve(outputPath);
-        if (!fs.existsSync(resolvedOut)) {
-            fs.mkdirSync(resolvedOut, { recursive: true });
-        }
-
         const results = [];
         for (let i = 0; i < queue.length; i++) {
             const task = queue[i];
             const baseName = path.basename(task.name, task.ext);
-            const outputFile = path.join(resolvedOut, `${baseName}_converted${task.ext}`);
+            const targetDir = outputPath ? path.resolve(outputPath) : path.dirname(task.path);
+            if (outputPath && !fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
+            }
+            const outputFile = path.join(targetDir, `${baseName}_encoded${task.ext}`);
 
             onProgress({
                 stage: 'encode-start',
@@ -261,13 +269,14 @@ class FfmpegAgent {
                 progressPercent: 0,
             });
 
-            const args = ['-i', task.path, ...task.ffmpegArgs, '-y', outputFile];
+            const args = [...task.inputArgs, '-i', task.path, ...task.outputArgs, '-y', outputFile];
             const startTime = Date.now();
             let lastTime = 0;
 
             try {
                 await this._runFfmpeg(args, line => {
                     const timeMatch = line.match(/time=(\d{2}:\d{2}:\d{2}\.\d{2})/);
+                    const speedMatch = line.match(/speed=\s*([0-9.]+x)/);
                     if (timeMatch) {
                         const seconds = this._parseTimeToSeconds(timeMatch[1]);
                         lastTime = seconds;
@@ -279,6 +288,7 @@ class FfmpegAgent {
                             file: task.name,
                             progressPercent: pct,
                             currentTime: seconds,
+                            speed: speedMatch ? speedMatch[1] : '1x',
                         });
                     }
                 });
@@ -339,22 +349,39 @@ class FfmpegAgent {
     _runFfmpeg(args, onStderrLine = () => {}) {
         return new Promise((resolve, reject) => {
             const proc = spawn('ffmpeg', args);
-            let stderrBuffer = '';
+
+            // Lower process priority right after spawn so the OS / GUI stays responsive
+            try {
+                os.setPriority(proc.pid, os.constants.priority.PRIORITY_BELOW_NORMAL);
+            } catch (e) {
+                console.warn(`[Priority] Не удалось снизить приоритет: ${e.message}`);
+            }
+
+            let remainder = '';
+            const stderrLines = [];
             proc.stderr.on('data', chunk => {
-                stderrBuffer += chunk;
-                const lines = stderrBuffer.split('\n');
-                stderrBuffer = lines.pop(); // keep incomplete tail
+                const data = remainder + chunk.toString();
+                // FFmpeg progress uses \r instead of \n; split on both
+                const lines = data.split(/\r|\n/);
+                remainder = lines.pop(); // keep incomplete tail
                 for (const line of lines) {
-                    onStderrLine(line);
+                    const trimmed = line.trim();
+                    if (trimmed) {
+                        stderrLines.push(trimmed);
+                        onStderrLine(trimmed);
+                    }
+                }
+            });
+            proc.stderr.on('end', () => {
+                if (remainder.trim()) {
+                    stderrLines.push(remainder.trim());
+                    onStderrLine(remainder.trim());
                 }
             });
             proc.on('close', code => {
-                if (stderrBuffer) {
-                    const lines = stderrBuffer.split('\n');
-                    for (const line of lines) onStderrLine(line);
-                }
                 if (code !== 0) {
-                    return reject(new Error(`ffmpeg exited with code ${code}`));
+                    const tail = stderrLines.slice(-20).join('\n');
+                    return reject(new Error(`ffmpeg exited with code ${code}\n${tail}`));
                 }
                 resolve();
             });

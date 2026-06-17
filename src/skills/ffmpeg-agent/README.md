@@ -155,8 +155,9 @@ node test-run.js ./videos ./out AIzaSy...
   path: '/abs/path/to/video.mp4',
   ext: '.mp4',
   metadata: { /* ffprobe input */ },
-  ffmpegArgs: ['-c:v', 'h264_nvenc', '-preset', 'p4', ...],
-  rationale: 'H.264 NVENC p4 for Quest 2 compat, 25 Mbps VBR',
+  inputArgs: ['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda'],
+  outputArgs: ['-c:v', 'hevc_nvenc', '-preset', 'p4', '-tune', 'hq', '-rc', 'vbr_hq', '-b:v', '28M', '-maxrate', '35M', '-bufsize', '70M', '-bf', '3', '-refs', '4', '-c:a', 'copy', '-movflags', '+faststart'],
+  rationale: 'HEVC NVENC p4, Constrained VBR 28/35/70 Mbps for 4K VR180 Quest 2',
   testSuccess: true,
   testDurationMs: 3400,
   outputProbe: { /* ffprobe output */ },
@@ -210,5 +211,78 @@ const results = await agent.executeBatch(queue, './out');
 - Только «плоское» сканирование (не рекурсивное).
 - Один GPU (RTX 3070), без `-gpu` выбора.
 - Тестовый отрезок начинается с 10-й минуты (`-ss 00:10:00`), 5 секунд.
-- Оценка качества зависит от корректности ответа Gemini; fallback на `libx264` CPU-энкод при ошибке AI.
+- Оценка качества зависит от корректности ответа Gemini; fallback на `hevc_nvenc` Constrained VBR при ошибке AI.
 - Quest 2: аппаратный декод до ~8K@30fps HEVC или ~5.7K@60fps HEVC. 8K@60fps требует Quest 3 / AV1.
+
+## Будущие планы / Roadmap
+
+### 1. Интеграция с базой данных XBVR (SQL-выборка)
+
+Конвейер автоматического поиска «тяжёлых» исходников для оптимизации:
+
+#### SQL-запрос
+
+```sql
+SELECT filename, path, size
+FROM files
+WHERE size > 20000000000
+ORDER BY size DESC
+LIMIT 10;
+```
+
+| Параметр | Описание |
+| -------- | -------- |
+| `size > 20000000000` | ~20 GB — порог «тяжёлого» файла |
+| `ORDER BY size DESC` | Приоритет самым большим |
+| `LIMIT 10` | Размер пакета для одного прогона |
+
+#### Логика конвейера
+
+1. **SQL-выборка**: Node.js подключается к SQLite XBVR (`xbvr.db`) и получает список кандидатов.
+2. **Предварительная проверка**: Для каждого файла запускается `ffprobe` для сбора актуальных метаданных (разрешение, FPS, кодек, битрейт).
+3. **Фильтрация по BPP**: Если `inputBPP < 0.035` — файл уже сильно сжат, исключается из очереди.
+4. **Идемпотентность**: Перед добавлением в очередь скрипт проверяет существование `*_encoded.mp4` рядом с оригиналом. Если оптимизированная копия уже есть — файл автоматически пропускается, чтобы база не крутила его по кругу.
+
+```js
+// Псевдокод защиты от повторной обработки
+const encodedPath = file.path.replace('.mp4', '_encoded.mp4');
+if (fs.existsSync(encodedPath)) {
+    console.log(`[skip] ${file.name} — already encoded.`);
+    continue;
+}
+```
+
+### 2. Интерактивная UI-панель управления в Udesk
+
+Веб-интерфейс, который исключает «слепую» автоматизацию и оставляет контроль за инженером.
+
+#### Панель конфигурации (верх)
+
+| Элемент | Описание |
+| ------- | -------- |
+| **System Prompts** | Два `textarea` с живым редактированием `QUEST2_OPTIMIZATION_PROMPT` и `VR_QUALITY_ASSESSMENT_PROMPT`. Изменения применяются к следующему вызову Gemini без перезагрузки сервера. |
+| **Фильтры** | `input[type="number"]` для минимального размера файла (GB) и лимита выборки `LIMIT`. |
+| **«Найти кандидатов»** | Кнопка, запускающая SQL-запрос к XBVR и первичный `ffprobe`-парсинг метаданных. |
+
+#### Интерактивная очередь задач (центр)
+
+| Колонка | Действие |
+| ------- | -------- |
+| **Файл** | Имя, размер, исходное разрешение, input BPP |
+| **Тест** | Кнопка запускает 5-секундный сэмпл → Gemini-оценку. Результат: `PASS`/`WARN`/`FAIL`, итоговый битрейт, расчётный BPP |
+| **Input Args** | Редактируемый `<input>` с флагами FFmpeg **до** `-i` (например, `-hwaccel cuda`) |
+| **Output Args** | Редактируемый `<input>` с флагами FFmpeg **после** `-i` (кодек, битрейт, фильтры) |
+| **Rationale** | Однострочное пояснение от Gemini (read-only) |
+
+Инженер может вручную поправить любой флаг перед запуском боевого кодирования.
+
+#### Мониторинг кодирования (низ)
+
+| Элемент | Реализация |
+| ------- | ---------- |
+| **«Старт пула»** | Кнопка запуска очереди с подтверждёнными задачами |
+| **Прогресс-бар** | Бэкенд парсит `stderr` FFmpeg (`time=HH:MM:SS.mm`), шлёт SSE/WebSocket-сообщение `{"file":"...","percent":42.3,"currentTime":127.5}` |
+| **ETA** | Расчётное время из `estimatedSeconds` с live-обновлением |
+| **Лог** | Scrollable консоль с raw-выводом ffmpeg для отладки |
+
+**Технический стек UI**: React + TailwindCSS (или shadcn/ui), SSE для real-time прогресса, REST API-обёртка вокруг `FfmpegAgent`.

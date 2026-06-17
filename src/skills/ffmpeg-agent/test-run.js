@@ -3,21 +3,29 @@ const path = require('path');
 const { FfmpegAgent } = require('./index');
 
 function printUsage() {
-    console.log('Usage: node test-run.js <input-dir> <output-dir> <gemini-api-key>');
+    console.log('Usage: node test-run.js <input-dir> [output-dir] <gemini-api-key>');
     console.log('');
-    console.log('Example:');
+    console.log('Examples:');
     console.log('  node test-run.js ./videos ./out AIza...');
+    console.log('  node test-run.js ./videos AIza...        (output in same folder as source)');
     process.exit(1);
 }
 
 const args = process.argv.slice(2);
-if (args.length < 3) {
+if (args.length < 2) {
     printUsage();
 }
 
 const INPUT_DIR = path.resolve(args[0]);
-const OUTPUT_DIR = path.resolve(args[1]);
-const GEMINI_KEY = args[2];
+let OUTPUT_DIR = null;
+let GEMINI_KEY = null;
+
+if (args.length === 2) {
+    GEMINI_KEY = args[1];
+} else {
+    OUTPUT_DIR = path.resolve(args[1]);
+    GEMINI_KEY = args[2];
+}
 
 async function promptUser(question) {
     const rl = readline.createInterface({
@@ -67,7 +75,7 @@ async function main() {
                 console.log(`  [${p.current}/${p.total}] Analyzing "${p.file}" ...`);
             }
             if (p.stage === 'estimate') {
-                const est = p.estimatedSeconds ? `~${p.estimatedSeconds.toFixed(1)}s total` : 'test failed';
+                const est = p.estimatedSeconds ? `~${(p.estimatedSeconds / 60).toFixed(1)} min` : 'test failed';
                 const a = p.assessment;
                 const verdict = a ? `[${a.assessment}] ${a.notes}` : '[no assessment]';
                 console.log(`  [${p.current}/${p.total}] Est: ${est} | ${verdict}`);
@@ -77,16 +85,17 @@ async function main() {
         console.log('\n--- Proposed Queue ---');
         queue.forEach((t, i) => {
             const status = t.testSuccess ? 'OK' : 'FAIL';
-            const est = t.estimatedSeconds > 0 ? `${t.estimatedSeconds.toFixed(1)}s` : 'N/A';
+            const est = t.estimatedSeconds > 0 ? `${(t.estimatedSeconds / 60).toFixed(1)} min` : 'N/A';
             const a = t.assessment;
             const verdict = a ? `${a.assessment}: ${a.notes}` : 'N/A';
             const changes = a?.recommended_changes?.length ? `Changes: ${a.recommended_changes.join(' ')}` : '';
             console.log(
                 `  ${i + 1}. [${status}] ${t.name}\n` +
-                    `     Args: ${t.ffmpegArgs.join(' ')}\n` +
-                    `     Why:  ${t.rationale}\n` +
-                    `     Est:  ${est}\n` +
-                    `     QA:   ${verdict}` +
+                    `     Input:  ${t.inputArgs.join(' ')}\n` +
+                    `     Output: ${t.outputArgs.join(' ')}\n` +
+                    `     Why:    ${t.rationale}\n` +
+                    `     Est:    ${est}\n` +
+                    `     QA:     ${verdict}` +
                     (changes ? `\n     ${changes}` : '')
             );
         });
@@ -113,20 +122,43 @@ async function main() {
     console.log('\n=== Stage 3: Execute Batch ===');
     console.log(`Output directory: ${OUTPUT_DIR}\n`);
 
+    let encodeStartTime = null;
+
     const results = await agent.executeBatch(queue, OUTPUT_DIR, p => {
         if (p.stage === 'encode-start') {
+            encodeStartTime = Date.now();
             console.log(`\n[${p.current}/${p.total}] Starting "${p.file}" ...`);
         }
         if (p.stage === 'encode') {
-            const pct = p.progressPercent.toFixed(1);
-            process.stdout.write(`\r  progress: ${pct}% (${p.currentTime?.toFixed(1)}s)`);
+            const pct = p.progressPercent || 0;
+            const speed = p.speed || '1x';
+            const time = p.currentTime ? p.currentTime.toFixed(1) : '0';
+
+            let etaStr = '--:--:--';
+            if (!encodeStartTime) encodeStartTime = Date.now();
+            if (pct > 0.5) {
+                const elapsedMs = Date.now() - encodeStartTime;
+                const totalEstimatedMs = (elapsedMs / pct) * 100;
+                const remainingMs = totalEstimatedMs - elapsedMs;
+
+                const totalSeconds = Math.floor(remainingMs / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                etaStr = [
+                    hours.toString().padStart(2, '0'),
+                    minutes.toString().padStart(2, '0'),
+                    seconds.toString().padStart(2, '0'),
+                ].join(':');
+            }
+
+            process.stdout.write(`\r   -> Encoding: [${pct.toFixed(1)}%] | Processed: ${time}s | Speed: ${speed} | ETA: ${etaStr} `);
         }
         if (p.stage === 'encode-done') {
-            process.stdout.write('\r  Done.          \n');
+            process.stdout.write('\n   [DONE] Encoding finished successfully.\n');
         }
         if (p.stage === 'encode-error') {
-            process.stdout.write('\r  Error.         \n');
-            console.error(`    -> ${p.error}`);
+            process.stdout.write(`\n   [ERROR] Encoding failed: ${p.error}\n`);
         }
     });
 
