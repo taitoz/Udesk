@@ -10,6 +10,7 @@
 /release-builds
 main.js
 src/**/*.js
+!src/skills/ffmpeg-agent/**/*.js
 *.js.map
 
 # dependencies
