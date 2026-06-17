@@ -36,22 +36,40 @@ Keys:
   "rationale": one-sentence explanation of your choices.
 `.trim();
 
-// ── Prompt: assess 1-minute test encode output ──────────────
-const QUALITY_ASSESSMENT_PROMPT = `
-You are a VR QA engineer. Given the INPUT and OUTPUT ffprobe metadata of a 1-minute test encode, assess whether the output will stream smoothly to an Oculus Quest 2 over WiFi 6.
+// ── Prompt: assess 5-second test encode output ──────────────
+const VR_QUALITY_ASSESSMENT_PROMPT = `
+You are an expert VR video encoding engineer specializing in high-resolution VR180/VR360 content playback on Oculus Quest 2 / Quest 3 via XBVR and DeoVR streaming over WiFi 6.
+Your core mission is NOT to simply minimize file size, but to find the perfect technical balance between maximum visual fidelity, decoder stability, and smooth local network streaming.
 
-Checklist:
-- Bitrate: is it within 15-40 Mbps sweet spot for WiFi 6?
-- Codec: is it H.264 High Profile or HEVC? Anything else is a FAIL.
-- Resolution/Level: does it exceed Quest 2 hardware decoder limits?
-- Audio: is it AAC stereo?
-- Any obvious red flags (incompatible profile, too many reference frames, weird SAR/DAR, etc.)?
+CRITICAL METRIC (BPP - Bits Per Pixel Per Frame):
+- BPP < 0.035: Video is ALREADY highly compressed. Re-encoding will likely destroy quality or inefficiently bloat the file size. Advise warning/skipping.
+- BPP 0.040 - 0.070: Balanced sweet spot for high-quality VR180.
+- BPP > 0.080: Potential overkill or unoptimized raw encode, good candidate for optimization if resolution is extreme (e.g., 8K).
 
-Return ONLY a valid JSON object with no markdown formatting.
-Keys:
-  "assessment": one of "PASS", "WARN", "FAIL"
-  "notes": short human-readable explanation
-  "recommended_changes": array of suggested ffmpeg arg changes (empty if PASS, otherwise strings).
+Analyze the provided INPUT and OUTPUT metadata alongside their calculated BPP metrics.
+
+Evaluation Criteria:
+1. Decoder Compatibility (Quest 2 Hardware Limits):
+   - Codec MUST be HEVC (preferred for VR) or H.264. Any other codec is an instant FAIL.
+   - Check Profile/Level (e.g., HEVC Main 10@L5.1 or L6.0). Flag if it exceeds Quest 2 hardware capabilities (Max hardware decoding for Quest 2 is roughly 8K@30fps or 5.7K@60fps for HEVC. 8K@60fps requires Quest 3 / AV1).
+2. Resolution & Bitrate Synergy:
+   - Do not apply flat-video rules (like 15-40 Mbps limits). 
+   - For 6K (6144x3072) or 5.7K, a bitrate of 40-75 Mbps is completely normal and preferred for streaming over Wi-Fi 6 to retain VR immersion.
+   - Only flag bitrate as "TOO HIGH" if it risks triggering network buffering (>90-100 Mbps sustained over WiFi 6) or if BPP shows diminishing returns.
+3. Quality Retention vs. Bloat:
+   - Compare INPUT BPP and OUTPUT BPP. If OUTPUT size/bitrate increased but resolution stayed the same, diagnose WHY (e.g., encoder fighting high-frequency noise/grain, or too low CRF/qp setting).
+
+Return ONLY a valid JSON object. Do not include markdown formatting or backticks.
+{
+  "assessment": "PASS" | "WARN" | "FAIL",
+  "streaming_score": 0,
+  "quality_score": 0,
+  "compatibility_score": 0,
+  "notes": "Short, technically precise explanation of your decision.",
+  "recommended_changes": [
+    "Specific ffmpeg argument tweaks to fix the issue, or ['skip re-encode'] if input was already optimal."
+  ]
+}
 `.trim();
 
 class FfmpegAgent {
@@ -103,7 +121,7 @@ class FfmpegAgent {
     }
 
     /**
-     * Stage 2: Analyze with AI, test-encode 60 s, re-probe output,
+     * Stage 2: Analyze with AI, test-encode 5 s, re-probe output,
      *          assess quality, estimate full-batch time.
      * @param {Array} files - result from scanFolder
      * @param {Function} onProgress - optional callback({stage, current, total, file, ...})
@@ -141,15 +159,17 @@ class FfmpegAgent {
                 rationale = 'Fallback to H.264/AAC due to AI error';
             }
 
-            // ── 2b. Test encode: first 60 seconds ──────────────────
+            // ── 2b. Test encode: 5-second sample ───────────────────
             const tempOutput = path.join(os.tmpdir(), `ffmpeg-agent-test-${Date.now()}-${i}.mp4`);
             const offsetStr = `00:${String(this.testOffsetMin).padStart(2, '0')}:00`;
-            const testArgs = ['-ss', offsetStr, '-t', '60', '-i', file.path, ...ffmpegArgs, '-y', tempOutput];
+            const testArgs = ['-ss', offsetStr, '-t', '5', '-i', file.path, ...ffmpegArgs, '-y', tempOutput];
 
             let testSuccess = false;
             const testStart = Date.now();
             let outputProbe = null;
             let assessment = null;
+            let inputBPP = null;
+            let outputBPP = null;
             try {
                 await this._runFfmpeg(testArgs);
                 testSuccess = true;
@@ -157,8 +177,12 @@ class FfmpegAgent {
                 // Re-probe output
                 outputProbe = await this._runFfprobe(tempOutput);
 
+                // Calculate BPP for both input and output
+                inputBPP = this._calculateBPP(file.metadata);
+                outputBPP = this._calculateBPP(outputProbe);
+
                 // Ask AI to assess output quality
-                const assessPrompt = this._buildAssessmentPrompt(file, outputProbe);
+                const assessPrompt = this._buildAssessmentPrompt(file, outputProbe, inputBPP, outputBPP);
                 const assessResponse = await this.genai.models.generateContent({
                     model: this.model,
                     contents: assessPrompt,
@@ -183,7 +207,7 @@ class FfmpegAgent {
             // ── 2c. Extrapolate total time ─────────────────────────
             let estimatedSeconds = 0;
             if (testSuccess && duration > 0) {
-                estimatedSeconds = (testDurationMs / 1000) * (duration / 60);
+                estimatedSeconds = (testDurationMs / 1000) * (duration / 5);
             }
 
             queue.push({
@@ -349,18 +373,54 @@ ${metaStr}
 Return ONLY the JSON object.`;
     }
 
-    _buildAssessmentPrompt(inputFile, outputProbe) {
+    _buildAssessmentPrompt(inputFile, outputProbe, inputBPP, outputBPP) {
         const inputStr = JSON.stringify(inputFile.metadata, null, 2);
         const outputStr = JSON.stringify(outputProbe, null, 2);
-        return `${QUALITY_ASSESSMENT_PROMPT}
+        return `${VR_QUALITY_ASSESSMENT_PROMPT}
 
 INPUT METADATA:
 ${inputStr}
 
-OUTPUT (1-minute test) METADATA:
+INPUT BPP: ${inputBPP !== null ? inputBPP.toFixed(6) : 'N/A'}
+
+OUTPUT (5-second test) METADATA:
 ${outputStr}
 
+OUTPUT BPP: ${outputBPP !== null ? outputBPP.toFixed(6) : 'N/A'}
+
 Return ONLY the JSON object.`;
+    }
+
+    _parseFps(fpsStr) {
+        if (!fpsStr) return 0;
+        if (fpsStr.includes('/')) {
+            const [num, den] = fpsStr.split('/').map(Number);
+            if (!den) return 0;
+            return num / den;
+        }
+        return parseFloat(fpsStr) || 0;
+    }
+
+    _calculateBPP(metadata) {
+        if (!metadata || !metadata.streams) return null;
+        const videoStream = metadata.streams.find(s => s.codec_type === 'video');
+        if (!videoStream) return null;
+
+        const width = videoStream.width || 0;
+        const height = videoStream.height || 0;
+        const fps = this._parseFps(videoStream.r_frame_rate || videoStream.avg_frame_rate || '');
+        if (!width || !height || !fps) return null;
+
+        let bitrate = 0;
+        if (videoStream.bit_rate) {
+            bitrate = parseInt(videoStream.bit_rate, 10);
+        } else if (metadata.format && metadata.format.bit_rate) {
+            bitrate = parseInt(metadata.format.bit_rate, 10);
+        }
+
+        if (!bitrate) return null;
+        const bpp = bitrate / (width * height * fps);
+        return bpp;
     }
 
     _parseTimeToSeconds(timeStr) {

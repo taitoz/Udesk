@@ -61,7 +61,7 @@ async function main() {
     let queue = [];
 
     while (!approved) {
-        console.log('\n=== Stage 2: Analyze & Estimate (60 s test slice) ===');
+        console.log('\n=== Stage 2: Analyze & Estimate (5 s test slice) ===');
         queue = await agent.analyzeAndEstimate(files, p => {
             if (p.stage === 'analyze') {
                 console.log(`  [${p.current}/${p.total}] Analyzing "${p.file}" ...`);
