@@ -82,23 +82,62 @@ async function main() {
             }
         });
 
-        console.log('\n--- Proposed Queue ---');
-        queue.forEach((t, i) => {
-            const status = t.testSuccess ? 'OK' : 'FAIL';
+        // Only PASS items make it into the encode queue
+        const passQueue = queue.filter(t => t.assessment?.assessment === 'PASS');
+        const excluded = queue.filter(t => t.assessment?.assessment !== 'PASS');
+
+        console.log('\n--- Proposed Queue (PASS only) ---');
+        if (passQueue.length === 0) {
+            console.log('  (none — no files passed quality assessment)');
+        }
+        passQueue.forEach((t, i) => {
             const est = t.estimatedSeconds > 0 ? `${(t.estimatedSeconds / 60).toFixed(1)} min` : 'N/A';
             const a = t.assessment;
             const verdict = a ? `${a.assessment}: ${a.notes}` : 'N/A';
-            const changes = a?.recommended_changes?.length ? `Changes: ${a.recommended_changes.join(' ')}` : '';
+
+            const inputStr = t.inputArgs?.length ? t.inputArgs.join(' ') : 'N/A';
+            const outputStr = t.outputArgs?.length ? t.outputArgs.join(' ') : 'N/A';
+
             console.log(
-                `  ${i + 1}. [${status}] ${t.name}\n` +
-                    `     Input:  ${t.inputArgs.join(' ')}\n` +
-                    `     Output: ${t.outputArgs.join(' ')}\n` +
+                `  ${i + 1}. [PASS] ${t.name}\n` +
+                    `     Input:  ${inputStr}\n` +
+                    `     Output: ${outputStr}\n` +
                     `     Why:    ${t.rationale}\n` +
                     `     Est:    ${est}\n` +
-                    `     QA:     ${verdict}` +
-                    (changes ? `\n     ${changes}` : '')
+                    `     QA:     ${verdict}`
             );
         });
+
+        if (excluded.length > 0) {
+            console.log('\n--- Excluded (will NOT be encoded) ---');
+            excluded.forEach((t, i) => {
+                let reason;
+                if (t.action === 'skip') reason = 'SKIP';
+                else if (!t.testSuccess) reason = 'TEST FAILED';
+                else reason = t.assessment?.assessment || 'NO ASSESSMENT';
+                const note = t.assessment?.notes || t.rationale || '';
+                console.log(`  ${i + 1}. [${reason}] ${t.name}\n     ${note}`);
+            });
+        }
+
+        // From here on the active queue is PASS-only
+        queue = passQueue;
+
+        if (queue.length === 0) {
+            const retry = await promptUser('\nNothing to encode. (n = abort, r = retry with new prompt): ');
+            if (retry.trim().toLowerCase() === 'r') {
+                const newPrompt = await promptUser('Enter new optimization prompt (or press Enter for default): ');
+                if (newPrompt.trim()) {
+                    agent.promptTemplate = newPrompt.trim();
+                    console.log('Prompt updated. Re-running Stage 2 ...\n');
+                } else {
+                    console.log('Keeping current prompt. Re-running Stage 2 ...\n');
+                }
+                continue;
+            }
+            console.log('Aborted by user.');
+            return;
+        }
 
         const answer = await promptUser('\nApprove batch? (y = yes, n = abort, r = retry with new prompt): ');
         const norm = answer.trim().toLowerCase();
@@ -164,11 +203,14 @@ async function main() {
 
     // ── Summary ─────────────────────────────────────────────
     console.log('\n--- Summary ---');
-    const succeeded = results.filter(r => r.success);
+    const succeeded = results.filter(r => r.success && !r.skipped);
+    const skipped = results.filter(r => r.skipped);
     const failed = results.filter(r => !r.success);
-    console.log(`  Success: ${succeeded.length}`);
+    console.log(`  Encoded: ${succeeded.length}`);
+    console.log(`  Skipped: ${skipped.length}`);
     console.log(`  Failed:  ${failed.length}`);
     succeeded.forEach(r => console.log(`    [OK] ${r.outputFile} (${(r.elapsed / 1000).toFixed(1)}s)`));
+    skipped.forEach(r => console.log(`    [SKIP] ${r.task.name}: ${r.task.rationale}`));
     failed.forEach(r => console.log(`    [ERR] ${r.task.name}: ${r.error}`));
 
     console.log('\nAll done.');

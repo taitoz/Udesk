@@ -155,17 +155,20 @@ node test-run.js ./videos ./out AIzaSy...
   path: '/abs/path/to/video.mp4',
   ext: '.mp4',
   metadata: { /* ffprobe input */ },
+  action: 'encode', // or 'skip'
   inputArgs: ['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda'],
-  outputArgs: ['-c:v', 'hevc_nvenc', '-preset', 'p4', '-tune', 'hq', '-rc', 'vbr_hq', '-b:v', '28M', '-maxrate', '35M', '-bufsize', '70M', '-bf', '3', '-refs', '4', '-c:a', 'copy', '-movflags', '+faststart'],
-  rationale: 'HEVC NVENC p4, Constrained VBR 28/35/70 Mbps for 4K VR180 Quest 2',
+  outputArgs: ['-c:v', 'hevc_nvenc', '-preset', 'p4', '-tune', 'hq', '-rc', 'vbr', '-cq', '20', '-maxrate', '35M', '-bufsize', '70M', '-bf', '3', '-refs', '4', '-c:a', 'copy', '-movflags', '+faststart'],
+  rationale: 'HEVC NVENC p4, CQ20 Constrained VBR for 4K VR180 Quest 2',
   testSuccess: true,
   testDurationMs: 3400,
   outputProbe: { /* ffprobe output */ },
-  assessment: { assessment: 'PASS', streaming_score: 85, quality_score: 90, compatibility_score: 95, notes: '...', recommended_changes: [] },
+  assessment: { assessment: 'PASS', notes: '...' },
   estimatedSeconds: 120.5,
   duration: 2120
 }
 ```
+
+**Возможные статусы `assessment.assessment`:** `PASS`, `WARN`, `FAIL`, `SKIP`, `REGRESSION`.
 
 ## Изменение цели без редактирования кода
 
