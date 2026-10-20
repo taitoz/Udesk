@@ -397,33 +397,43 @@ class FfmpegAgent {
         if (!video?.width || !video?.height) throw new Error('Video dimensions are missing');
         const sourceRate = this._parseFps(video.avg_frame_rate || '') > 0 ? video.avg_frame_rate : video.r_frame_rate;
         const fps = this._parseFps(sourceRate || '');
-        const low = video.height <= 1920 && video.width / video.height >= 1.9;
-        const oversized = video.width > 6144 || video.height > 3072;
-        const ratio = low ? Math.min(4800 / video.width, 2400 / video.height)
-            : Math.min(1, 6144 / video.width, 3072 / video.height);
-        const width = Math.max(2, Math.floor(video.width * ratio / 2) * 2);
-        const height = Math.max(2, Math.floor(video.height * ratio / 2) * 2);
-        // CPU restoration only when Gemini flags grid or color; clean sources stay on the GPU.
-        // AVC macroblock grid only exists in H.264 sources — ignore the flag otherwise.
-        const removeGrid = restoration.remove_grid === true && video.codec_name === 'h264';
+        // Тиры контента: 8K-даунскейл (GPU only), все файлы до 3072p — CPU по флагам или авто для <=2400p
+        const isOversized = video.width > 6144 || video.height > 3072;
+        const isUpTo3072 = !isOversized;
+
+        let width, height;
+        if (video.height <= 1920) {
+            width = 4800;
+            height = 2400;
+        } else if (isOversized) {
+            width = 6144;
+            height = 3072;
+        } else {
+            width = video.width;
+            height = video.height;
+        }
+
+        const removeGrid = restoration.remove_grid === true;
         const colorCorrect = restoration.color_correct === true;
-        const needsCpuFilters = removeGrid || colorCorrect;
-        // eq is auxiliary: never triggers the CPU path on its own
-        const adjustContrast = needsCpuFilters && restoration.adjust_contrast === true;
+        const adjustContrast = restoration.adjust_contrast === true;
+
+        // До 3072p CPU-фильтры разрешены по флагам или автоматически для видео <= 2400p
+        const needsCpuFilters = isUpTo3072
+            && (video.height <= 2400 || removeGrid || colorCorrect || adjustContrast);
+
         const filters = [];
         if (needsCpuFilters) {
             const downloadFormat = /10|12|p010|p016/.test(video.pix_fmt || '') ? 'p010le' : 'nv12';
             filters.push('hwdownload', `format=${downloadFormat}`, 'format=yuv420p');
             if (removeGrid) filters.push('spp=4:0:1', 'hqdn3d=1:1:1:1');
             if (colorCorrect) filters.push('colortemperature=temperature=7500');
-            if (adjustContrast) filters.push('eq=contrast=1.03:brightness=0.01');
-            filters.push('cas=0.5', 'format=yuv420p', 'hwupload_cuda');
+            if (adjustContrast || video.height <= 2400) filters.push('eq=contrast=1.03:brightness=0.01');
+            filters.push('unsharp=5:5:1.6:5:5:0', 'format=yuv420p', 'hwupload_cuda');
         }
         filters.push(`scale_cuda=${width}:${height}:format=nv12:interp_algo=bicubic`);
         const rate = fps > 60 ? '60' : fps > 0 ? sourceRate : '30';
         return {
-            mandatory: low || oversized || !Number.isFinite(fps) || fps <= 0 || fps > 60 || !['hevc', 'h264'].includes(video.codec_name)
-                || (video.codec_name === 'h264' && video.width > 4096),
+            mandatory: video.height <= 1920 || isOversized || !Number.isFinite(fps) || fps <= 0 || fps > 60 || video.codec_name !== 'hevc',
             input_args: ['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda'],
             output_args: ['-vf', filters.join(','), '-fps_mode', 'cfr', '-r', rate,
                 '-c:v', 'hevc_nvenc', '-preset', 'p4', '-tune', 'hq', '-rc', 'vbr',

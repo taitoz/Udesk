@@ -17,48 +17,57 @@ test('low AVC gets 2400p restoration, explicit CPU/CUDA transitions and original
     const profile = agent()._restorationProfile(metadata(), { remove_grid: true, color_correct: true });
     const filter = profile.output_args[1];
     assert.match(filter, /^hwdownload,format=nv12,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1/);
-    assert.match(filter, /temperature=7500,cas=0\.5,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400:format=nv12:interp_algo=bicubic$/);
+    assert.match(filter, /temperature=7500,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400:format=nv12:interp_algo=bicubic$/);
     assert.equal(profile.output_args[profile.output_args.indexOf('-r') + 1], '60000/1001');
     assert.equal(profile.mandatory, true);
     const tenBit = metadata();
     tenBit.streams[0].pix_fmt = 'yuv420p10le';
     assert.match(agent()._restorationProfile(tenBit, { remove_grid: true, color_correct: true }).output_args[1],
-        /^hwdownload,format=p010le,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1,colortemperature=temperature=7500,cas=0\.5,format=yuv420p,hwupload_cuda,scale_cuda=/);
+        /^hwdownload,format=p010le,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1,colortemperature=temperature=7500,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=/);
 });
 
 test('adaptive filters: clean sources stay on GPU, flags enable only their filters', () => {
     const a = agent();
-    const hevc4k = metadata(3840, 2160);
-    hevc4k.streams[0].codec_name = 'hevc';
-    const gpuOnly = a._restorationProfile(hevc4k);
-    assert.equal(gpuOnly.output_args[1], 'scale_cuda=3840:2160:format=nv12:interp_algo=bicubic');
+    const hevcFit = metadata(5760, 2880);
+    hevcFit.streams[0].codec_name = 'hevc';
+    const gpuOnly = a._restorationProfile(hevcFit);
+    assert.equal(gpuOnly.output_args[1], 'scale_cuda=5760:2880:format=nv12:interp_algo=bicubic');
 
-    const hevcLow = metadata(3840, 1920);
-    hevcLow.streams[0].codec_name = 'hevc';
-    assert.doesNotMatch(a._restorationProfile(hevcLow).output_args[1], /spp|hqdn3d/);
-    // Low-res AVC also stays GPU-only without explicit flags
-    assert.doesNotMatch(a._restorationProfile(metadata()).output_args[1], /hwdownload|spp|hqdn3d/);
-    // remove_grid is honored only on H.264 (AVC) sources; ignored on HEVC
-    assert.doesNotMatch(a._restorationProfile(hevcLow, { remove_grid: true }).output_args[1], /hwdownload|spp|hqdn3d/);
+    const hevcMid = metadata(5760, 2880);
+    hevcMid.streams[0].codec_name = 'hevc';
+    assert.doesNotMatch(a._restorationProfile(hevcMid).output_args[1], /spp|hqdn3d|hwdownload/);
+    // Low-res upscales always pass through the CPU path with eq + cas
+    const lowClean = a._restorationProfile(metadata()).output_args[1];
+    assert.match(lowClean, /^hwdownload,format=nv12,format=yuv420p,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400/);
+    assert.doesNotMatch(lowClean, /spp|hqdn3d|colortemperature/);
+    // remove_grid triggers spp+hqdn3d on any codec within the 3072p limit
+    const hevcGrid = a._restorationProfile(hevcMid, { remove_grid: true }).output_args[1];
+    assert.match(hevcGrid, /^hwdownload,format=nv12,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1,unsharp=5:5:1.6:5:5:0/);
     const gridProfile = a._restorationProfile(metadata(), { remove_grid: true });
     assert.match(gridProfile.output_args[1], /^hwdownload,format=nv12,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1/);
-    assert.match(gridProfile.output_args[1], /cas=0\.5,format=yuv420p,hwupload_cuda,scale_cuda=/);
-    assert.doesNotMatch(gridProfile.output_args[1], /colortemperature|eq=/);
+    assert.match(gridProfile.output_args[1], /unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=/);
+    assert.doesNotMatch(gridProfile.output_args[1], /colortemperature/);
 
-    const flagged = a._restorationProfile(hevcLow, { color_correct: true, adjust_contrast: true });
-    assert.match(flagged.output_args[1], /colortemperature=temperature=7500,eq=contrast=1\.03:brightness=0\.01,cas=0\.5/);
+    const flagged = a._restorationProfile(hevcMid, { color_correct: true, adjust_contrast: true });
+    assert.match(flagged.output_args[1], /colortemperature=temperature=7500,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0/);
     assert.doesNotMatch(flagged.output_args[1], /spp|hqdn3d/);
 
-    // adjust_contrast alone is auxiliary and never triggers the CPU path
-    assert.doesNotMatch(a._restorationProfile(hevcLow, { adjust_contrast: true }).output_args[1], /hwdownload|eq=/);
+    // adjust_contrast alone is enough to trigger the CPU path on in-limits files
+    const eqOnly = a._restorationProfile(hevcMid, { adjust_contrast: true }).output_args[1];
+    assert.match(eqOnly, /^hwdownload,format=nv12,format=yuv420p,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0/);
+    assert.doesNotMatch(eqOnly, /spp|hqdn3d|colortemperature/);
+
+    // Oversized 8K sources never touch the CPU path regardless of flags
+    const eightK = a._restorationProfile(metadata(8192, 4096), { remove_grid: true, color_correct: true, adjust_contrast: true }).output_args[1];
+    assert.equal(eightK, 'scale_cuda=6144:3072:format=nv12:interp_algo=bicubic');
 });
 
-test('8K and >60 fps are capped; non-2:1 geometry is preserved', () => {
+test('8K downscales to fixed 6144x3072 and >60 fps is capped', () => {
     const a = agent();
     const profile = a._restorationProfile(metadata(8192, 4096, '120'));
     assert.match(profile.output_args[1], /scale_cuda=6144:3072/);
     assert.equal(profile.output_args[profile.output_args.indexOf('-r') + 1], '60');
-    assert.match(a._restorationProfile(metadata(4096, 4096)).output_args[1], /scale_cuda=3072:3072/);
+    assert.match(a._restorationProfile(metadata(4096, 4096)).output_args[1], /scale_cuda=6144:3072/);
     assert.doesNotMatch(a._restorationProfile(metadata()).output_args[1], /colortemperature/);
 });
 
