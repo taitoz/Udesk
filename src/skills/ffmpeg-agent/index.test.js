@@ -1,6 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { spawnSync } = require('child_process');
 const { FfmpegAgent } = require('./index');
 
 const metadata = (width = 3840, height = 1920, fps = '60000/1001') => ({
@@ -182,4 +185,131 @@ test('critical analysis failure in one file does not abort the rest of the batch
 test('missing visual verdict is never a PASS', () => {
     assert.equal(agent()._normalizeAssessment({ assessment: 'PASS' }).status, 'WARN');
     assert.equal(agent()._normalizeAssessment(null).grid_removed, false);
+});
+
+function launcherFixture(t) {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ffmpeg-launcher-test-'));
+    t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+    return directory;
+}
+
+function runLauncher(args, mock = true) {
+    const launcher = path.join(__dirname, 'test-run.js');
+    const script = `
+        const { main } = require(${JSON.stringify(launcher)});
+        const { FfmpegAgent } = require(${JSON.stringify(path.join(__dirname, 'index.js'))});
+        class MockAgent extends FfmpegAgent {
+            constructor() { super({ apiKey: 'test-placeholder' }); }
+            async scanFolder(input) {
+                if (require('path').basename(input) === 'scan-error') throw new Error('Scan failed');
+                return super.scanFolder(input);
+            }
+            async _runFfprobe() { return ${JSON.stringify(metadata())}; }
+            async _runFfmpeg() { throw new Error('Unexpected encoding'); }
+            async analyzeAndEstimate(files) {
+                return files.map(file => {
+                    const profile = this._restorationProfile(file.metadata);
+                    return { ...file, action: file.name.startsWith('skip') ? 'skip' : 'encode',
+                        inputArgs: profile.input_args, outputArgs: profile.output_args,
+                        assessment: { status: file.name.startsWith('fail') ? 'FAIL' : file.name.startsWith('warn') ? 'WARN' : 'PASS' } };
+                });
+            }
+        }
+        main(JSON.parse(process.argv[1]), MockAgent).catch(error => {
+            console.error(error.message);
+            process.exitCode = 1;
+        });
+    `;
+    return spawnSync(process.execPath, mock ? ['-e', script, JSON.stringify(args)] : [launcher, ...args],
+        { encoding: 'utf8', env: { ...process.env, GEMINI_API_KEY: '' } });
+}
+
+test('scanFolder accepts a single video without scanning siblings', async t => {
+    const directory = launcherFixture(t);
+    const selected = path.join(directory, 'selected.MP4');
+    fs.writeFileSync(selected, 'video');
+    fs.writeFileSync(path.join(directory, 'sibling.mp4'), 'video');
+    const a = agent();
+    const probed = [];
+    a._runFfprobe = async input => { probed.push(input); return metadata(); };
+    const files = await a.scanFolder(selected);
+    assert.deepEqual(files.map(file => file.name), ['selected.MP4']);
+    assert.deepEqual(probed, [selected]);
+});
+
+test('launcher saves only the selected file and never overwrites existing reports', t => {
+    const directory = launcherFixture(t);
+    const selected = path.join(directory, 'warn clip.mp4');
+    fs.writeFileSync(selected, 'video');
+    fs.writeFileSync(path.join(directory, 'sibling.mp4'), 'video');
+    const existingReport = path.join(directory, 'warn clip_commands.json');
+    fs.writeFileSync(existingReport, 'keep original');
+    const result = runLauncher([selected]);
+    assert.equal(result.status, 0, result.stderr);
+    const task = JSON.parse(result.stdout);
+    assert.equal(task.file_name, 'warn clip.mp4');
+    assert.equal(task.assessment.status, 'WARN');
+    assert.equal(fs.readFileSync(existingReport, 'utf8'), 'keep original');
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(directory, 'warn clip_commands_1.json'), 'utf8')), task);
+    assert.equal(fs.existsSync(path.join(directory, 'warn clip_encoded.mp4')), false);
+});
+
+test('launcher scans folders, preserves WARN and excludes skip/FAIL', t => {
+    const directory = launcherFixture(t);
+    for (const name of ['pass.mp4', 'warn.mp4', 'fail.mp4', 'skip.mp4', 'ignored.txt']) {
+        fs.writeFileSync(path.join(directory, name), 'video');
+    }
+    const output = path.join(directory, 'reports');
+    const result = runLauncher([directory, output]);
+    assert.equal(result.status, 0, result.stderr);
+    const tasks = JSON.parse(result.stdout);
+    assert.deepEqual(tasks.map(task => task.file_name), ['pass.mp4', 'warn.mp4']);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(output, 'optimization_commands.json'), 'utf8')), tasks);
+});
+
+test('empty input produces JSON [] in stdout and a report', t => {
+    const directory = launcherFixture(t);
+    const result = runLauncher([directory]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), []);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(directory, 'optimization_commands.json'), 'utf8')), []);
+});
+
+test('launcher validates arguments and paths before requesting credentials', t => {
+    const directory = launcherFixture(t);
+    const outputFile = path.join(directory, 'not-a-directory');
+    fs.writeFileSync(outputFile, 'keep');
+    const cases = [
+        { args: [], error: /Usage:/ },
+        { args: [directory, directory, 'extra'], error: /Usage:/ },
+        { args: [path.join(directory, 'missing')], error: /Input path not found/ },
+        { args: [outputFile], error: /Unsupported video extension/ },
+        { args: [directory, outputFile], error: /Output path is not a directory/ },
+        { args: [directory, path.join(outputFile, 'nested')], error: /Output path is not a directory/ },
+    ];
+    for (const entry of cases) {
+        const result = runLauncher(entry.args, false);
+        assert.equal(result.status, 1, result.stderr);
+        assert.match(result.stderr, entry.error);
+        assert.doesNotMatch(result.stderr, /GEMINI_API_KEY is not configured/);
+        assert.equal(result.stdout, '');
+    }
+    assert.equal(fs.readFileSync(outputFile, 'utf8'), 'keep');
+});
+
+test('scan errors do not create output directories and importing the launcher has no side effects', t => {
+    const directory = launcherFixture(t);
+    const input = path.join(directory, 'scan-error');
+    const output = path.join(directory, 'output');
+    fs.mkdirSync(input);
+    const result = runLauncher([input, output]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Scan failed/);
+    assert.equal(fs.existsSync(output), false);
+    const imported = spawnSync(process.execPath,
+        ['-e', `require(${JSON.stringify(path.join(__dirname, 'test-run.js'))});`],
+        { encoding: 'utf8', env: { ...process.env, GEMINI_API_KEY: '' } });
+    assert.equal(imported.status, 0, imported.stderr);
+    assert.equal(imported.stdout, '');
+    assert.equal(imported.stderr, '');
 });

@@ -125,17 +125,18 @@ class FfmpegAgent {
             throw new Error(`Path not found: ${resolved}`);
         }
         const stat = fs.statSync(resolved);
-        if (!stat.isDirectory()) {
-            throw new Error(`Path is not a directory: ${resolved}`);
+        if (!stat.isDirectory() && !stat.isFile()) {
+            throw new Error(`Path is not a file or directory: ${resolved}`);
         }
 
-        const entries = fs.readdirSync(resolved);
+        const sourceDir = stat.isDirectory() ? resolved : path.dirname(resolved);
+        const entries = stat.isDirectory() ? fs.readdirSync(resolved) : [path.basename(resolved)];
         const files = [];
         for (const entry of entries) {
             const ext = path.extname(entry).toLowerCase();
             if (!this.videoExts.includes(ext)) continue;
 
-            const fullPath = path.join(resolved, entry);
+            const fullPath = path.join(sourceDir, entry);
             const entryStat = fs.statSync(fullPath);
             if (!entryStat.isFile()) continue;
 
