@@ -4,7 +4,7 @@
   "description": "Локальный AI-скилл для интеллектуальной оценки и пережатия VR-контента (**VR180 / VR360, 5.7K / 6K / 8K**) под стриминг через **XBVR / DeoVR** на **Oculus Quest 2 / Quest 3** по **WiFi 6** с использованием аппаратного кодирования на **NVIDIA RTX 3070 (CUDA / NVENC)**.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test index.test.js"
   },
   "keywords": [],
   "author": "",

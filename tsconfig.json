@@ -2,10 +2,10 @@
   "compileOnSave": false,
   "compilerOptions": {
     "skipLibCheck": true,
-    "downlevelIteration": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "outDir": "./dist/out-tsc",
+    "rootDir": "./src",
     "sourceMap": false,
     "declaration": false,
     "moduleResolution": "bundler",
@@ -21,9 +21,8 @@
       "dom"
     ],
     "module": "ES2022",
-    "baseUrl": "./",
     "paths": {
-      "primeng/*": ["node_modules/primeng/*"]
+      "primeng/*": ["./node_modules/primeng/*"]
     }
   },
   "files": [
