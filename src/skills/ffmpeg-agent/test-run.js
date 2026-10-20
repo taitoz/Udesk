@@ -3,8 +3,21 @@ const fs = require('fs');
 const { FfmpegAgent, VIDEO_EXTS } = require('./index');
 
 async function main(args = process.argv.slice(2), Agent = FfmpegAgent) {
+    let sampleOffset = null;
+    const positional = [];
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--frame-time') {
+            sampleOffset = Number(args[++i]);
+            if (!Number.isFinite(sampleOffset) || sampleOffset < 0) {
+                throw new Error('--frame-time must be a non-negative number of seconds');
+            }
+        } else {
+            positional.push(args[i]);
+        }
+    }
+    args = positional;
     if (args.length < 1 || args.length > 2) {
-        throw new Error('Usage: GEMINI_API_KEY=... node test-run.js <input-path> [output-dir]');
+        throw new Error('Usage: GEMINI_API_KEY=... node test-run.js [--frame-time <sec>] <input-path> [output-dir]');
     }
     const inputPath = path.resolve(args[0]);
     if (!fs.existsSync(inputPath)) {
@@ -33,7 +46,7 @@ async function main(args = process.argv.slice(2), Agent = FfmpegAgent) {
         throw new Error(`Output path is not a directory: ${existingParent}`);
     }
 
-    const agent = new Agent();
+    const agent = new Agent(sampleOffset !== null ? { sampleOffset } : {});
     const originalLog = console.log;
     console.log = (...values) => console.error(...values);
 
@@ -55,16 +68,20 @@ async function main(args = process.argv.slice(2), Agent = FfmpegAgent) {
         console.error(`Generated: ${tasks.length}; excluded: ${queue.length - tasks.length}. No final encoding started.`);
         const resultJson = JSON.stringify(tasks.length === 1 ? tasks[0] : tasks, null, 2);
 
-        // Формирование имени и сохранение выходного файла с командами в целевую пакку
+        // txt-файл с готовыми командами ffmpeg для вставки в cmd
+        const commandsText = tasks
+            .map(task => `rem ${task.file_name}\r\n${task.full_command}`)
+            .join('\r\n\r\n');
+
         const reportBaseName = inputStat.isFile()
             ? `${path.basename(inputPath, path.extname(inputPath))}_commands`
             : 'optimization_commands';
         fs.mkdirSync(outputDir, { recursive: true });
         let reportPath;
         for (let suffix = 0; ; suffix++) {
-            reportPath = path.join(outputDir, `${reportBaseName}${suffix ? `_${suffix}` : ''}.json`);
+            reportPath = path.join(outputDir, `${reportBaseName}${suffix ? `_${suffix}` : ''}.txt`);
             try {
-                fs.writeFileSync(reportPath, resultJson, { encoding: 'utf-8', flag: 'wx' });
+                fs.writeFileSync(reportPath, commandsText + '\r\n', { encoding: 'utf-8', flag: 'wx' });
                 break;
             } catch (err) {
                 if (err.code !== 'EEXIST') throw err;

@@ -18,12 +18,16 @@ Analyze the source video metadata and determine if it needs re-encoding ("action
 
 RESTORATION RULES (override any conflicting rules below):
 1. Evaluate the supplied source image for AVC macroblock grid, noise, yellow cast, luminance/contrast and sharpness. Low BPP alone is NEVER a reason to skip restoration. Increased bitrate or size is allowed when restoration benefits quality.
-2. For low-resolution SBS VR180 (height <= 1920), restore and upscale to 4800x2400. For height >= 4096 or width > 5376, downscale to fit 5376x2688 at <= 60 fps HEVC. Preserve aspect ratio and stereo layout; never stretch non-2:1 content.
-3. Restoration chain: spp=6:0:1,hqdn3d=1.5:1:1.5:1,colortemperature=temperature=7500,cas=0.5. Choose temperature=6500 for a neutral source, or 7500 only for visible yellow cast. Optional mild eq contrast/brightness only when visually justified.
+2. For low-resolution SBS VR180 (height <= 1920), restore and upscale to 4800x2400. For height >= 4096 or width > 6144, downscale to fit 6144x3072 at <= 60 fps HEVC. Preserve aspect ratio and stereo layout; never stretch non-2:1 content.
+3. Restoration filters are adaptive and chosen per-flag: remove_grid enables spp+hqdn3d denoise/degrid, color_correct enables colortemperature=7500 (yellow cast only). adjust_contrast (mild eq) and cas=0.5 are applied ONLY as auxiliary adjustments when remove_grid or color_correct are already active. Visually clean sources need no CPU filters and stay fully on the GPU.
 4. With CUDA decoded frames, CPU filters require hwdownload,format=nv12 (p010le for 10-bit),format=yuv420p first. After CPU filters ALWAYS use format=yuv420p,hwupload_cuda,scale_cuda=W:H:format=nv12:interp_algo=bicubic. This prevents rgb0 -> semiplanar8 failures.
 5. Always return action=encode if there is any improvement potential: AVC grid removal, denoising, yellow cast correction, luminance/contrast correction, low-resolution upscale to 2400p, or downscale for Quest 2.
-6. Return action=skip ONLY when the original image is visually clean (no AVC grid, noise or yellow cast), has no improvement potential AND uses HEVC/H.264 with dimensions <=5376x2688 and fps <=60. Unknown metadata or visual uncertainty is NOT permission to skip.
-7. Return source_clean=true ONLY when the supplied source image confirms all visual cleanliness criteria. Otherwise return false. Return visual decisions as restoration: {"color_correct": boolean, "adjust_contrast": boolean}. The application enforces safe profiles.
+6. Return action=skip ONLY when the original image is visually clean (no AVC grid, noise or yellow cast), has no improvement potential AND uses HEVC/H.264 with dimensions <=6144x3072 and fps <=60. Unknown metadata or visual uncertainty is NOT permission to skip.
+7. Return source_clean=true ONLY when the supplied source image confirms all visual cleanliness criteria. Otherwise return false. Return visual decisions as restoration flags: {"remove_grid": boolean, "color_correct": boolean, "adjust_contrast": boolean}.
+   - remove_grid=true STRICTLY AND EXCLUSIVELY for a visible blocky AVC macroblock compression grid. If the video is HEVC, 4K/8K, or clean, remove_grid MUST always be false.
+   - color_correct=true STRICTLY AND EXCLUSIVELY for a pronounced, unnatural yellow/green cast (e.g., cheap indoor lighting). If the colors look natural, neutral, or cinematic, color_correct MUST be false.
+   - adjust_contrast=true only for washed-out, severely flat luminance.
+   Default all flags to false for clean high-res sources. The application enforces safe profiles.
 
 ENCODING & RATE CONTROL RULES (If action is "encode"):
 1. Playback must be smooth — zero re-buffering on Quest 2. Preferred codec: HEVC (mandatory for >4K).
@@ -31,7 +35,7 @@ ENCODING & RATE CONTROL RULES (If action is "encode"):
 3. For hevc_nvenc, you can use: "-c:v", "hevc_nvenc", "-rc", "vbr", "-cq", "20", "-maxrate", "MAX_CAP", "-bufsize", "BUF_CAP".
    - Hard upper caps for maxrate/bufsize based on target resolutions:
      * 6K (6144x3072) @ 60fps: -maxrate 72M -bufsize 120M (Target average ~35M-60M depending on complexity)
-     * 5.7K (5376x2688) @ 60fps: -maxrate 60M -bufsize 100M
+     * 5.7K (5760x2880) @ 60fps: -maxrate 60M -bufsize 100M
      * 4K (3840x1920) @ 60fps: -maxrate 35M -bufsize 70M
 4. Audio: AAC stereo, keep original sample rate. Use -c:a copy if source is already AAC.
 5. For network streaming add -movflags +faststart.
@@ -52,7 +56,7 @@ Strict Output Format:
 {
   "action": "encode",
   "source_clean": false,
-  "restoration": {"color_correct": true, "adjust_contrast": false},
+  "restoration": {"remove_grid": true, "color_correct": true, "adjust_contrast": false},
   "rationale": "Кратко объясните визуальные дефекты и необходимость реставрации; разрешение и параметры задает приложение."
 }
 `.trim();
@@ -66,10 +70,10 @@ VISUAL RESTORATION ASSESSMENT (override conflicting size rules below):
 Compare the labelled BEFORE and AFTER images from the same timestamp alongside metadata.
 Inspect residual AVC grid, noise, yellow cast/white balance, luminance/contrast, detail retention, oversharpening halos and stereo geometry.
 The chain uses spp, hqdn3d, optional colortemperature=7500, cas and CUDA scaling.
-4800x2400 upscale for low-resolution SBS VR180 and downscale of 4096p+/8K to fit 5376x2688 <=60 fps are intentional.
+4800x2400 upscale for low-resolution SBS VR180 and downscale of 4096p+/8K to fit 6144x3072 <=60 fps are intentional.
 Increased bitrate/file size is NOT a regression when restoring artifacts or upscaling. BPP is contextual, not a skip threshold.
 Always recommend action=encode if the ORIGINAL has improvement potential (grid removal, denoising, color normalization, low-resolution upscale to 2400p) or requires downscale for Quest 2. An improved AFTER image does not make the ORIGINAL eligible for skipping.
-Return action=skip ONLY if the ORIGINAL is visually clean (no AVC grid, noise or yellow cast), has no improvement potential AND is HEVC/H.264 with dimensions <=5376x2688 at <=60fps. Never skip for uncertainty or low BPP.
+Return action=skip ONLY if the ORIGINAL is visually clean (no AVC grid, noise or yellow cast), has no improvement potential AND is HEVC/H.264 with dimensions <=6144x3072 at <=60fps. Never skip for uncertainty or low BPP.
 PASS means acceptable visual quality and decoder compatibility. WARN means non-critical remarks, residual artifacts, uncertainty or additional improvement potential: encoding is STILL recommended, and the task MUST remain in the queue.
 FAIL is reserved exclusively for critical inability to encode/analyze the video (unreadable file or corrupt video stream), NOT minor visual issues, bitrate growth or a recoverable model-service error. Never invent successful correction.
 Return ONLY {"action":"encode"|"skip", "status":"PASS"|"WARN"|"FAIL", "grid_removed":boolean, "color_corrected":boolean, "notes":"Краткая оценка сетки, шума, цвета, яркости/контраста и резкости"}.
@@ -78,7 +82,7 @@ The status object above is mandatory; all conclusions must be grounded in the im
 Evaluation Criteria:
 1. Decoder Compatibility (Quest 2 Hardware Limits):
    - Original codec outside HEVC/H.264 requires encoding, not automatic FAIL. The target profile is HEVC.
-   - Quest 2 queue policy: dimensions <=5376x2688 and <=60fps. Any original exceeding these limits requires encoding, even when the image is clean. Flag output non-compliance for review.
+   - Quest 2 queue policy: dimensions <=6144x3072 and <=60fps. Any original exceeding these limits requires encoding, even when the image is clean. Flag output non-compliance for review.
 2. Resolution & Bitrate Synergy:
    - Do not apply flat-video rules (like 15-40 Mbps limits).
    - For 6K (6144x3072) or 5.7K, a bitrate of 40-75 Mbps is completely normal and preferred for streaming over Wi-Fi 6 to retain VR immersion.
@@ -112,6 +116,7 @@ class FfmpegAgent {
         this.promptTemplate = options.promptTemplate || QUEST2_OPTIMIZATION_PROMPT;
         this.videoExts = options.videoExts || VIDEO_EXTS;
         this.testOffsetMin = options.testOffsetMin ?? null;
+        this.sampleOffset = options.sampleOffset ?? null;
     }
 
     /**
@@ -166,8 +171,8 @@ class FfmpegAgent {
             const duration = parseFloat(file.metadata.format?.duration || '0');
             const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ffmpeg-agent-'));
             try {
-            const before = path.join(tempDir, 'before.jpg');
-            const after = path.join(tempDir, 'after.jpg');
+            const before = path.join(tempDir, 'before.webp');
+            const after = path.join(tempDir, 'after.webp');
             const offset = this._sampleOffset(duration);
             let sourceImage = null;
             try {
@@ -198,19 +203,24 @@ class FfmpegAgent {
                 if (finishReason && finishReason !== 'STOP') {
                     console.warn(`[analyze] Gemini finishReason=${finishReason} (response may be truncated)`);
                 }
-                if (!text) throw new Error('Empty response from Gemini');
+                if (!text) {
+                    const blockReason = response?.promptFeedback?.blockReason;
+                    throw this._geminiError(`Empty response from Gemini${blockReason ? ` (prompt blocked: ${blockReason})` : ''}`, blockReason);
+                }
                 const parsed = this._extractJson(text);
+                console.warn(`[analyze] "${file.name}" AI flags: ${JSON.stringify(parsed.restoration || {})} source_clean=${parsed.source_clean}`);
                 action = parsed.action === 'skip' ? 'skip' : 'encode';
                 const profile = this._restorationProfile(file.metadata, parsed.restoration);
                 inputArgs = profile.input_args;
                 outputArgs = profile.output_args;
                 if (profile.mandatory || !sourceImage || parsed.source_clean !== true
-                    || parsed.restoration?.color_correct === true || parsed.restoration?.adjust_contrast === true) action = 'encode';
+                    || parsed.restoration?.remove_grid === true || parsed.restoration?.color_correct === true) action = 'encode';
                 rationale = typeof parsed.rationale === 'string' ? parsed.rationale : 'Реставрация и масштабирование под Quest 2.';
                 if (action === 'encode' && (!Array.isArray(inputArgs) || !Array.isArray(outputArgs))) {
                     throw new Error('input_args or output_args is not an array');
                 }
             } catch (err) {
+                if (err.geminiBlocked) throw err;
                 console.warn(`[analyze] AI failed for "${file.name}": ${err.message}`);
                 action = 'encode';
                 const profile = this._restorationProfile(file.metadata);
@@ -247,9 +257,9 @@ class FfmpegAgent {
                     outputProbe = await this._runFfprobe(tempOutput);
                     const outputVideo = outputProbe.streams?.find(stream => stream.codec_type === 'video');
                     const outputFps = this._parseFps(outputVideo?.avg_frame_rate || outputVideo?.r_frame_rate || '');
-                    if (!outputVideo || outputVideo.codec_name !== 'hevc' || !(outputVideo.width > 0 && outputVideo.width <= 5376)
-                        || !(outputVideo.height > 0 && outputVideo.height <= 2688) || !(outputFps > 0 && outputFps <= 60)) {
-                        throw new Error('Тестовый результат не соответствует профилю HEVC Quest 2 (5376x2688, <=60 fps)');
+                    if (!outputVideo || outputVideo.codec_name !== 'hevc' || !(outputVideo.width > 0 && outputVideo.width <= 6144)
+                        || !(outputVideo.height > 0 && outputVideo.height <= 3072) || !(outputFps > 0 && outputFps <= 60)) {
+                        throw new Error('Тестовый результат не соответствует профилю HEVC Quest 2 (6144x3072, <=60 fps)');
                     }
 
                     sampleValidated = true;
@@ -275,10 +285,15 @@ class FfmpegAgent {
                         },
                     });
                     const assessText = assessResponse?.text;
+                    if (!assessText) {
+                        const blockReason = assessResponse?.promptFeedback?.blockReason;
+                        throw this._geminiError(`Empty assessment response from Gemini${blockReason ? ` (prompt blocked: ${blockReason})` : ''}`, blockReason);
+                    }
                     if (assessText) {
                         assessment = this._normalizeAssessment(this._extractJson(assessText));
                     }
                 } catch (err) {
+                    if (err.geminiBlocked) throw err;
                     assessment = { status: sampleValidated ? 'WARN' : 'FAIL', grid_removed: false, color_corrected: false, notes: err.message };
                     console.warn(`[analyze] test/assessment failed for "${file.name}": ${err.message}`);
                 }
@@ -324,6 +339,7 @@ class FfmpegAgent {
                 assessment,
             });
             } catch (err) {
+                if (err.geminiBlocked) throw err;
                 const assessment = { status: 'FAIL', grid_removed: false, color_corrected: false, notes: err.message };
                 queue.push({ ...file, action: 'encode', testSuccess: false, assessment });
                 onProgress({ stage: 'estimate', current: i + 1, total: files.length, file: file.name, estimatedSeconds: 0, assessment });
@@ -382,18 +398,28 @@ class FfmpegAgent {
         const sourceRate = this._parseFps(video.avg_frame_rate || '') > 0 ? video.avg_frame_rate : video.r_frame_rate;
         const fps = this._parseFps(sourceRate || '');
         const low = video.height <= 1920 && video.width / video.height >= 1.9;
-        const oversized = video.width > 5376 || video.height > 2688;
+        const oversized = video.width > 6144 || video.height > 3072;
         const ratio = low ? Math.min(4800 / video.width, 2400 / video.height)
-            : Math.min(1, 5376 / video.width, 2688 / video.height);
+            : Math.min(1, 6144 / video.width, 3072 / video.height);
         const width = Math.max(2, Math.floor(video.width * ratio / 2) * 2);
         const height = Math.max(2, Math.floor(video.height * ratio / 2) * 2);
-        const downloadFormat = /10|12|p010|p016/.test(video.pix_fmt || '') ? 'p010le' : 'nv12';
-        const filters = [`hwdownload`, `format=${downloadFormat}`, 'format=yuv420p',
-            'spp=6:0:1', 'hqdn3d=1.5:1:1.5:1',
-            `colortemperature=temperature=${restoration.color_correct === true ? 7500 : 6500}`];
-        if (restoration.adjust_contrast === true) filters.push('eq=contrast=1.03:brightness=0.01');
-        filters.push('cas=0.5', 'format=yuv420p', 'hwupload_cuda',
-            `scale_cuda=${width}:${height}:format=nv12:interp_algo=bicubic`);
+        // CPU restoration only when Gemini flags grid or color; clean sources stay on the GPU.
+        // AVC macroblock grid only exists in H.264 sources — ignore the flag otherwise.
+        const removeGrid = restoration.remove_grid === true && video.codec_name === 'h264';
+        const colorCorrect = restoration.color_correct === true;
+        const needsCpuFilters = removeGrid || colorCorrect;
+        // eq is auxiliary: never triggers the CPU path on its own
+        const adjustContrast = needsCpuFilters && restoration.adjust_contrast === true;
+        const filters = [];
+        if (needsCpuFilters) {
+            const downloadFormat = /10|12|p010|p016/.test(video.pix_fmt || '') ? 'p010le' : 'nv12';
+            filters.push('hwdownload', `format=${downloadFormat}`, 'format=yuv420p');
+            if (removeGrid) filters.push('spp=4:0:1', 'hqdn3d=1:1:1:1');
+            if (colorCorrect) filters.push('colortemperature=temperature=7500');
+            if (adjustContrast) filters.push('eq=contrast=1.03:brightness=0.01');
+            filters.push('cas=0.5', 'format=yuv420p', 'hwupload_cuda');
+        }
+        filters.push(`scale_cuda=${width}:${height}:format=nv12:interp_algo=bicubic`);
         const rate = fps > 60 ? '60' : fps > 0 ? sourceRate : '30';
         return {
             mandatory: low || oversized || !Number.isFinite(fps) || fps <= 0 || fps > 60 || !['hevc', 'h264'].includes(video.codec_name)
@@ -407,9 +433,16 @@ class FfmpegAgent {
         };
     }
 
+    _geminiError(message, blockReason) {
+        const err = new Error(message);
+        if (blockReason) err.geminiBlocked = true;
+        return err;
+    }
+
     _sampleOffset(duration) {
         if (!Number.isFinite(duration) || duration <= 0) return 0;
         const latest = Math.max(0, duration - 5);
+        if (this.sampleOffset !== null) return Math.min(latest, Math.max(0, this.sampleOffset));
         if (this.testOffsetMin !== null) return Math.min(latest, Math.max(0, this.testOffsetMin * 60));
         const start = Math.min(latest, Math.max(60, duration * 0.35));
         const end = Math.min(latest, Math.max(start, duration * 0.65));
@@ -418,11 +451,12 @@ class FfmpegAgent {
 
     async _captureScreenshot(input, offset, output) {
         await this._runFfmpeg(['-ss', String(offset), '-i', input, '-map', '0:v:0',
-            '-vframes', '1', '-q:v', '2', '-y', output]);
+            '-vframes', '1', '-c:v', 'libwebp', '-lossless', '1', '-y', output]);
     }
 
     _imagePart(file) {
-        return { inlineData: { mimeType: path.extname(file) === '.png' ? 'image/png' : 'image/jpeg', data: fs.readFileSync(file).toString('base64') } };
+        const mimeTypes = { '.png': 'image/png', '.webp': 'image/webp' };
+        return { inlineData: { mimeType: mimeTypes[path.extname(file).toLowerCase()] || 'image/jpeg', data: fs.readFileSync(file).toString('base64') } };
     }
 
     _normalizeAssessment(value) {

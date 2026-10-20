@@ -14,25 +14,52 @@ const metadata = (width = 3840, height = 1920, fps = '60000/1001') => ({
 const agent = () => new FfmpegAgent({ apiKey: 'test-placeholder' });
 
 test('low AVC gets 2400p restoration, explicit CPU/CUDA transitions and original fps', () => {
-    const profile = agent()._restorationProfile(metadata(), { color_correct: true });
+    const profile = agent()._restorationProfile(metadata(), { remove_grid: true, color_correct: true });
     const filter = profile.output_args[1];
-    assert.match(filter, /^hwdownload,format=nv12,format=yuv420p,spp=6:0:1,hqdn3d=/);
-    assert.match(filter, /temperature=7500,cas=0.5,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400:format=nv12:interp_algo=bicubic$/);
+    assert.match(filter, /^hwdownload,format=nv12,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1/);
+    assert.match(filter, /temperature=7500,cas=0\.5,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400:format=nv12:interp_algo=bicubic$/);
     assert.equal(profile.output_args[profile.output_args.indexOf('-r') + 1], '60000/1001');
     assert.equal(profile.mandatory, true);
     const tenBit = metadata();
     tenBit.streams[0].pix_fmt = 'yuv420p10le';
-    assert.match(agent()._restorationProfile(tenBit, { color_correct: true }).output_args[1],
-        /^hwdownload,format=p010le,format=yuv420p,spp=6:0:1,hqdn3d=1.5:1:1.5:1,colortemperature=temperature=7500,cas=0.5,format=yuv420p,hwupload_cuda,scale_cuda=/);
+    assert.match(agent()._restorationProfile(tenBit, { remove_grid: true, color_correct: true }).output_args[1],
+        /^hwdownload,format=p010le,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1,colortemperature=temperature=7500,cas=0\.5,format=yuv420p,hwupload_cuda,scale_cuda=/);
+});
+
+test('adaptive filters: clean sources stay on GPU, flags enable only their filters', () => {
+    const a = agent();
+    const hevc4k = metadata(3840, 2160);
+    hevc4k.streams[0].codec_name = 'hevc';
+    const gpuOnly = a._restorationProfile(hevc4k);
+    assert.equal(gpuOnly.output_args[1], 'scale_cuda=3840:2160:format=nv12:interp_algo=bicubic');
+
+    const hevcLow = metadata(3840, 1920);
+    hevcLow.streams[0].codec_name = 'hevc';
+    assert.doesNotMatch(a._restorationProfile(hevcLow).output_args[1], /spp|hqdn3d/);
+    // Low-res AVC also stays GPU-only without explicit flags
+    assert.doesNotMatch(a._restorationProfile(metadata()).output_args[1], /hwdownload|spp|hqdn3d/);
+    // remove_grid is honored only on H.264 (AVC) sources; ignored on HEVC
+    assert.doesNotMatch(a._restorationProfile(hevcLow, { remove_grid: true }).output_args[1], /hwdownload|spp|hqdn3d/);
+    const gridProfile = a._restorationProfile(metadata(), { remove_grid: true });
+    assert.match(gridProfile.output_args[1], /^hwdownload,format=nv12,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1/);
+    assert.match(gridProfile.output_args[1], /cas=0\.5,format=yuv420p,hwupload_cuda,scale_cuda=/);
+    assert.doesNotMatch(gridProfile.output_args[1], /colortemperature|eq=/);
+
+    const flagged = a._restorationProfile(hevcLow, { color_correct: true, adjust_contrast: true });
+    assert.match(flagged.output_args[1], /colortemperature=temperature=7500,eq=contrast=1\.03:brightness=0\.01,cas=0\.5/);
+    assert.doesNotMatch(flagged.output_args[1], /spp|hqdn3d/);
+
+    // adjust_contrast alone is auxiliary and never triggers the CPU path
+    assert.doesNotMatch(a._restorationProfile(hevcLow, { adjust_contrast: true }).output_args[1], /hwdownload|eq=/);
 });
 
 test('8K and >60 fps are capped; non-2:1 geometry is preserved', () => {
     const a = agent();
     const profile = a._restorationProfile(metadata(8192, 4096, '120'));
-    assert.match(profile.output_args[1], /scale_cuda=5376:2688/);
+    assert.match(profile.output_args[1], /scale_cuda=6144:3072/);
     assert.equal(profile.output_args[profile.output_args.indexOf('-r') + 1], '60');
-    assert.match(a._restorationProfile(metadata(4096, 4096)).output_args[1], /scale_cuda=2688:2688/);
-    assert.match(a._restorationProfile(metadata()).output_args[1], /temperature=6500/);
+    assert.match(a._restorationProfile(metadata(4096, 4096)).output_args[1], /scale_cuda=3072:3072/);
+    assert.doesNotMatch(a._restorationProfile(metadata()).output_args[1], /colortemperature/);
 });
 
 test('sample offsets stay in short clips and central region of long clips', () => {
@@ -242,7 +269,7 @@ test('launcher saves only the selected file and never overwrites existing report
     const selected = path.join(directory, 'warn clip.mp4');
     fs.writeFileSync(selected, 'video');
     fs.writeFileSync(path.join(directory, 'sibling.mp4'), 'video');
-    const existingReport = path.join(directory, 'warn clip_commands.json');
+    const existingReport = path.join(directory, 'warn clip_commands.txt');
     fs.writeFileSync(existingReport, 'keep original');
     const result = runLauncher([selected]);
     assert.equal(result.status, 0, result.stderr);
@@ -250,7 +277,9 @@ test('launcher saves only the selected file and never overwrites existing report
     assert.equal(task.file_name, 'warn clip.mp4');
     assert.equal(task.assessment.status, 'WARN');
     assert.equal(fs.readFileSync(existingReport, 'utf8'), 'keep original');
-    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(directory, 'warn clip_commands_1.json'), 'utf8')), task);
+    const reportText = fs.readFileSync(path.join(directory, 'warn clip_commands_1.txt'), 'utf8');
+    assert.match(reportText, /rem warn clip\.mp4\r?\n/);
+    assert.ok(reportText.includes(task.full_command));
     assert.equal(fs.existsSync(path.join(directory, 'warn clip_encoded.mp4')), false);
 });
 
@@ -264,7 +293,11 @@ test('launcher scans folders, preserves WARN and excludes skip/FAIL', t => {
     assert.equal(result.status, 0, result.stderr);
     const tasks = JSON.parse(result.stdout);
     assert.deepEqual(tasks.map(task => task.file_name), ['pass.mp4', 'warn.mp4']);
-    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(output, 'optimization_commands.json'), 'utf8')), tasks);
+    const reportText = fs.readFileSync(path.join(output, 'optimization_commands.txt'), 'utf8');
+    for (const task of tasks) {
+        assert.ok(reportText.includes(task.full_command));
+        assert.ok(reportText.includes(`rem ${task.file_name}`));
+    }
 });
 
 test('empty input produces JSON [] in stdout and a report', t => {
@@ -272,7 +305,7 @@ test('empty input produces JSON [] in stdout and a report', t => {
     const result = runLauncher([directory]);
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), []);
-    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(directory, 'optimization_commands.json'), 'utf8')), []);
+    assert.equal(fs.existsSync(path.join(directory, 'optimization_commands.txt')), true);
 });
 
 test('launcher validates arguments and paths before requesting credentials', t => {
