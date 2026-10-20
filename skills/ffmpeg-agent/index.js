@@ -33,6 +33,12 @@ ENCODING & RATE CONTROL RULES (If action is "encode"):
 5. For network streaming add -movflags +faststart.
 6. Use NVENC preset: p4 (quality) or p5 (balanced), -tune hq, -bf 3 -refs 4.
 7. CUDA Scaling: If scaling, use -vf "scale_cuda=W:H:format=yuv420p" and do NOT add "-pix_fmt yuv420p" to output_args.
+8. MEMORY SAFETY for 8K sources (source width >= 7680):
+   - The host GPU is RTX 3070 with 8 GB VRAM. Any CUDA involvement on 8K HEVC (decode or scale) will OOM.
+   - Therefore, for 8K sources you MUST NOT use "-hwaccel cuda" or "-hwaccel_output_format cuda" at all.
+   - Decode entirely on CPU. Use CPU scaling: "-vf", "scale=6144:3072:flags=lanczos".
+   - Encoding still happens on NVENC (hevc_nvenc), but input frames come from system memory.
+   - input_args for 8K MUST be empty: [].
 
 CRITICAL ARGUMENT RULES:
 - "input_args" MUST contain ONLY input-side global flags like "-hwaccel" / "-hwaccel_output_format".
@@ -181,12 +187,14 @@ class FfmpegAgent {
                 if (action === 'encode' && (!Array.isArray(inputArgs) || !Array.isArray(outputArgs))) {
                     throw new Error('input_args or output_args is not an array');
                 }
+                ({ inputArgs, outputArgs } = this._ensureMemorySafeArgs(file, inputArgs, outputArgs));
             } catch (err) {
                 console.warn(`[analyze] AI failed for "${file.name}": ${err.message}`);
                 action = 'encode';
-                inputArgs = ['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda'];
+                inputArgs = ['-hwaccel', 'cuda'];
                 outputArgs = ['-c:v', 'hevc_nvenc', '-preset', 'p5', '-tune', 'hq', '-rc', 'vbr', '-cq', '20', '-maxrate', '35M', '-bufsize', '70M', '-bf', '3', '-refs', '4', '-c:a', 'copy', '-movflags', '+faststart'];
                 rationale = 'Fallback to HEVC NVENC CQ20 Constrained VBR due to AI error';
+                ({ inputArgs, outputArgs } = this._ensureMemorySafeArgs(file, inputArgs, outputArgs));
             }
 
             let testSuccess = false;
@@ -545,6 +553,52 @@ Return ONLY the JSON object.`;
             // bare non-flag tokens (likely filenames) are dropped
         }
         return clean;
+    }
+
+    /**
+     * RTX 3070 8 GB cannot handle any CUDA involvement on 8K HEVC.
+     * For 8K sources: decode on CPU, scale on CPU, encode on NVENC.
+     */
+    _ensureMemorySafeArgs(file, inputArgs, outputArgs) {
+        const videoStream = file.metadata?.streams?.find(s => s.codec_type === 'video');
+        const width = videoStream?.width || 0;
+        const height = videoStream?.height || 0;
+        const is8K = width >= 7680 || height >= 3840;
+        if (!is8K) return { inputArgs, outputArgs };
+
+        // 8K sources MUST decode on CPU to avoid OOM on RTX 3070 8 GB.
+        // Remove any hwaccel flag and its value from input_args.
+        const safeInput = [];
+        for (let i = 0; i < inputArgs.length; i++) {
+            const arg = inputArgs[i];
+            if (arg === '-hwaccel' || arg === '-hwaccel_output_format' || arg === '-hwaccel_device' || arg === '-init_hw_device') {
+                i++; // skip the value
+                continue;
+            }
+            safeInput.push(arg);
+        }
+        if (inputArgs.length !== safeInput.length) {
+            console.warn(`[memory] 8K source detected; removed CUDA hwaccel flags to force CPU decode`);
+        }
+
+        let safeOutput = outputArgs.slice();
+        for (let i = 0; i < safeOutput.length; i++) {
+            const arg = safeOutput[i];
+            if (arg === '-vf' || arg === '-filter:v') {
+                const next = safeOutput[i + 1];
+                if (typeof next === 'string' && next.includes('scale_cuda')) {
+                    const target = next.match(/scale_cuda=(\d+):(\d+)/);
+                    if (target) {
+                        safeOutput[i + 1] = `scale=${target[1]}:${target[2]}:flags=lanczos`;
+                    } else {
+                        safeOutput[i + 1] = 'scale=6144:3072:flags=lanczos';
+                    }
+                    console.warn(`[memory] 8K source detected; replaced CUDA scaling with CPU scaling to avoid OOM`);
+                }
+            }
+        }
+
+        return { inputArgs: safeInput, outputArgs: safeOutput };
     }
 
     _calculateBPP(metadata) {

@@ -1,0 +1,12 @@
+{
+  "name": "xbvr-lib-utils",
+  "version": "1.0.0",
+  "description": "XBVR utility scripts",
+  "main": "test-fix.js",
+  "scripts": {
+    "fix": "node test-fix.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0"
+  }
+}
