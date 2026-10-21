@@ -26,40 +26,64 @@ test('low AVC gets 2400p restoration, explicit CPU/CUDA transitions and original
         /^hwdownload,format=p010le,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1,colortemperature=temperature=7500,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=/);
 });
 
-test('adaptive filters: clean sources stay on GPU, flags enable only their filters', () => {
+test('pure CUDA variant is GPU-only; full variant always adds unsharp plus flag-driven filters', () => {
     const a = agent();
-    const hevcFit = metadata(5760, 2880);
-    hevcFit.streams[0].codec_name = 'hevc';
-    const gpuOnly = a._restorationProfile(hevcFit);
-    assert.equal(gpuOnly.output_args[1], 'scale_cuda=5760:2880:format=nv12:interp_algo=bicubic');
-
     const hevcMid = metadata(5760, 2880);
     hevcMid.streams[0].codec_name = 'hevc';
-    assert.doesNotMatch(a._restorationProfile(hevcMid).output_args[1], /spp|hqdn3d|hwdownload/);
-    // Low-res upscales always pass through the CPU path with eq + cas
-    const lowClean = a._restorationProfile(metadata()).output_args[1];
-    assert.match(lowClean, /^hwdownload,format=nv12,format=yuv420p,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400/);
-    assert.doesNotMatch(lowClean, /spp|hqdn3d|colortemperature/);
-    // remove_grid triggers spp+hqdn3d on any codec within the 3072p limit
-    const hevcGrid = a._restorationProfile(hevcMid, { remove_grid: true }).output_args[1];
-    assert.match(hevcGrid, /^hwdownload,format=nv12,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1,unsharp=5:5:1.6:5:5:0/);
+    const clean = a._restorationProfile(hevcMid);
+    assert.equal(clean.pure_cuda_output_args[1], 'scale_cuda=5760:2880:format=nv12:interp_algo=bicubic');
+    assert.match(clean.full_restored_output_args[1],
+        /^hwdownload,format=nv12,format=yuv420p,unsharp=5:5:1\.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=5760:2880/);
+    assert.doesNotMatch(clean.full_restored_output_args[1], /spp|hqdn3d|colortemperature|eq=/);
+
     const gridProfile = a._restorationProfile(metadata(), { remove_grid: true });
-    assert.match(gridProfile.output_args[1], /^hwdownload,format=nv12,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1/);
-    assert.match(gridProfile.output_args[1], /unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=/);
-    assert.doesNotMatch(gridProfile.output_args[1], /colortemperature/);
+    assert.match(gridProfile.full_restored_output_args[1], /^hwdownload,format=nv12,format=yuv420p,spp=4:0:1,hqdn3d=1:1:1:1/);
+    assert.match(gridProfile.full_restored_output_args[1], /unsharp=5:5:1\.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400/);
+    assert.doesNotMatch(gridProfile.full_restored_output_args[1], /colortemperature/);
 
     const flagged = a._restorationProfile(hevcMid, { color_correct: true, adjust_contrast: true });
-    assert.match(flagged.output_args[1], /colortemperature=temperature=7500,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0/);
-    assert.doesNotMatch(flagged.output_args[1], /spp|hqdn3d/);
+    assert.match(flagged.full_restored_output_args[1], /colortemperature=temperature=7500,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1\.6:5:5:0/);
+    assert.doesNotMatch(flagged.full_restored_output_args[1], /spp|hqdn3d/);
 
-    // adjust_contrast alone is enough to trigger the CPU path on in-limits files
-    const eqOnly = a._restorationProfile(hevcMid, { adjust_contrast: true }).output_args[1];
-    assert.match(eqOnly, /^hwdownload,format=nv12,format=yuv420p,eq=contrast=1\.03:brightness=0\.01,unsharp=5:5:1.6:5:5:0/);
-    assert.doesNotMatch(eqOnly, /spp|hqdn3d|colortemperature/);
+    // Oversized 8K sources never touch the CPU path regardless of flags, in both variants
+    const eightK = a._restorationProfile(metadata(8192, 4096), { remove_grid: true, color_correct: true, adjust_contrast: true });
+    for (const variant of [eightK.pure_cuda_output_args, eightK.full_restored_output_args, eightK.output_args]) {
+        assert.equal(variant[1], 'scale_cuda=6144:3072:format=nv12:interp_algo=bicubic');
+    }
+});
 
-    // Oversized 8K sources never touch the CPU path regardless of flags
-    const eightK = a._restorationProfile(metadata(8192, 4096), { remove_grid: true, color_correct: true, adjust_contrast: true }).output_args[1];
-    assert.equal(eightK, 'scale_cuda=6144:3072:format=nv12:interp_algo=bicubic');
+test('new restoration flags: noise, fisheye, interlaced and swapped eyes', () => {
+    const a = agent();
+    const hevcMid = metadata(5760, 2880);
+    hevcMid.streams[0].codec_name = 'hevc';
+
+    // remove_noise enables hqdn3d alone, without spp
+    const noisy = a._restorationProfile(hevcMid, { remove_noise: true });
+    assert.match(noisy.full_restored_output_args[1], /^hwdownload,format=nv12,format=yuv420p,hqdn3d=3:2:6:4\.5,/);
+    assert.doesNotMatch(noisy.full_restored_output_args[1], /spp/);
+
+    // fisheye triggers v360 reprojection and forces encode (mandatory)
+    const fisheye = a._restorationProfile(hevcMid, { projection_type: 'fisheye' });
+    assert.match(fisheye.full_restored_output_args[1], /v360=input=fisheye:output=equirectangular:ih_fov=180:iv_fov=180/);
+    assert.equal(fisheye.mandatory, true);
+
+    // interlaced adds yadif to both variants (GPU-native in pure, CPU in full)
+    const interlaced = a._restorationProfile(hevcMid, { interlaced: true });
+    assert.match(interlaced.pure_cuda_output_args[1], /^yadif_cuda=mode=1,scale_cuda=/);
+    assert.match(interlaced.full_restored_output_args[1], /format=yuv420p,yadif=mode=1,/);
+    assert.equal(interlaced.mandatory, true);
+
+    // swap_lr inserts stereo3d eye swap before restoration filters
+    const swapped = a._restorationProfile(hevcMid, { swap_lr: true });
+    assert.match(swapped.full_restored_output_args[1], /format=yuv420p,stereo3d=sbsl:sbsr,/);
+    assert.equal(swapped.mandatory, true);
+
+    // filter order: v360 and deinterlace run before denoise/sharpen
+    const combo = a._restorationProfile(metadata(), {
+        interlaced: true, correct_geometry: true, remove_grid: true, remove_noise: true, swap_lr: true,
+    }).full_restored_output_args[1];
+    assert.ok(combo.indexOf('yadif') < combo.indexOf('v360') && combo.indexOf('v360') < combo.indexOf('spp'));
+    assert.match(combo, /spp=4:0:1,hqdn3d=1:1:1:1/); // remove_grid takes precedence over remove_noise strength
 });
 
 test('8K downscales to fixed 6144x3072 and >60 fps is capped', () => {
@@ -85,7 +109,9 @@ test('executeBatch generates every PASS/WARN task, excludes only skip/FAIL and n
     a._runFfmpeg = () => assert.fail('Final encoding must never run');
     const profile = a._restorationProfile(metadata());
     const task = { name: 'input file.mp4', ext: '.mp4', path: 'input file.mp4', action: 'encode',
-        inputArgs: profile.input_args, outputArgs: profile.output_args, rationale: 'Реставрация',
+        inputArgs: profile.input_args, outputArgs: profile.output_args,
+        pureCudaArgs: profile.pure_cuda_output_args, fullRestoredArgs: profile.full_restored_output_args,
+        rationale: 'Реставрация',
         assessment: { status: 'PASS', grid_removed: true, color_corrected: false, notes: 'OK' } };
     const warning = { ...task, name: 'warning.mp4', path: 'warning.mp4', assessment: { status: 'WARN', notes: 'Остаточная сетка' } };
     const tasks = await a.executeBatch([task, warning, { ...task, assessment: { status: 'FAIL' } }, { ...task, action: 'skip' }, { ...task, assessment: null }]);
@@ -93,9 +119,13 @@ test('executeBatch generates every PASS/WARN task, excludes only skip/FAIL and n
     assert.deepEqual(tasks.map(result => result.assessment.status), ['PASS', 'WARN', 'WARN']);
     assert.equal(tasks[1].assessment.notes, 'Остаточная сетка');
     assert.equal(tasks[1].file_name, 'warning.mp4');
-    assert.deepEqual(Object.keys(tasks[0]), ['file_name', 'action', 'target_resolution', 'input_args', 'output_args', 'full_command', 'rationale', 'assessment']);
+    assert.deepEqual(Object.keys(tasks[0]), ['file_name', 'action', 'target_resolution', 'input_args', 'pure_cuda', 'full_restored', 'rationale', 'assessment']);
     assert.equal(tasks[0].target_resolution, '4800:2400');
-    assert.match(tasks[0].full_command, /input file.mp4/);
+    assert.match(tasks[0].pure_cuda.full_command, /input file\.mp4/);
+    assert.match(tasks[0].pure_cuda.full_command, /input file_pure_cuda\.mp4/);
+    assert.doesNotMatch(tasks[0].pure_cuda.output_args[1], /hwdownload|spp|hqdn3d/);
+    assert.match(tasks[0].full_restored.full_command, /input file_restored\.mp4/);
+    assert.match(tasks[0].full_restored.output_args[1], /hwdownload.*unsharp.*hwupload_cuda/);
     assert.doesNotThrow(() => JSON.parse(JSON.stringify(tasks[0])));
 });
 
@@ -247,6 +277,8 @@ function runLauncher(args, mock = true) {
                     const profile = this._restorationProfile(file.metadata);
                     return { ...file, action: file.name.startsWith('skip') ? 'skip' : 'encode',
                         inputArgs: profile.input_args, outputArgs: profile.output_args,
+                        pureCudaArgs: profile.pure_cuda_output_args,
+                        fullRestoredArgs: profile.full_restored_output_args,
                         assessment: { status: file.name.startsWith('fail') ? 'FAIL' : file.name.startsWith('warn') ? 'WARN' : 'PASS' } };
                 });
             }
@@ -287,8 +319,10 @@ test('launcher saves only the selected file and never overwrites existing report
     assert.equal(task.assessment.status, 'WARN');
     assert.equal(fs.readFileSync(existingReport, 'utf8'), 'keep original');
     const reportText = fs.readFileSync(path.join(directory, 'warn clip_commands_1.txt'), 'utf8');
-    assert.match(reportText, /rem warn clip\.mp4\r?\n/);
-    assert.ok(reportText.includes(task.full_command));
+    assert.match(reportText, /rem warn clip\.mp4 — pure_cuda\r?\n/);
+    assert.match(reportText, /rem warn clip\.mp4 — full_restored\r?\n/);
+    assert.ok(reportText.includes(task.pure_cuda.full_command));
+    assert.ok(reportText.includes(task.full_restored.full_command));
     assert.equal(fs.existsSync(path.join(directory, 'warn clip_encoded.mp4')), false);
 });
 
@@ -304,8 +338,10 @@ test('launcher scans folders, preserves WARN and excludes skip/FAIL', t => {
     assert.deepEqual(tasks.map(task => task.file_name), ['pass.mp4', 'warn.mp4']);
     const reportText = fs.readFileSync(path.join(output, 'optimization_commands.txt'), 'utf8');
     for (const task of tasks) {
-        assert.ok(reportText.includes(task.full_command));
-        assert.ok(reportText.includes(`rem ${task.file_name}`));
+        assert.ok(reportText.includes(task.pure_cuda.full_command));
+        assert.ok(reportText.includes(task.full_restored.full_command));
+        assert.ok(reportText.includes(`rem ${task.file_name} — pure_cuda`));
+        assert.ok(reportText.includes(`rem ${task.file_name} — full_restored`));
     }
 });
 

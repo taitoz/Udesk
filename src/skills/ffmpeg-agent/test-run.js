@@ -70,7 +70,8 @@ async function main(args = process.argv.slice(2), Agent = FfmpegAgent) {
 
         // txt-файл с готовыми командами ffmpeg для вставки в cmd
         const commandsText = tasks
-            .map(task => `rem ${task.file_name}\r\n${task.full_command}`)
+            .map(task => `rem ${task.file_name} — pure_cuda\r\n${task.pure_cuda.full_command}`
+                + `\r\n\r\nrem ${task.file_name} — full_restored\r\n${task.full_restored.full_command}`)
             .join('\r\n\r\n');
 
         const reportBaseName = inputStat.isFile()

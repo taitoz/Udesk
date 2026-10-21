@@ -17,17 +17,22 @@ The host machine runs Windows/Linux with an NVIDIA RTX 3070 GPU (Ampere). Always
 Analyze the source video metadata and determine if it needs re-encoding ("action": "encode") or should be skipped ("action": "skip").
 
 RESTORATION RULES (override any conflicting rules below):
-1. Evaluate the supplied source image for AVC macroblock grid, noise, yellow cast, luminance/contrast and sharpness. Low BPP alone is NEVER a reason to skip restoration. Increased bitrate or size is allowed when restoration benefits quality.
-2. For low-resolution SBS VR180 (height <= 1920), restore and upscale to 4800x2400. For height >= 4096 or width > 6144, downscale to fit 6144x3072 at <= 60 fps HEVC. Preserve aspect ratio and stereo layout; never stretch non-2:1 content.
-3. Restoration filters are adaptive and chosen per-flag: remove_grid enables spp+hqdn3d denoise/degrid, color_correct enables colortemperature=7500 (yellow cast only). adjust_contrast (mild eq) and cas=0.5 are applied ONLY as auxiliary adjustments when remove_grid or color_correct are already active. Visually clean sources need no CPU filters and stay fully on the GPU.
+1. Evaluate the supplied source image thoroughly for ALL potential improvements. Be comprehensive: if the video has compression blocks/grid, unnatural color cast, noise or flat washed-out contrast, flag them honestly and do not hide minor defects. Inspect noise specifically in shadow areas and low-detail regions (sky, dark clothing, background) — a single frame can hide heavy grain. Low BPP alone is NEVER a reason to skip restoration. Increased bitrate or size is allowed when restoration benefits quality.
+2. For low-resolution SBS VR180 (height <= 1920), restore and upscale to 4800x2400. For height >= 4096 or width > 6144, downscale to fit 6144x3072 at <= 60 fps HEVC. Preserve aspect ratio and stereo layout; never stretch non-2:1 content and NEVER crop the frame — VR180 does not tolerate cropping.
+3. Restoration flags map to filters: remove_grid enables spp+hqdn3d degrid/denoise, remove_noise enables standalone hqdn3d denoising, color_correct enables colortemperature=7500 (yellow cast only), adjust_contrast enables a mild eq boost. correct_geometry or projection_type=fisheye enables v360 reprojection, interlaced enables deinterlacing, swap_lr swaps the SBS eye order. The full variant also applies unsharp sharpening; the pure variant stays entirely on the GPU.
 4. With CUDA decoded frames, CPU filters require hwdownload,format=nv12 (p010le for 10-bit),format=yuv420p first. After CPU filters ALWAYS use format=yuv420p,hwupload_cuda,scale_cuda=W:H:format=nv12:interp_algo=bicubic. This prevents rgb0 -> semiplanar8 failures.
 5. Always return action=encode if there is any improvement potential: AVC grid removal, denoising, yellow cast correction, luminance/contrast correction, low-resolution upscale to 2400p, or downscale for Quest 2.
 6. Return action=skip ONLY when the original image is visually clean (no AVC grid, noise or yellow cast), has no improvement potential AND uses HEVC/H.264 with dimensions <=6144x3072 and fps <=60. Unknown metadata or visual uncertainty is NOT permission to skip.
-7. Return source_clean=true ONLY when the supplied source image confirms all visual cleanliness criteria. Otherwise return false. Return visual decisions as restoration flags: {"remove_grid": boolean, "color_correct": boolean, "adjust_contrast": boolean}.
+7. Return source_clean=true ONLY when the supplied source image confirms all visual cleanliness criteria. Otherwise return false. Return visual decisions as restoration flags: {"remove_grid": boolean, "remove_noise": boolean, "color_correct": boolean, "adjust_contrast": boolean, "correct_geometry": boolean, "interlaced": boolean, "swap_lr": boolean, "projection_type": "equirectangular"|"fisheye"}.
    - remove_grid=true STRICTLY AND EXCLUSIVELY for a visible blocky AVC macroblock compression grid. If the video is HEVC, 4K/8K, or clean, remove_grid MUST always be false.
+   - remove_noise=true for visible digital noise/grain, especially in shadows and low-detail areas. Independent of remove_grid — a file can be noisy without any grid.
    - color_correct=true STRICTLY AND EXCLUSIVELY for a pronounced, unnatural yellow/green cast (e.g., cheap indoor lighting). If the colors look natural, neutral, or cinematic, color_correct MUST be false.
-   - adjust_contrast=true only for washed-out, severely flat luminance.
-   Default all flags to false for clean high-res sources. The application enforces safe profiles.
+   - adjust_contrast=true whenever luminance is flat, washed-out, or needs enhancement (especially for upscaled or low-contrast sources).
+   - correct_geometry=true if the file has a projection mismatch, needs fisheye-to-equirectangular conversion, shows vertical eye-alignment errors, or is geometrically distorted/stretched. Set projection_type="fisheye" for raw fisheye/dual-fisheye lenses (visible circular/hemispherical images).
+   - interlaced=true for comb artifacts / interlaced scan lines.
+   - swap_lr=true only when the SBS eye order is clearly wrong (impossible/inverted parallax — nearer objects rendered behind farther ones in stereopsis). If uncertain, keep false.
+   Default all flags to false for clean sources, but flag every defect you can actually see. The application enforces safe profiles and always produces both a pure-GPU variant and a full-restoration variant.
+   The METADATA may include stream side data such as rotation; a rotated VR frame is non-standard — flag correct_geometry in that case.
 
 ENCODING & RATE CONTROL RULES (If action is "encode"):
 1. Playback must be smooth — zero re-buffering on Quest 2. Preferred codec: HEVC (mandatory for >4K).
@@ -56,7 +61,7 @@ Strict Output Format:
 {
   "action": "encode",
   "source_clean": false,
-  "restoration": {"remove_grid": true, "color_correct": true, "adjust_contrast": false},
+  "restoration": {"remove_grid": true, "remove_noise": false, "color_correct": true, "adjust_contrast": false, "correct_geometry": false, "interlaced": false, "swap_lr": false, "projection_type": "equirectangular"},
   "rationale": "Кратко объясните визуальные дефекты и необходимость реставрации; разрешение и параметры задает приложение."
 }
 `.trim();
@@ -68,8 +73,8 @@ Your core mission is NOT to simply minimize file size, but to find the perfect t
 
 VISUAL RESTORATION ASSESSMENT (override conflicting size rules below):
 Compare the labelled BEFORE and AFTER images from the same timestamp alongside metadata.
-Inspect residual AVC grid, noise, yellow cast/white balance, luminance/contrast, detail retention, oversharpening halos and stereo geometry.
-The chain uses spp, hqdn3d, optional colortemperature=7500, cas and CUDA scaling.
+Inspect residual AVC grid, noise (check shadows and low-detail areas), yellow cast/white balance, luminance/contrast, detail retention, oversharpening halos, stereo geometry and projection correctness.
+The chain may use spp, hqdn3d, colortemperature=7500, eq, unsharp, v360 fisheye→equirectangular reprojection, yadif deinterlacing, stereo3d eye-swap and CUDA scaling. Verify the AFTER frame is not cropped and geometry/projection looks correct — VR180 does not tolerate cropping or wrong eye order.
 4800x2400 upscale for low-resolution SBS VR180 and downscale of 4096p+/8K to fit 6144x3072 <=60 fps are intentional.
 Increased bitrate/file size is NOT a regression when restoring artifacts or upscaling. BPP is contextual, not a skip threshold.
 Always recommend action=encode if the ORIGINAL has improvement potential (grid removal, denoising, color normalization, low-resolution upscale to 2400p) or requires downscale for Quest 2. An improved AFTER image does not make the ORIGINAL eligible for skipping.
@@ -186,6 +191,8 @@ class FfmpegAgent {
             let action = 'encode';
             let inputArgs;
             let outputArgs;
+            let pureCudaArgs;
+            let fullRestoredArgs;
             let rationale;
             try {
                 const prompt = this._buildPrompt(file);
@@ -213,8 +220,11 @@ class FfmpegAgent {
                 const profile = this._restorationProfile(file.metadata, parsed.restoration);
                 inputArgs = profile.input_args;
                 outputArgs = profile.output_args;
-                if (profile.mandatory || !sourceImage || parsed.source_clean !== true
-                    || parsed.restoration?.remove_grid === true || parsed.restoration?.color_correct === true) action = 'encode';
+                pureCudaArgs = profile.pure_cuda_output_args;
+                fullRestoredArgs = profile.full_restored_output_args;
+                const flagged = parsed.restoration && Object.entries(parsed.restoration)
+                    .some(([key, value]) => key !== 'projection_type' ? value === true : value === 'fisheye');
+                if (profile.mandatory || !sourceImage || parsed.source_clean !== true || flagged) action = 'encode';
                 rationale = typeof parsed.rationale === 'string' ? parsed.rationale : 'Реставрация и масштабирование под Quest 2.';
                 if (action === 'encode' && (!Array.isArray(inputArgs) || !Array.isArray(outputArgs))) {
                     throw new Error('input_args or output_args is not an array');
@@ -226,6 +236,8 @@ class FfmpegAgent {
                 const profile = this._restorationProfile(file.metadata);
                 inputArgs = profile.input_args;
                 outputArgs = profile.output_args;
+                pureCudaArgs = profile.pure_cuda_output_args;
+                fullRestoredArgs = profile.full_restored_output_args;
                 rationale = 'Резервный профиль реставрации Quest 2: spp, hqdn3d, cas и безопасное разрешение; требуется визуальная проверка.';
             }
 
@@ -321,6 +333,8 @@ class FfmpegAgent {
                 action,
                 inputArgs,
                 outputArgs,
+                pureCudaArgs,
+                fullRestoredArgs,
                 rationale,
                 testSuccess,
                 testDurationMs,
@@ -355,7 +369,7 @@ class FfmpegAgent {
      * @param {Array} queue - result from analyzeAndEstimate
      * @param {string} outputPath - destination directory
      * @param {Function} onProgress - optional callback({stage, current, total, file, progressPercent, ...})
-     * @returns {Promise<Array<{action:string, target_resolution:string, input_args:string[], output_args:string[], full_command:string, rationale:string, assessment:object}>>}
+     * @returns {Promise<Array<{file_name:string, action:string, target_resolution:string, input_args:string[], pure_cuda:object, full_restored:object, rationale:string, assessment:object}>>}
      */
     async executeBatch(queue, outputPath, onProgress = () => {}) {
         const results = [];
@@ -368,18 +382,32 @@ class FfmpegAgent {
 
             const baseName = path.basename(task.name, task.ext);
             const targetDir = outputPath ? path.resolve(outputPath) : path.dirname(task.path);
-            const outputFile = path.join(targetDir, `${baseName}_encoded.mp4`);
-            const filter = task.outputArgs[task.outputArgs.indexOf('-vf') + 1];
+            const pureOutputFile = path.join(targetDir, `${baseName}_pure_cuda.mp4`);
+            const fullOutputFile = path.join(targetDir, `${baseName}_restored.mp4`);
+
+            const pureOutputArgs = task.pureCudaArgs || task.outputArgs;
+            const fullRestoredArgs = task.fullRestoredArgs || task.outputArgs;
+            const filter = fullRestoredArgs[fullRestoredArgs.indexOf('-vf') + 1];
             const resolution = filter.match(/scale_cuda=(\d+):(\d+)/);
             if (!resolution) throw new Error('Missing target CUDA resolution');
-            const args = [...task.inputArgs, '-i', task.path, ...task.outputArgs, outputFile];
+
+            const pureArgsList = [...task.inputArgs, '-i', task.path, ...pureOutputArgs, pureOutputFile];
+            const fullArgsList = [...task.inputArgs, '-i', task.path, ...fullRestoredArgs, fullOutputFile];
             results.push({
                 file_name: task.name,
                 action: 'encode',
                 target_resolution: `${resolution[1]}:${resolution[2]}`,
                 input_args: [...task.inputArgs],
-                output_args: [...task.outputArgs],
-                full_command: `ffmpeg ${args.map(arg => this._quoteArgument(arg)).join(' ')}`,
+                pure_cuda: {
+                    output_file: pureOutputFile,
+                    output_args: [...pureOutputArgs],
+                    full_command: `ffmpeg ${pureArgsList.map(arg => this._quoteArgument(arg)).join(' ')}`,
+                },
+                full_restored: {
+                    output_file: fullOutputFile,
+                    output_args: [...fullRestoredArgs],
+                    full_command: `ffmpeg ${fullArgsList.map(arg => this._quoteArgument(arg)).join(' ')}`,
+                },
                 rationale: task.rationale || 'Реставрация и масштабирование под Quest 2.',
                 assessment: this._normalizeAssessment({ ...task.assessment, status: verdict === 'PASS' ? 'PASS' : 'WARN' }),
             });
@@ -414,32 +442,59 @@ class FfmpegAgent {
         }
 
         const removeGrid = restoration.remove_grid === true;
+        const removeNoise = restoration.remove_noise === true;
         const colorCorrect = restoration.color_correct === true;
         const adjustContrast = restoration.adjust_contrast === true;
+        const correctGeometry = restoration.correct_geometry === true;
+        const isFisheye = restoration.projection_type === 'fisheye';
+        const interlaced = restoration.interlaced === true;
+        const swapLr = restoration.swap_lr === true;
 
-        // До 3072p CPU-фильтры разрешены по флагам или автоматически для видео <= 2400p
-        const needsCpuFilters = isUpTo3072
-            && (video.height <= 2400 || removeGrid || colorCorrect || adjustContrast);
+        // Чистый CUDA-профиль: только GPU-скейлинг, без CPU-фильтров.
+        // Чересстрочный исходник деинтерлейсится на GPU через yadif_cuda.
+        const pureCudaFilters = interlaced && isUpTo3072
+            ? ['yadif_cuda=mode=1', `scale_cuda=${width}:${height}:format=nv12:interp_algo=bicubic`]
+            : [`scale_cuda=${width}:${height}:format=nv12:interp_algo=bicubic`];
 
-        const filters = [];
-        if (needsCpuFilters) {
-            const downloadFormat = /10|12|p010|p016/.test(video.pix_fmt || '') ? 'p010le' : 'nv12';
-            filters.push('hwdownload', `format=${downloadFormat}`, 'format=yuv420p');
-            if (removeGrid) filters.push('spp=4:0:1', 'hqdn3d=1:1:1:1');
-            if (colorCorrect) filters.push('colortemperature=temperature=7500');
-            if (adjustContrast || video.height <= 2400) filters.push('eq=contrast=1.03:brightness=0.01');
-            filters.push('unsharp=5:5:1.6:5:5:0', 'format=yuv420p', 'hwupload_cuda');
+        // Полный профиль: CPU-реставрация по флагам + шарпенинг, затем загрузка на GPU.
+        // Oversized-источники (>3072p) остаются на GPU: CPU-путь на них слишком тяжёлый.
+        const fullFilters = [...pureCudaFilters];
+        if (isUpTo3072) {
+            fullFilters.length = 0;
+            fullFilters.push('hwdownload',
+                `format=${/10|12|p010|p016/.test(video.pix_fmt || '') ? 'p010le' : 'nv12'}`,
+                'format=yuv420p');
+            // Деинтерлейс и перепроекция идут первыми — до любой очистки
+            if (interlaced) fullFilters.push('yadif=mode=1');
+            if (isFisheye || correctGeometry) {
+                fullFilters.push('v360=input=fisheye:output=equirectangular:ih_fov=180:iv_fov=180');
+            }
+            if (swapLr) fullFilters.push('stereo3d=sbsl:sbsr');
+            if (removeGrid) fullFilters.push('spp=4:0:1', 'hqdn3d=1:1:1:1');
+            else if (removeNoise) fullFilters.push('hqdn3d=3:2:6:4.5');
+            if (colorCorrect) fullFilters.push('colortemperature=temperature=7500');
+            if (adjustContrast || video.height <= 2400) {
+                fullFilters.push('eq=contrast=1.03:brightness=0.01');
+            }
+            fullFilters.push('unsharp=5:5:1.6:5:5:0', 'format=yuv420p', 'hwupload_cuda',
+                `scale_cuda=${width}:${height}:format=nv12:interp_algo=bicubic`);
         }
-        filters.push(`scale_cuda=${width}:${height}:format=nv12:interp_algo=bicubic`);
+
         const rate = fps > 60 ? '60' : fps > 0 ? sourceRate : '30';
+        const baseOutputArgs = ['-fps_mode', 'cfr', '-r', rate,
+            '-c:v', 'hevc_nvenc', '-preset', 'p4', '-tune', 'hq', '-rc', 'vbr',
+            '-b:v', width > 4800 ? '40M' : '30M', '-maxrate', width > 4800 ? '60M' : '45M',
+            '-bufsize', width > 4800 ? '100M' : '60M', '-tag:v', 'hvc1',
+            '-c:a', 'copy', '-movflags', '+faststart'];
+
         return {
-            mandatory: video.height <= 1920 || isOversized || !Number.isFinite(fps) || fps <= 0 || fps > 60 || video.codec_name !== 'hevc',
+            mandatory: video.height <= 1920 || isOversized || isFisheye || correctGeometry || swapLr || interlaced
+                || !Number.isFinite(fps) || fps <= 0 || fps > 60 || video.codec_name !== 'hevc',
             input_args: ['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda'],
-            output_args: ['-vf', filters.join(','), '-fps_mode', 'cfr', '-r', rate,
-                '-c:v', 'hevc_nvenc', '-preset', 'p4', '-tune', 'hq', '-rc', 'vbr',
-                '-b:v', width > 4800 ? '40M' : '30M', '-maxrate', width > 4800 ? '60M' : '45M',
-                '-bufsize', width > 4800 ? '100M' : '60M', '-tag:v', 'hvc1',
-                '-c:a', 'copy', '-movflags', '+faststart'],
+            pure_cuda_output_args: ['-vf', pureCudaFilters.join(','), ...baseOutputArgs],
+            full_restored_output_args: ['-vf', fullFilters.join(','), ...baseOutputArgs],
+            // Тестовый образец оценивает качество полной реставрации
+            output_args: ['-vf', fullFilters.join(','), ...baseOutputArgs],
         };
     }
 

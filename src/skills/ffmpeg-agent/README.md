@@ -49,8 +49,10 @@ src/skills/ffmpeg-agent/
 - `PASS` и `WARN` включаются в результат.
 - Исключаются только явные `action: "skip"` и `assessment.status: "FAIL"`.
 - Отсутствующая или неизвестная оценка нормализуется в `WARN`, а не теряет задачу.
-- Каждая задача содержит `file_name`, аргументы, полную команду и оценку.
-- Имя результата — `<исходное-имя>_encoded.mp4`. Без `outputPath` используется директория исходника.
+- Каждая задача содержит `file_name`, `input_args` и **две независимые команды**: `pure_cuda` и `full_restored` — каждая со своими `output_args`, `output_file` и `full_command`.
+- `pure_cuda` — чистый GPU-вариант: только `scale_cuda` + NVENC, без CPU-фильтров. Результат — `<имя>_pure_cuda.mp4`.
+- `full_restored` — полная реставрация: CPU-фильтры по флагам модели + `unsharp`, затем загрузка на GPU и `scale_cuda`. Результат — `<имя>_restored.mp4`.
+- Без `outputPath` используется директория исходника.
 - Callback получает событие `task-generated`.
 
 ## Критерии пропуска и статусы
@@ -78,21 +80,30 @@ BPP рассчитывается как `bitrate / (width × height × fps)` и 
 
 - Низкое разрешение: высота ≤1920 — фиксированный апскейл до **4800×2400**.
 - Oversized (ширина >6144 или высота >3072) — фиксированный даунскейл до **6144×3072**, строго без CPU-фильтров (чистый GPU, максимальная скорость).
-- Все остальные исходники до 3072p кодируются в родном разрешении; CPU-фильтры включаются автоматически для видео ≤2400p либо по флагам модели (`remove_grid`, `color_correct`, `adjust_contrast`).
+- Все остальные исходники до 3072p кодируются в родном разрешении; фильтры в `full_restored` подбираются по флагам модели (`remove_grid`, `color_correct`, `adjust_contrast`), `unsharp` применяется всегда, `eq` — дополнительно для видео ≤2400p.
 - Исходный FPS сохраняется, включая дробную запись `60000/1001`; значения выше 60 ограничиваются до 60. При неизвестном FPS профиль использует 30.
 
 Последовательность фильтров:
 
 ```text
+# pure_cuda (всегда только GPU):
+[yadif_cuda=mode=1,]               # при interlaced
+scale_cuda=W:H:format=nv12:interp_algo=bicubic
+
+# full_restored (CPU-реставрация → GPU):
 hwdownload,format=nv12,format=yuv420p,
-spp=4:0:1,hqdn3d=1:1:1:1,
-colortemperature=temperature=7500,
-eq=contrast=1.03:brightness=0.01,
-cas=0.5,format=yuv420p,hwupload_cuda,
-scale_cuda=4800:2400:format=nv12:interp_algo=bicubic
+yadif=mode=1,                                        # при interlaced
+v360=input=fisheye:output=equirectangular:...,       # при fisheye/correct_geometry
+stereo3d=sbsl:sbsr,                                  # при swap_lr
+spp=4:0:1,hqdn3d=1:1:1:1,          # при remove_grid
+hqdn3d=3:2:6:4.5,                  # при remove_noise без remove_grid
+colortemperature=temperature=7500, # при color_correct
+eq=contrast=1.03:brightness=0.01,  # при adjust_contrast или ≤2400p
+unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,
+scale_cuda=W:H:format=nv12:interp_algo=bicubic
 ```
 
-Фильтры подключаются адаптивно по флагам модели: `remove_grid` добавляет `spp`+`hqdn3d`, `color_correct` — `colortemperature=7500`, `adjust_contrast` — `eq`. `unsharp=5:5:1.6:5:5:0` добавляется при любой CPU-реставрации; для видео ≤2400p `eq` и `unsharp` включаются всегда. Oversized-источники и файлы без флагов выше 2400p остаются на чистом GPU-пути: цепочка сводится к `scale_cuda=W:H:format=nv12:interp_algo=bicubic`.
+Фильтры подключаются по флагам модели в `restoration`: `remove_grid`, `remove_noise` (независимо — шум без сетки), `color_correct`, `adjust_contrast`, `correct_geometry`/`projection_type: "fisheye"`, `interlaced`, `swap_lr`. Геометрия и деинтерлейс идут первыми в цепочке — до денойза и шарпенинга. `unsharp=5:5:1.6:5:5:0` в полном профиле применяется всегда; для видео ≤2400p `eq` включается автоматически. Oversized-источники (>3072p) не используют CPU-путь ни в одном варианте. Флаги `fisheye`, `correct_geometry`, `swap_lr`, `interlaced` делают кодирование обязательным (`mandatory`).
 
 Для 10-битного исходника перед CPU-фильтрами используется `format=p010le` вместо `nv12`. Температура 7500K применяется только при видимой желтизне.
 
@@ -115,7 +126,7 @@ ffmpeg -version
 ffprobe -version
 ```
 
-FFmpeg должен включать фильтры `spp`, `hqdn3d`, `colortemperature`, `cas`, `eq`, `hwdownload`, `hwupload_cuda`, `scale_cuda` и энкодер `hevc_nvenc`. Одного наличия CUDA-флагов в сборке недостаточно: необходим доступный NVIDIA-драйвер. Ошибка загрузки `nvcuda.dll` означает, что аппаратный прогон недоступен в текущем окружении.
+FFmpeg должен включать фильтры `spp`, `hqdn3d`, `colortemperature`, `unsharp`, `eq`, `v360`, `yadif`, `yadif_cuda`, `stereo3d`, `hwdownload`, `hwupload_cuda`, `scale_cuda`, кодировщик `libwebp` и энкодер `hevc_nvenc`. Одного наличия CUDA-флагов в сборке недостаточно: необходим доступный NVIDIA-драйвер. Ошибка загрузки `nvcuda.dll` означает, что аппаратный прогон недоступен в текущем окружении.
 
 Установите `GEMINI_API_KEY` в окружении. Ключ не передаётся аргументом командной строки и не должен сохраняться в репозитории.
 
@@ -135,13 +146,13 @@ node test-run.js ./videos ./out > tasks.json
 
 - **stdout**: один JSON-объект, если сгенерирована одна задача; массив, если задач несколько; `[]`, если задач нет, включая пустую входную папку.
 - **stderr**: прогресс, диагностика, количество исключённых файлов и путь сохранённого отчёта.
-- CLI автоматически сохраняет тот же JSON: `<имя-видео>_commands.json` для отдельного файла или `optimization_commands.json` для директории. Если имя занято, используются суффиксы `_1`, `_2` и далее; существующие файлы не перезаписываются.
+- CLI дополнительно сохраняет текстовый файл с готовыми командами ffmpeg (по две на задачу: `pure_cuda` и `full_restored`, с `rem`-заголовками для вставки в консоль): `<имя-видео>_commands.txt` для отдельного файла или `optimization_commands.txt` для директории. Если имя занято, используются суффиксы `_1`, `_2` и далее; существующие файлы не перезаписываются.
 - Входной путь и тип выходного пути проверяются до создания агента и проверки API-ключа. Выходная директория создаётся только после успешного анализа, непосредственно перед сохранением отчёта.
 - Выходные видео не создаются. Дополнительный `tasks.json` в примерах создаётся перенаправлением stdout оболочки; не направляйте вывод в существующий файл, который хотите сохранить.
 
 ## Формат итоговой задачи
 
-Пример для реставрации 3840×1920 с подтверждённой желтизной (команда для Bash):
+Пример для реставрации 3840×1920 с подтверждённой желтизной (команды показаны для Bash; `full_command` сокращён):
 
 ```json
 {
@@ -149,15 +160,29 @@ node test-run.js ./videos ./out > tasks.json
   "action": "encode",
   "target_resolution": "4800:2400",
   "input_args": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"],
-  "output_args": [
-    "-vf", "hwdownload,format=nv12,format=yuv420p,spp=6:0:1,hqdn3d=1.5:1:1.5:1,colortemperature=temperature=7500,cas=0.5,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400:format=nv12:interp_algo=bicubic",
-    "-fps_mode", "cfr", "-r", "60000/1001",
-    "-c:v", "hevc_nvenc", "-preset", "p4", "-tune", "hq", "-rc", "vbr",
-    "-b:v", "30M", "-maxrate", "45M", "-bufsize", "60M",
-    "-tag:v", "hvc1", "-c:a", "copy", "-movflags", "+faststart"
-  ],
-  "full_command": "ffmpeg '-hwaccel' 'cuda' '-hwaccel_output_format' 'cuda' '-i' '/videos/example.mp4' '-vf' 'hwdownload,format=nv12,format=yuv420p,spp=6:0:1,hqdn3d=1.5:1:1.5:1,colortemperature=temperature=7500,cas=0.5,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400:format=nv12:interp_algo=bicubic' '-fps_mode' 'cfr' '-r' '60000/1001' '-c:v' 'hevc_nvenc' '-preset' 'p4' '-tune' 'hq' '-rc' 'vbr' '-b:v' '30M' '-maxrate' '45M' '-bufsize' '60M' '-tag:v' 'hvc1' '-c:a' 'copy' '-movflags' '+faststart' '/out/example_encoded.mp4'",
-  "rationale": "Устранение сетки AVC, коррекция цвета и апскейл до 2400p.",
+  "pure_cuda": {
+    "output_file": "/out/example_pure_cuda.mp4",
+    "output_args": [
+      "-vf", "scale_cuda=4800:2400:format=nv12:interp_algo=bicubic",
+      "-fps_mode", "cfr", "-r", "60000/1001",
+      "-c:v", "hevc_nvenc", "-preset", "p4", "-tune", "hq", "-rc", "vbr",
+      "-b:v", "30M", "-maxrate", "45M", "-bufsize", "60M",
+      "-tag:v", "hvc1", "-c:a", "copy", "-movflags", "+faststart"
+    ],
+    "full_command": "ffmpeg '-hwaccel' 'cuda' ... '/out/example_pure_cuda.mp4'"
+  },
+  "full_restored": {
+    "output_file": "/out/example_restored.mp4",
+    "output_args": [
+      "-vf", "hwdownload,format=nv12,format=yuv420p,colortemperature=temperature=7500,eq=contrast=1.03:brightness=0.01,unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400:format=nv12:interp_algo=bicubic",
+      "-fps_mode", "cfr", "-r", "60000/1001",
+      "-c:v", "hevc_nvenc", "-preset", "p4", "-tune", "hq", "-rc", "vbr",
+      "-b:v", "30M", "-maxrate", "45M", "-bufsize", "60M",
+      "-tag:v", "hvc1", "-c:a", "copy", "-movflags", "+faststart"
+    ],
+    "full_command": "ffmpeg '-hwaccel' 'cuda' ... '/out/example_restored.mp4'"
+  },
+  "rationale": "Устранение желтизны и апскейл до 2400p.",
   "assessment": {
     "status": "WARN",
     "grid_removed": false,
@@ -193,7 +218,7 @@ async function generateTasks() {
 
 `analyzeAndEstimate()` возвращает внутренние элементы с `name`, `path`, `ext`, `metadata`, `action`, `inputArgs`, `outputArgs`, `rationale`, `testSuccess`, `testDurationMs`, `outputProbe`, `assessment`, `estimatedSeconds` и `duration`. При критической ошибке отдельного файла набор полей может быть сокращён; элемент получает `FAIL` и исключается в `executeBatch()`.
 
-Публичные задачи используют snake_case (`input_args`, `output_args`, `file_name`) и не включают все внутренние метаданные. Метод `executeBatch()` всегда возвращает **массив**, независимо от количества задач; преобразование одиночной задачи в объект выполняет только CLI.
+Публичные задачи используют snake_case (`file_name`, `input_args`, `pure_cuda`, `full_restored`) и не включают все внутренние метаданные. Внутренние элементы очереди дополнительно хранят `pureCudaArgs` и `fullRestoredArgs` в camelCase. Метод `executeBatch()` всегда возвращает **массив**, независимо от количества задач; преобразование одиночной задачи в объект выполняет только CLI.
 
 ## Проверки
 
