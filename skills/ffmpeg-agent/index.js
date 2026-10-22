@@ -193,6 +193,11 @@ class FfmpegAgent {
             let outputArgs;
             let pureCudaArgs;
             let fullRestoredArgs;
+            let safeInputArgs;
+            let safeOutputArgs;
+            let safePureCudaArgs;
+            let safeFullRestoredArgs;
+            let usedCpuFallback = false;
             let rationale;
             try {
                 const prompt = this._buildPrompt(file);
@@ -229,7 +234,10 @@ class FfmpegAgent {
                 if (action === 'encode' && (!Array.isArray(inputArgs) || !Array.isArray(outputArgs))) {
                     throw new Error('input_args or output_args is not an array');
                 }
-                ({ inputArgs, outputArgs } = this._ensureMemorySafeArgs(file, inputArgs, outputArgs));
+                // Primary args stay on the GPU; CPU-safe variants are kept as fallback
+                ({ inputArgs: safeInputArgs, outputArgs: safeOutputArgs } = this._ensureMemorySafeArgs(file, inputArgs, outputArgs));
+                safePureCudaArgs = this._ensureMemorySafeArgs(file, [], pureCudaArgs).outputArgs;
+                safeFullRestoredArgs = this._ensureMemorySafeArgs(file, [], fullRestoredArgs).outputArgs;
             } catch (err) {
                 if (err.geminiBlocked) throw err;
                 console.warn(`[analyze] AI failed for "${file.name}": ${err.message}`);
@@ -240,6 +248,9 @@ class FfmpegAgent {
                 pureCudaArgs = profile.pure_cuda_output_args;
                 fullRestoredArgs = profile.full_restored_output_args;
                 rationale = 'Резервный профиль реставрации Quest 2: spp, hqdn3d, cas и безопасное разрешение; требуется визуальная проверка.';
+                ({ inputArgs: safeInputArgs, outputArgs: safeOutputArgs } = this._ensureMemorySafeArgs(file, inputArgs, outputArgs));
+                safePureCudaArgs = this._ensureMemorySafeArgs(file, [], pureCudaArgs).outputArgs;
+                safeFullRestoredArgs = this._ensureMemorySafeArgs(file, [], fullRestoredArgs).outputArgs;
             }
 
             let testSuccess = false;
@@ -258,11 +269,22 @@ class FfmpegAgent {
                 // ── 2b. Test encode: 5-second sample ───────────────────
                 const tempOutput = path.join(tempDir, 'sample.mp4');
                 const offsetStr = String(offset);
-                const testArgs = [...inputArgs, '-ss', offsetStr, '-i', file.path, '-t', '5', ...outputArgs, '-y', tempOutput];
+                const buildTestArgs = (inArgs, outArgs) => [...inArgs, '-ss', offsetStr, '-i', file.path, '-t', '5', ...outArgs, '-y', tempOutput];
+                const testArgs = buildTestArgs(inputArgs, outputArgs);
                 console.log(`[ffmpeg] test command: ffmpeg ${testArgs.map(a => (a.includes(' ') ? `"${a}"` : a)).join(' ')}`);
 
                 try {
-                    await this._runFfmpeg(testArgs);
+                    try {
+                        await this._runFfmpeg(testArgs);
+                    } catch (gpuErr) {
+                        // Retry once with the CPU-safe variant (e.g. 8K OOM on small GPUs)
+                        const cpuArgs = buildTestArgs(safeInputArgs, safeOutputArgs);
+                        if (cpuArgs.join(' ') === testArgs.join(' ')) throw gpuErr;
+                        console.warn(`[ffmpeg] GPU test failed for "${file.name}" (${gpuErr.message.split('\n')[0]}), retrying CPU-safe variant`);
+                        console.log(`[ffmpeg] fallback command: ffmpeg ${cpuArgs.map(a => (a.includes(' ') ? `"${a}"` : a)).join(' ')}`);
+                        await this._runFfmpeg(cpuArgs);
+                        usedCpuFallback = true;
+                    }
                     encodeDurationMs = Date.now() - testStart;
                     testSuccess = true;
 
@@ -336,6 +358,11 @@ class FfmpegAgent {
                 outputArgs,
                 pureCudaArgs,
                 fullRestoredArgs,
+                safeInputArgs,
+                safeOutputArgs,
+                safePureCudaArgs,
+                safeFullRestoredArgs,
+                usedCpuFallback,
                 rationale,
                 testSuccess,
                 testDurationMs,
@@ -389,25 +416,36 @@ class FfmpegAgent {
             const pureOutputArgs = task.pureCudaArgs || task.outputArgs;
             const fullRestoredArgs = task.fullRestoredArgs || task.outputArgs;
             const filter = fullRestoredArgs[fullRestoredArgs.indexOf('-vf') + 1];
-            const resolution = filter.match(/scale_cuda=(\d+):(\d+)/);
-            if (!resolution) throw new Error('Missing target CUDA resolution');
+            const resolution = filter.match(/scale(?:_cuda)?=(\d+):(\d+)/);
+            if (!resolution) throw new Error('Missing target resolution');
 
             const pureArgsList = [...task.inputArgs, '-i', task.path, ...pureOutputArgs, pureOutputFile];
             const fullArgsList = [...task.inputArgs, '-i', task.path, ...fullRestoredArgs, fullOutputFile];
+            // CPU-safe fallback commands for 8K sources that may OOM on the GPU path
+            const safeInput = task.safeInputArgs || task.inputArgs;
+            const pureFallbackList = [...safeInput, '-i', task.path, ...(task.safePureCudaArgs || pureOutputArgs), pureOutputFile];
+            const fullFallbackList = [...safeInput, '-i', task.path, ...(task.safeFullRestoredArgs || fullRestoredArgs), fullOutputFile];
+            const pureCommand = `ffmpeg ${pureArgsList.map(arg => this._quoteArgument(arg)).join(' ')}`;
+            const fullCommand = `ffmpeg ${fullArgsList.map(arg => this._quoteArgument(arg)).join(' ')}`;
+            const pureFallback = `ffmpeg ${pureFallbackList.map(arg => this._quoteArgument(arg)).join(' ')}`;
+            const fullFallback = `ffmpeg ${fullFallbackList.map(arg => this._quoteArgument(arg)).join(' ')}`;
             results.push({
                 file_name: task.name,
                 action: 'encode',
                 target_resolution: `${resolution[1]}:${resolution[2]}`,
                 input_args: [...task.inputArgs],
+                cpu_fallback: task.usedCpuFallback === true,
                 pure_cuda: {
                     output_file: pureOutputFile,
                     output_args: [...pureOutputArgs],
-                    full_command: `ffmpeg ${pureArgsList.map(arg => this._quoteArgument(arg)).join(' ')}`,
+                    full_command: pureCommand,
+                    ...(pureFallback !== pureCommand ? { fallback_command: pureFallback } : {}),
                 },
                 full_restored: {
                     output_file: fullOutputFile,
                     output_args: [...fullRestoredArgs],
-                    full_command: `ffmpeg ${fullArgsList.map(arg => this._quoteArgument(arg)).join(' ')}`,
+                    full_command: fullCommand,
+                    ...(fullFallback !== fullCommand ? { fallback_command: fullFallback } : {}),
                 },
                 rationale: task.rationale || 'Реставрация и масштабирование под Quest 2.',
                 assessment: this._normalizeAssessment({ ...task.assessment, status: verdict === 'PASS' ? 'PASS' : 'WARN' }),

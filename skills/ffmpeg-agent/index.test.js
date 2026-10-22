@@ -119,7 +119,7 @@ test('executeBatch generates every PASS/WARN task, excludes only skip/FAIL and n
     assert.deepEqual(tasks.map(result => result.assessment.status), ['PASS', 'WARN', 'WARN']);
     assert.equal(tasks[1].assessment.notes, 'Остаточная сетка');
     assert.equal(tasks[1].file_name, 'warning.mp4');
-    assert.deepEqual(Object.keys(tasks[0]), ['file_name', 'action', 'target_resolution', 'input_args', 'pure_cuda', 'full_restored', 'rationale', 'assessment']);
+    assert.deepEqual(Object.keys(tasks[0]), ['file_name', 'action', 'target_resolution', 'input_args', 'cpu_fallback', 'pure_cuda', 'full_restored', 'rationale', 'assessment']);
     assert.equal(tasks[0].target_resolution, '4800:2400');
     assert.match(tasks[0].pure_cuda.full_command, /input file\.mp4/);
     assert.match(tasks[0].pure_cuda.full_command, /input file_pure_cuda\.mp4/);
