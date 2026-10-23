@@ -119,14 +119,34 @@ test('executeBatch generates every PASS/WARN task, excludes only skip/FAIL and n
     assert.deepEqual(tasks.map(result => result.assessment.status), ['PASS', 'WARN', 'WARN']);
     assert.equal(tasks[1].assessment.notes, 'Остаточная сетка');
     assert.equal(tasks[1].file_name, 'warning.mp4');
-    assert.deepEqual(Object.keys(tasks[0]), ['file_name', 'action', 'target_resolution', 'input_args', 'cpu_fallback', 'pure_cuda', 'full_restored', 'rationale', 'assessment']);
+    assert.deepEqual(Object.keys(tasks[0]), ['file_name', 'action', 'target_resolution', 'input_args', 'uses_cpu_filters', 'cpu_fallback', 'pure_cuda', 'full_restored', 'rationale', 'assessment']);
     assert.equal(tasks[0].target_resolution, '4800:2400');
+    assert.equal(tasks[0].uses_cpu_filters, true);
+    assert.equal(tasks[0].cpu_fallback, false);
     assert.match(tasks[0].pure_cuda.full_command, /input file\.mp4/);
-    assert.match(tasks[0].pure_cuda.full_command, /input file_pure_cuda\.mp4/);
+    assert.match(tasks[0].pure_cuda.full_command, /input file_2400p\.mp4/);
     assert.doesNotMatch(tasks[0].pure_cuda.output_args[1], /hwdownload|spp|hqdn3d/);
-    assert.match(tasks[0].full_restored.full_command, /input file_restored\.mp4/);
+    assert.match(tasks[0].full_restored.full_command, /input file_2400p_restored\.mp4/);
     assert.match(tasks[0].full_restored.output_args[1], /hwdownload.*unsharp.*hwupload_cuda/);
     assert.doesNotThrow(() => JSON.parse(JSON.stringify(tasks[0])));
+});
+
+test('rescale replaces the resolution token in the original name', async () => {
+    const a = agent();
+    const profile = a._restorationProfile(metadata());
+    const task = { name: 'clip_1920p_VR180_SBS_LR.mp4', ext: '.mp4', path: 'clip_1920p_VR180_SBS_LR.mp4',
+        action: 'encode', inputArgs: profile.input_args, outputArgs: profile.output_args,
+        pureCudaArgs: profile.pure_cuda_output_args, fullRestoredArgs: profile.full_restored_output_args,
+        metadata: metadata(), assessment: { status: 'PASS', notes: 'OK' } };
+    const [result] = await a.executeBatch([task]);
+    assert.match(result.pure_cuda.output_file, /clip_2400p_VR180_SBS_LR\.mp4$/);
+    assert.match(result.full_restored.output_file, /clip_2400p_VR180_SBS_LR_restored\.mp4$/);
+    assert.doesNotMatch(result.pure_cuda.output_file, /1920p|_pure_cuda/);
+
+    // Без рескейла (уже целевой размер) имя чистой команды защищено суффиксом от совпадения с исходником
+    const sameRes = { ...task, name: 'same.mp4', path: 'same.mp4', metadata: metadata(4800, 2400) };
+    const [sameResult] = await a.executeBatch([sameRes]);
+    assert.match(sameResult.pure_cuda.output_file, /same_pure_cuda\.mp4$/);
 });
 
 test('analysis supplies labelled inline images, forces low AVC restoration and cleans temp files', async () => {
@@ -310,20 +330,23 @@ test('launcher saves only the selected file and never overwrites existing report
     const selected = path.join(directory, 'warn clip.mp4');
     fs.writeFileSync(selected, 'video');
     fs.writeFileSync(path.join(directory, 'sibling.mp4'), 'video');
-    const existingReport = path.join(directory, 'warn clip_commands.txt');
+    const existingReport = path.join(directory, 'warn clip_2400p.ffc');
     fs.writeFileSync(existingReport, 'keep original');
     const result = runLauncher([selected]);
     assert.equal(result.status, 0, result.stderr);
     const task = JSON.parse(result.stdout);
     assert.equal(task.file_name, 'warn clip.mp4');
     assert.equal(task.assessment.status, 'WARN');
+    assert.equal(task.uses_cpu_filters, true);
     assert.equal(fs.readFileSync(existingReport, 'utf8'), 'keep original');
-    const reportText = fs.readFileSync(path.join(directory, 'warn clip_commands_1.txt'), 'utf8');
-    assert.match(reportText, /rem warn clip\.mp4 — pure_cuda\r?\n/);
-    assert.match(reportText, /rem warn clip\.mp4 — full_restored\r?\n/);
-    assert.ok(reportText.includes(task.pure_cuda.full_command));
-    assert.ok(reportText.includes(task.full_restored.full_command));
-    assert.equal(fs.existsSync(path.join(directory, 'warn clip_encoded.mp4')), false);
+    const pureText = fs.readFileSync(path.join(directory, 'warn clip_2400p_1.ffc'), 'utf8');
+    assert.match(pureText, /^rem warn clip\.mp4 — pure_cuda\r?\n/);
+    assert.ok(pureText.includes(task.pure_cuda.full_command));
+    const restoredText = fs.readFileSync(path.join(directory, 'warn clip_2400p_restored.ffc'), 'utf8');
+    assert.match(restoredText, /^rem warn clip\.mp4 — full_restored\r?\n/);
+    assert.ok(restoredText.includes(task.full_restored.full_command));
+    assert.ok(task.pure_cuda.full_command.includes('warn clip_2400p.mp4'));
+    assert.equal(fs.existsSync(path.join(directory, 'warn clip_2400p.mp4')), false);
 });
 
 test('launcher scans folders, preserves WARN and excludes skip/FAIL', t => {
@@ -336,21 +359,55 @@ test('launcher scans folders, preserves WARN and excludes skip/FAIL', t => {
     assert.equal(result.status, 0, result.stderr);
     const tasks = JSON.parse(result.stdout);
     assert.deepEqual(tasks.map(task => task.file_name), ['pass.mp4', 'warn.mp4']);
-    const reportText = fs.readFileSync(path.join(output, 'optimization_commands.txt'), 'utf8');
     for (const task of tasks) {
-        assert.ok(reportText.includes(task.pure_cuda.full_command));
-        assert.ok(reportText.includes(task.full_restored.full_command));
-        assert.ok(reportText.includes(`rem ${task.file_name} — pure_cuda`));
-        assert.ok(reportText.includes(`rem ${task.file_name} — full_restored`));
+        const stem = task.file_name.replace(/\.mp4$/, '');
+        const pureText = fs.readFileSync(path.join(output, `${stem}_2400p.ffc`), 'utf8');
+        assert.ok(pureText.includes(task.pure_cuda.full_command));
+        assert.match(pureText, new RegExp(`^rem ${stem.replace(' ', '\\s')}`));
+        const restoredText = fs.readFileSync(path.join(output, `${stem}_2400p_restored.ffc`), 'utf8');
+        assert.ok(restoredText.includes(task.full_restored.full_command));
     }
 });
 
-test('empty input produces JSON [] in stdout and a report', t => {
+test('empty input produces JSON [] in stdout and no reports', t => {
     const directory = launcherFixture(t);
     const result = runLauncher([directory]);
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), []);
-    assert.equal(fs.existsSync(path.join(directory, 'optimization_commands.txt')), true);
+    assert.deepEqual(fs.readdirSync(directory).filter(name => name.endsWith('.ffc')), []);
+});
+
+test('GPU-only downscale produces a single pure_cuda .ffc', t => {
+    const directory = launcherFixture(t);
+    const eightK = path.join(directory, 'big.mp4');
+    fs.writeFileSync(eightK, 'video');
+    const script = `
+        const { main } = require(${JSON.stringify(path.join(__dirname, 'test-run.js'))});
+        const { FfmpegAgent } = require(${JSON.stringify(path.join(__dirname, 'index.js'))});
+        const big = ${JSON.stringify(metadata(8192, 4096))};
+        class MockAgent extends FfmpegAgent {
+            constructor() { super({ apiKey: 'test-placeholder' }); }
+            async _runFfprobe() { return big; }
+            async analyzeAndEstimate(files) {
+                return files.map(file => {
+                    const profile = this._restorationProfile(file.metadata);
+                    return { ...file, action: 'encode', inputArgs: profile.input_args,
+                        outputArgs: profile.output_args, pureCudaArgs: profile.pure_cuda_output_args,
+                        fullRestoredArgs: profile.full_restored_output_args,
+                        assessment: { status: 'PASS' } };
+                });
+            }
+        }
+        main(JSON.parse(process.argv[1]), MockAgent).catch(e => { console.error(e.message); process.exitCode = 1; });
+    `;
+    const result = spawnSync(process.execPath, ['-e', script, JSON.stringify([eightK])],
+        { encoding: 'utf8', env: { ...process.env, GEMINI_API_KEY: '' } });
+    assert.equal(result.status, 0, result.stderr);
+    const task = JSON.parse(result.stdout);
+    assert.equal(task.uses_cpu_filters, false);
+    assert.match(task.pure_cuda.full_command, /big_3072p\.mp4/);
+    const reports = fs.readdirSync(directory).filter(name => name.endsWith('.ffc'));
+    assert.deepEqual(reports, ['big_3072p.ffc']);
 });
 
 test('launcher validates arguments and paths before requesting credentials', t => {

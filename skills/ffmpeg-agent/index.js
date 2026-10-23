@@ -408,16 +408,36 @@ class FfmpegAgent {
             const verdict = task.assessment?.status;
             if (task.action === 'skip' || verdict === 'FAIL') continue;
 
-            const baseName = path.basename(task.name, task.ext);
-            const targetDir = outputPath ? path.resolve(outputPath) : path.dirname(task.path);
-            const pureOutputFile = path.join(targetDir, `${baseName}_pure_cuda.mp4`);
-            const fullOutputFile = path.join(targetDir, `${baseName}_restored.mp4`);
-
             const pureOutputArgs = task.pureCudaArgs || task.outputArgs;
             const fullRestoredArgs = task.fullRestoredArgs || task.outputArgs;
             const filter = fullRestoredArgs[fullRestoredArgs.indexOf('-vf') + 1];
             const resolution = filter.match(/scale(?:_cuda)?=(\d+):(\d+)/);
             if (!resolution) throw new Error('Missing target resolution');
+            const targetW = Number(resolution[1]);
+            const targetH = Number(resolution[2]);
+
+            // При рескейле заменяем разрешение в имени исходника (1920p -> 2400p);
+            // если токена нет — добавляем _<высота>p
+            const baseName = path.basename(task.name, task.ext);
+            const targetDir = outputPath ? path.resolve(outputPath) : path.dirname(task.path);
+            const srcVideo = task.metadata?.streams?.find(stream => stream.codec_type === 'video');
+            const rescaled = !srcVideo || srcVideo.width !== targetW || srcVideo.height !== targetH;
+            let newBase = baseName;
+            if (rescaled) {
+                newBase = /(\d{3,4}p)/i.test(baseName)
+                    ? baseName.replace(/(\d{3,4}p)/i, `${targetH}p`)
+                    : `${baseName}_${targetH}p`;
+            }
+            let pureOutputFile = path.join(targetDir, `${newBase}.mp4`);
+            // Не даём чистой команде совпасть с именем исходника в той же папке
+            if (!rescaled && path.dirname(task.path) === targetDir) {
+                pureOutputFile = path.join(targetDir, `${newBase}_pure_cuda.mp4`);
+            }
+            const fullOutputFile = path.join(targetDir, `${newBase}_restored.mp4`);
+
+            // CPU-фильтры активны, когда в полной цепочке есть hwdownload
+            const usesCpuFilters = fullRestoredArgs.includes('-vf')
+                && fullRestoredArgs[fullRestoredArgs.indexOf('-vf') + 1].includes('hwdownload');
 
             const pureArgsList = [...task.inputArgs, '-i', task.path, ...pureOutputArgs, pureOutputFile];
             const fullArgsList = [...task.inputArgs, '-i', task.path, ...fullRestoredArgs, fullOutputFile];
@@ -434,6 +454,7 @@ class FfmpegAgent {
                 action: 'encode',
                 target_resolution: `${resolution[1]}:${resolution[2]}`,
                 input_args: [...task.inputArgs],
+                uses_cpu_filters: usesCpuFilters,
                 cpu_fallback: task.usedCpuFallback === true,
                 pure_cuda: {
                     output_file: pureOutputFile,

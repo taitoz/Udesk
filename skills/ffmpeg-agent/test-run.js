@@ -68,27 +68,32 @@ async function main(args = process.argv.slice(2), Agent = FfmpegAgent) {
         console.error(`Generated: ${tasks.length}; excluded: ${queue.length - tasks.length}. No final encoding started.`);
         const resultJson = JSON.stringify(tasks.length === 1 ? tasks[0] : tasks, null, 2);
 
-        // txt-файл с готовыми командами ffmpeg для вставки в cmd
-        const commandsText = tasks
-            .map(task => `rem ${task.file_name} — pure_cuda\r\n${task.pure_cuda.full_command}`
-                + `\r\n\r\nrem ${task.file_name} — full_restored\r\n${task.full_restored.full_command}`)
-            .join('\r\n\r\n');
-
-        const reportBaseName = inputStat.isFile()
-            ? `${path.basename(inputPath, path.extname(inputPath))}_commands`
-            : 'optimization_commands';
+        // .ffc-файлы с готовыми командами ffmpeg для вставки в cmd:
+        // на каждый видеофайл — pure_cuda всегда, restored — только когда CPU-фильтры активны
+        // (для чистого даунскейла oversized-источников остаётся одна CUDA-команда)
         fs.mkdirSync(outputDir, { recursive: true });
-        let reportPath;
-        for (let suffix = 0; ; suffix++) {
-            reportPath = path.join(outputDir, `${reportBaseName}${suffix ? `_${suffix}` : ''}.txt`);
-            try {
-                fs.writeFileSync(reportPath, commandsText + '\r\n', { encoding: 'utf-8', flag: 'wx' });
-                break;
-            } catch (err) {
-                if (err.code !== 'EEXIST') throw err;
+        const savedReports = [];
+        const writeReport = (variant, label) => {
+            const base = path.basename(variant.output_file, path.extname(variant.output_file));
+            for (let suffix = 0; ; suffix++) {
+                const reportPath = path.join(outputDir, `${base}${suffix ? `_${suffix}` : ''}.ffc`);
+                try {
+                    fs.writeFileSync(reportPath, `${label}\r\n${variant.full_command}\r\n`,
+                        { encoding: 'utf-8', flag: 'wx' });
+                    savedReports.push(reportPath);
+                    return;
+                } catch (err) {
+                    if (err.code !== 'EEXIST') throw err;
+                }
+            }
+        };
+        for (const task of tasks) {
+            writeReport(task.pure_cuda, `rem ${task.file_name} — pure_cuda`);
+            if (task.uses_cpu_filters) {
+                writeReport(task.full_restored, `rem ${task.file_name} — full_restored`);
             }
         }
-        console.error(`Commands saved to: ${reportPath}`);
+        for (const reportPath of savedReports) console.error(`Commands saved to: ${reportPath}`);
         process.stdout.write(`${resultJson}\n`);
     } finally {
         console.log = originalLog;

@@ -50,8 +50,11 @@ src/skills/ffmpeg-agent/
 - Исключаются только явные `action: "skip"` и `assessment.status: "FAIL"`.
 - Отсутствующая или неизвестная оценка нормализуется в `WARN`, а не теряет задачу.
 - Каждая задача содержит `file_name`, `input_args` и **две независимые команды**: `pure_cuda` и `full_restored` — каждая со своими `output_args`, `output_file` и `full_command`.
-- `pure_cuda` — чистый GPU-вариант: только `scale_cuda` + NVENC, без CPU-фильтров. Результат — `<имя>_pure_cuda.mp4`.
-- `full_restored` — полная реставрация: CPU-фильтры по флагам модели + `unsharp`, затем загрузка на GPU и `scale_cuda`. Результат — `<имя>_restored.mp4`.
+- `pure_cuda` — чистый GPU-вариант: только `scale_cuda` + NVENC, без CPU-фильтров.
+- `full_restored` — полная реставрация: CPU-фильтры по флагам модели + `unsharp`, затем загрузка на GPU и `scale_cuda`.
+- Именование результатов при рескейле: токен разрешения в имени исходника заменяется на целевое (`clip_1920p_VR180_SBS_LR.mp4` → `clip_2400p_VR180_SBS_LR.mp4` для pure и `..._restored.mp4` для полной версии). Если токена `\d{3,4}p` в имени нет, добавляется `_<высота>p` (`big.mp4` → `big_3072p.mp4`). Без рескейла чистая команда получает суффикс `_pure_cuda`, чтобы не совпасть с именем исходника в той же папке.
+- Поле `uses_cpu_filters: true/false` показывает, задействован ли CPU-путь в `full_restored` (для GPU-only источников оба варианта идентичны).
+- Поле `cpu_fallback: true` и `fallback_command` внутри вариантов — резервные CPU-команды для 8K-источников, способных вызвать OOM на GPU.
 - Без `outputPath` используется директория исходника.
 - Callback получает событие `task-generated`.
 
@@ -146,7 +149,7 @@ node test-run.js ./videos ./out > tasks.json
 
 - **stdout**: один JSON-объект, если сгенерирована одна задача; массив, если задач несколько; `[]`, если задач нет, включая пустую входную папку.
 - **stderr**: прогресс, диагностика, количество исключённых файлов и путь сохранённого отчёта.
-- CLI дополнительно сохраняет текстовый файл с готовыми командами ffmpeg (по две на задачу: `pure_cuda` и `full_restored`, с `rem`-заголовками для вставки в консоль): `<имя-видео>_commands.txt` для отдельного файла или `optimization_commands.txt` для директории. Если имя занято, используются суффиксы `_1`, `_2` и далее; существующие файлы не перезаписываются.
+- CLI дополнительно сохраняет `.ffc`-файлы с готовыми командами ffmpeg (одна команда на файл, с `rem`-заголовком для вставки в консоль). Имена совпадают с именами результирующих видео: `<имя>.ffc` (pure-вариант) создаётся всегда, `<имя>_restored.ffc` — только когда в задаче активны CPU-фильтры (`uses_cpu_filters`). Для чистого GPU-даунскейла oversized-источников сохраняется один `.ffc`. Если имя занято, добавляются суффиксы `_1`, `_2` и далее; существующие файлы не перезаписываются. Пустой пакет не создаёт отчётов.
 - Входной путь и тип выходного пути проверяются до создания агента и проверки API-ключа. Выходная директория создаётся только после успешного анализа, непосредственно перед сохранением отчёта.
 - Выходные видео не создаются. Дополнительный `tasks.json` в примерах создаётся перенаправлением stdout оболочки; не направляйте вывод в существующий файл, который хотите сохранить.
 
@@ -160,8 +163,10 @@ node test-run.js ./videos ./out > tasks.json
   "action": "encode",
   "target_resolution": "4800:2400",
   "input_args": ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"],
+  "uses_cpu_filters": true,
+  "cpu_fallback": false,
   "pure_cuda": {
-    "output_file": "/out/example_pure_cuda.mp4",
+    "output_file": "/out/example_2400p.mp4",
     "output_args": [
       "-vf", "scale_cuda=4800:2400:format=nv12:interp_algo=bicubic",
       "-fps_mode", "cfr", "-r", "60000/1001",
@@ -169,10 +174,10 @@ node test-run.js ./videos ./out > tasks.json
       "-b:v", "30M", "-maxrate", "45M", "-bufsize", "60M",
       "-tag:v", "hvc1", "-c:a", "copy", "-movflags", "+faststart"
     ],
-    "full_command": "ffmpeg '-hwaccel' 'cuda' ... '/out/example_pure_cuda.mp4'"
+    "full_command": "ffmpeg '-hwaccel' 'cuda' ... '/out/example_2400p.mp4'"
   },
   "full_restored": {
-    "output_file": "/out/example_restored.mp4",
+    "output_file": "/out/example_2400p_restored.mp4",
     "output_args": [
       "-vf", "hwdownload,format=nv12,format=yuv420p,colortemperature=temperature=7500,eq=contrast=1.03:brightness=0.01,unsharp=5:5:1.6:5:5:0,format=yuv420p,hwupload_cuda,scale_cuda=4800:2400:format=nv12:interp_algo=bicubic",
       "-fps_mode", "cfr", "-r", "60000/1001",
@@ -180,7 +185,7 @@ node test-run.js ./videos ./out > tasks.json
       "-b:v", "30M", "-maxrate", "45M", "-bufsize", "60M",
       "-tag:v", "hvc1", "-c:a", "copy", "-movflags", "+faststart"
     ],
-    "full_command": "ffmpeg '-hwaccel' 'cuda' ... '/out/example_restored.mp4'"
+    "full_command": "ffmpeg '-hwaccel' 'cuda' ... '/out/example_2400p_restored.mp4'"
   },
   "rationale": "Устранение желтизны и апскейл до 2400p.",
   "assessment": {
